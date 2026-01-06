@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>electron-shadcn Template</title>
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline';" />
+    <link rel="stylesheet" href="/src/styles/global.css" />
+    <script type="module">
+      // React Grab - for selecting context for coding agents
+      if (import.meta.env.DEV) {
+        import("react-grab");
+      }
+    </script>
+  </head>
+  <body>
+    <div id="app" />
+    <script type="module" src="/src/renderer.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "name": "prompt-validator",
+  "description": "Validate prompt before submission",
+  "enabled": true,
+  "hookType": "PromptSubmit",
+  "onSubmit": "const prompt = context.prompt || '';\n\n// Check for common issues\nif (prompt.length > 100000) {\n  console.warn('[Prompt Validator] Prompt is very long:', prompt.length, 'characters');\n}\n\nif (prompt.includes('<api_key>') || prompt.includes('<secret>')) {\n  console.warn('[Prompt Validator] Possible API key or secret in prompt!');\n}\n\nconsole.log('[Prompt Validator] Prompt validated successfully');"
+}

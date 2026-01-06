@@ -1,0 +1,7 @@
+{
+  "name": "my-sessionstart-hook",
+  "description": "My SessionStart hook",
+  "hookType": "SessionStart",
+  "enabled": true,
+  "script": "// SessionStart hook script\n// This script runs when SessionStart event occurs\n\nconsole.log('SessionStart hook executed:', {\n  context: typeof context !== 'undefined' ? context : 'N/A',\n});"
+}

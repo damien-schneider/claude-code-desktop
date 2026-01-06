@@ -1,0 +1,17 @@
+{
+  "name": "create-component",
+  "description": "Generate a React component with TypeScript, tests, and documentation",
+  "parameters": {
+    "componentName": {
+      "type": "string",
+      "description": "The name of the component to create (PascalCase)",
+      "required": true
+    },
+    "props": {
+      "type": "object",
+      "description": "Component props with TypeScript types",
+      "required": false
+    }
+  },
+  "content": "Generate a complete React component with:\n\n1. **Component file** (`ComponentName.tsx`)\n   - TypeScript interfaces for props\n   - Proper type annotations\n   - Export statement\n   - Default props\n\n2. **Test file** (`ComponentName.test.tsx`)\n   - Unit tests for component rendering\n   - Props validation\n   - User interaction tests\n\n3. **Documentation** (`ComponentName.docs.md`)\n   - Component description\n   - Props table\n   - Usage examples\n   - Accessibility notes\n\n4. **Index file** (`index.ts`)\n   - Export for clean imports\n\n## Component Template\n\n```typescript\nimport React from 'react';\n\nexport interface {componentName}Props {\n  // Props defined from parameters\n}\n\nexport const {componentName}: React.FC<{componentName}Props> = ({\n  // Destructured props\n}) => {\n  return (\n    <div>\n      {/* Component JSX */}\n    </div>\n  );\n};\n\nexport default {componentName};\n```"
+}

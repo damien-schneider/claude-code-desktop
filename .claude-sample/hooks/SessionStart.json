@@ -1,0 +1,7 @@
+{
+  "name": "session-start-hook",
+  "description": "Log session start information",
+  "enabled": true,
+  "hookType": "SessionStart",
+  "script": "console.log('[Session Start]', {\n  timestamp: new Date().toISOString(),\n  project: typeof context !== 'undefined' ? context.project : 'unknown',\n  session: typeof context !== 'undefined' ? context.sessionId : 'unknown'\n});"
+}
