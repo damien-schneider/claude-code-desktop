@@ -97,7 +97,9 @@ function getModeInfo(mode: string): {
 
   // Generate fallback info for unknown modes
   const label = formatModeLabel(mode);
-  const isDangerous = mode.toLowerCase().includes("bypass") || mode.toLowerCase().includes("danger");
+  const isDangerous =
+    mode.toLowerCase().includes("bypass") ||
+    mode.toLowerCase().includes("danger");
 
   return {
     label,
@@ -159,7 +161,9 @@ export const PermissionModeSelector: React.FC<PermissionModeSelectorProps> = ({
         {availableModes.map((mode) => {
           const info = getModeInfo(mode);
           const isSelected = value === mode;
-          const isDangerous = mode.toLowerCase().includes("bypass") || mode.toLowerCase().includes("danger");
+          const isDangerous =
+            mode.toLowerCase().includes("bypass") ||
+            mode.toLowerCase().includes("danger");
 
           return (
             <Button
@@ -171,7 +175,9 @@ export const PermissionModeSelector: React.FC<PermissionModeSelectorProps> = ({
               onClick={() => onChange(mode)}
               className={cn(
                 "flex-1 min-w-[100px] justify-start gap-2 h-auto py-2 px-3",
-                isDangerous && isSelected && "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+                isDangerous &&
+                  isSelected &&
+                  "bg-destructive text-destructive-foreground hover:bg-destructive/90",
                 !isSelected && "hover:bg-accent"
               )}
             >
@@ -182,7 +188,7 @@ export const PermissionModeSelector: React.FC<PermissionModeSelectorProps> = ({
                   {info.description}
                 </span>
                 {info.warning && (
-                  <span className="text-[9px] text-orange-500 font-medium">
+                  <span className="text-[9px] text-destructive font-bold">
                     {info.warning}
                   </span>
                 )}

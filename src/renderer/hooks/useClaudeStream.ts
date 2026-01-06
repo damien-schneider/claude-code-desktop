@@ -5,11 +5,13 @@ import {
   isStreamingAtom,
   streamingMessageAtom,
   currentSessionMessagesAtom,
+  currentSessionIdAtom,
   streamingErrorAtom,
   isThinkingAtom,
   thinkingStartTimeAtom,
   completionStatusAtom,
   lastQueryCostAtom,
+  activeSessionsAtom,
 } from "@/renderer/stores";
 
 // =============================================================================
@@ -73,7 +75,9 @@ interface SDKEventData {
     | "result"
     | "system"
     | "error"
-    | "complete";
+    | "complete"
+    | "session_created"
+    | "session_ready";
   subtype?: string;
   content?: string;
   message?: SDKMessageContent;
@@ -85,6 +89,9 @@ interface SDKEventData {
   isError?: boolean;
   errors?: string[];
   code?: number;
+  projectName?: string;
+  projectPath?: string;
+  createdAt?: string;
 }
 
 /**
@@ -159,21 +166,70 @@ export const useClaudeStream = (processId: string | null) => {
   const [isStreaming, setIsStreaming] = useAtom(isStreamingAtom);
   const [streamingMessage, setStreamingMessage] = useAtom(streamingMessageAtom);
   const setMessages = useSetAtom(currentSessionMessagesAtom);
+  const [currentSessionId, setCurrentSessionId] = useAtom(currentSessionIdAtom);
   const [, setStreamingError] = useAtom(streamingErrorAtom);
   const [, setIsThinking] = useAtom(isThinkingAtom);
   const [, setThinkingStartTime] = useAtom(thinkingStartTimeAtom);
   const [, setCompletionStatus] = useAtom(completionStatusAtom);
   const [, setLastQueryCost] = useAtom(lastQueryCostAtom);
+  const [, setActiveSessions] = useAtom(activeSessionsAtom);
 
   // Use ref to track current streaming content without stale closure issues
   const streamingContentRef = useRef<string>("");
+  // Use ref to track RAF for smooth updates
+  const rafRef = useRef<number | null>(null);
 
   const handleMessage = useCallback(
     (_event: unknown, data: IPCMessageWrapper) => {
       const eventData = data.data;
       if (eventData.processId !== processId) return;
 
+      // Update current session ID if not set (for new sessions)
+      if (!currentSessionId && eventData.sessionId) {
+        setCurrentSessionId(eventData.sessionId);
+      }
+
       switch (eventData.type) {
+        // Session created event
+        case "session_created": {
+          console.log("[useClaudeStream] Session created:", eventData);
+          setActiveSessions((prev) => {
+            const newMap = new Map(prev);
+            newMap.set(eventData.processId, {
+              processId: eventData.processId,
+              sessionId: eventData.sessionId || null,
+              projectPath: eventData.projectPath || "",
+              projectName: eventData.projectName || "",
+              createdAt: eventData.createdAt || new Date().toISOString(),
+              isStreaming: true,
+            });
+            return newMap;
+          });
+          break;
+        }
+
+        // Session ready event (when we have the session ID)
+        case "session_ready": {
+          console.log("[useClaudeStream] Session ready:", eventData);
+          setActiveSessions((prev) => {
+            const newMap = new Map(prev);
+            const existing = newMap.get(eventData.processId);
+            if (existing) {
+              newMap.set(eventData.processId, {
+                ...existing,
+                sessionId: eventData.sessionId || null,
+              });
+            }
+            return newMap;
+          });
+
+          // Update current session ID if this is the active process
+          if (eventData.processId === processId) {
+            setCurrentSessionId(eventData.sessionId || null);
+          }
+          break;
+        }
+
         // Legacy chunk events (for backwards compatibility)
         case "chunk": {
           const content = eventData.content || "";
@@ -181,7 +237,15 @@ export const useClaudeStream = (processId: string | null) => {
             // We have text content - we're no longer just "thinking"
             setIsThinking(false);
             streamingContentRef.current += content;
-            setStreamingMessage(streamingContentRef.current);
+
+            // Use requestAnimationFrame for smooth UI updates
+            if (rafRef.current === null) {
+              rafRef.current = requestAnimationFrame(() => {
+                setStreamingMessage(streamingContentRef.current);
+                rafRef.current = null;
+              });
+            }
+
             setIsStreaming(true);
           }
           break;
@@ -278,6 +342,18 @@ export const useClaudeStream = (processId: string | null) => {
           }
 
           setIsStreaming(false);
+
+          // Update active session streaming state
+          if (processId) {
+            setActiveSessions((prev) => {
+              const newMap = new Map(prev);
+              const existing = newMap.get(processId);
+              if (existing) {
+                newMap.set(processId, { ...existing, isStreaming: false });
+              }
+              return newMap;
+            });
+          }
           break;
         }
 
@@ -292,6 +368,18 @@ export const useClaudeStream = (processId: string | null) => {
             setCompletionStatus("idle");
             streamingContentRef.current = "";
             setStreamingMessage("");
+
+            // Update active session streaming state
+            if (processId) {
+              setActiveSessions((prev) => {
+                const newMap = new Map(prev);
+                const existing = newMap.get(processId);
+                if (existing) {
+                  newMap.set(processId, { ...existing, isStreaming: true });
+                }
+                return newMap;
+              });
+            }
           }
           break;
         }
@@ -362,6 +450,9 @@ export const useClaudeStream = (processId: string | null) => {
       setThinkingStartTime,
       setCompletionStatus,
       setLastQueryCost,
+      currentSessionId,
+      setCurrentSessionId,
+      setActiveSessions,
     ]
   );
 
@@ -402,6 +493,21 @@ export const useClaudeStream = (processId: string | null) => {
 
     // Cleanup listener on unmount or processId change
     return () => {
+      // Cancel any pending RAF
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+
+      // Remove active session tracking
+      if (processId) {
+        setActiveSessions((prev) => {
+          const newMap = new Map(prev);
+          newMap.delete(processId);
+          return newMap;
+        });
+      }
+
       if (window.electron?.removeListener) {
         console.log(
           "[useClaudeStream] Removing listener for processId:",
@@ -410,7 +516,7 @@ export const useClaudeStream = (processId: string | null) => {
         window.electron.removeListener("claude-process-event", messageHandler);
       }
     };
-  }, [processId, handleMessage, setStreamingMessage]);
+  }, [processId, handleMessage, setStreamingMessage, setActiveSessions]);
 
   return { isStreaming, streamingMessage };
 };

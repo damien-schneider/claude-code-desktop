@@ -2,7 +2,6 @@ import React from 'react';
 import { useAtom } from 'jotai';
 import {
   currentViewAtom,
-  appModeAtom,
   type NavigationView,
 } from '@/renderer/stores';
 import { cn } from '@/utils/tailwind';
@@ -36,6 +35,7 @@ const VIEW_COMPONENTS: Record<NavigationView, React.ComponentType> = {
 };
 
 const VIEW_TITLES: Record<NavigationView, string> = {
+  chat: 'Chat',
   files: 'File Explorer',
   claudemd: 'CLAUDE.md',
   rules: 'Rules',
@@ -49,14 +49,13 @@ const VIEW_TITLES: Record<NavigationView, string> = {
 
 export const ContentView: React.FC<ContentViewProps> = ({ className }) => {
   const [currentView] = useAtom(currentViewAtom);
-  const [appMode] = useAtom(appModeAtom);
 
-  // Show chat layout in chat mode
-  if (appMode === 'chat') {
+  // Show chat layout when chat view is selected
+  if (currentView === 'chat') {
     return <ChatLayout className={className} />;
   }
 
-  // Original behavior for settings mode
+  // Show other views
   const ViewComponent = VIEW_COMPONENTS[currentView];
 
   return (

@@ -9,6 +9,7 @@ import {
   Code,
   Gear,
   Database,
+  ChatCircleText,
 } from "@phosphor-icons/react";
 import { useAtom } from "jotai";
 import { currentViewAtom, type NavigationView } from "@/renderer/stores";
@@ -31,6 +32,7 @@ interface NavigationItem {
 
 // All navigation items displayed directly
 const ALL_NAV_ITEMS: NavigationItem[] = [
+  { id: "chat", label: "Chat", icon: ChatCircleText },
   { id: "files", label: "Files", icon: Folder },
   { id: "claudemd", label: "CLAUDE.md", icon: FileText },
   { id: "rules", label: "Rules", icon: GitBranch },

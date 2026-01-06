@@ -6,7 +6,11 @@ import { VariantProps, cva } from "class-variance-authority";
 import { Sidebar as SidebarIcon } from "@phosphor-icons/react";
 
 import { useAtom } from "jotai";
-import { sidebarCollapsedAtom } from "@/renderer/stores";
+import {
+  leftSidebarCollapsedAtom,
+  rightSidebarCollapsedAtom,
+  sidebarCollapsedAtom,
+} from "@/renderer/stores";
 import { cn } from "@/utils/tailwind";
 import { Button } from "@/components/ui/button";
 
@@ -52,75 +56,84 @@ const Sidebar = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
     defaultOpen?: boolean;
+    side?: "left" | "right";
   }
->(({ defaultOpen = true, className, children, ...props }, ref) => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useAtom(sidebarCollapsedAtom);
-  const [openMobile, setOpenMobile] = React.useState(false);
+>(
+  (
+    { defaultOpen = true, side = "left", className, children, ...props },
+    ref
+  ) => {
+    const atomToUse =
+      side === "left" ? leftSidebarCollapsedAtom : rightSidebarCollapsedAtom;
+    const [sidebarCollapsed, setSidebarCollapsed] = useAtom(atomToUse);
+    const [openMobile, setOpenMobile] = React.useState(false);
 
-  const isMobile = React.useMemo(() => {
-    // Simple check for mobile - could use a hook
-    return typeof window !== "undefined" && window.innerWidth < 768;
-  }, []);
+    const isMobile = React.useMemo(() => {
+      // Simple check for mobile - could use a hook
+      return typeof window !== "undefined" && window.innerWidth < 768;
+    }, []);
 
-  const setOpen = React.useCallback(
-    (open: boolean) => {
-      setSidebarCollapsed(!open);
-    },
-    [setSidebarCollapsed],
-  );
+    const setOpen = React.useCallback(
+      (open: boolean) => {
+        setSidebarCollapsed(!open);
+      },
+      [setSidebarCollapsed]
+    );
 
-  const toggleSidebar = React.useCallback(() => {
-    return isMobile
-      ? setOpenMobile(!openMobile)
-      : setSidebarCollapsed(!sidebarCollapsed);
-  }, [
-    isMobile,
-    openMobile,
-    sidebarCollapsed,
-    setSidebarCollapsed,
-    setOpenMobile,
-  ]);
-
-  // Register the toggle function globally for keyboard shortcut
-  React.useEffect(() => {
-    sidebarToggleFn = toggleSidebar;
-    return () => {
-      sidebarToggleFn = null;
-    };
-  }, [toggleSidebar]);
-
-  const state = sidebarCollapsed ? "collapsed" : "expanded";
-
-  const contextValue = React.useMemo<SidebarContext>(
-    () => ({
-      state,
-      open: !sidebarCollapsed,
-      setOpen,
+    const toggleSidebar = React.useCallback(() => {
+      return isMobile
+        ? setOpenMobile(!openMobile)
+        : setSidebarCollapsed(!sidebarCollapsed);
+    }, [
       isMobile,
       openMobile,
+      sidebarCollapsed,
+      setSidebarCollapsed,
       setOpenMobile,
-      toggleSidebar,
-    }),
-    [state, sidebarCollapsed, setOpen, isMobile, openMobile, toggleSidebar],
-  );
+    ]);
 
-  return (
-    <SidebarContext.Provider value={contextValue}>
-      <div
-        ref={ref}
-        data-state={state}
-        className={cn(
-          "flex flex-col h-full bg-muted/30 border-r transition-all duration-200",
-          state === "collapsed" ? "w-16" : "w-64",
-          className,
-        )}
-        {...props}
-      >
-        {children}
-      </div>
-    </SidebarContext.Provider>
-  );
-});
+    // Register the toggle function globally for keyboard shortcut
+    React.useEffect(() => {
+      sidebarToggleFn = toggleSidebar;
+      return () => {
+        sidebarToggleFn = null;
+      };
+    }, [toggleSidebar]);
+
+    const state = sidebarCollapsed ? "collapsed" : "expanded";
+
+    const contextValue = React.useMemo<SidebarContext>(
+      () => ({
+        state,
+        open: !sidebarCollapsed,
+        setOpen,
+        isMobile,
+        openMobile,
+        setOpenMobile,
+        toggleSidebar,
+      }),
+      [state, sidebarCollapsed, setOpen, isMobile, openMobile, toggleSidebar]
+    );
+
+    return (
+      <SidebarContext.Provider value={contextValue}>
+        <div
+          ref={ref}
+          data-state={state}
+          className={cn(
+            "flex flex-col h-full bg-muted/30",
+            side === "left" ? "border-r" : "border-l",
+            state === "collapsed" ? "w-16" : "w-64",
+            className
+          )}
+          {...props}
+        >
+          {children}
+        </div>
+      </SidebarContext.Provider>
+    );
+  }
+);
 Sidebar.displayName = "Sidebar";
 
 const SidebarHeader = React.forwardRef<
@@ -135,7 +148,7 @@ const SidebarHeader = React.forwardRef<
       className={cn(
         "flex flex-col gap-2 p-2",
         state === "collapsed" && "p-2",
-        className,
+        className
       )}
       {...props}
     />
@@ -155,7 +168,7 @@ const SidebarContent = React.forwardRef<
       className={cn(
         "flex-1 overflow-y-auto",
         state === "collapsed" ? "p-1" : "p-2",
-        className,
+        className
       )}
       {...props}
     />
@@ -257,7 +270,7 @@ const sidebarMenuButtonVariants = cva(
       variant: "default",
       size: "default",
     },
-  },
+  }
 );
 
 const SidebarMenuButton = React.forwardRef<
@@ -278,7 +291,7 @@ const SidebarMenuButton = React.forwardRef<
       children,
       ...props
     },
-    ref,
+    ref
   ) => {
     const { state } = useSidebar();
     const Comp = asChild ? Slot : "button";
@@ -299,14 +312,14 @@ const SidebarMenuButton = React.forwardRef<
           sidebarMenuButtonVariants({ variant, size }),
           state === "collapsed" && "justify-center px-2",
           isActive && "bg-primary text-primary-foreground hover:bg-primary",
-          className,
+          className
         )}
         {...props}
       >
         {displayChildren}
       </Comp>
     );
-  },
+  }
 );
 SidebarMenuButton.displayName = "SidebarMenuButton";
 
@@ -325,7 +338,7 @@ const SidebarMenuAction = React.forwardRef<
       ref={ref}
       className={cn(
         "absolute right-1 top-1.5 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-muted-foreground outline-none ring-offset-background transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none focus-visible:ring-2 peer-hover/menu-button:text-foreground [&_svg]:size-3",
-        className,
+        className
       )}
       {...props}
     />
@@ -348,7 +361,7 @@ const SidebarMenuBadge = React.forwardRef<
       ref={ref}
       className={cn(
         "absolute right-1 top-1.5 flex h-5 min-w-5 items-center justify-center rounded-md px-1 text-xs font-medium tabular-nums text-muted-foreground select-none",
-        className,
+        className
       )}
       {...props}
     />
@@ -370,7 +383,7 @@ const SidebarMenuSkeleton = React.forwardRef<
       className={cn(
         "flex h-8 items-center gap-2 rounded-md px-2",
         state === "collapsed" && "h-8 w-8 justify-center",
-        className,
+        className
       )}
       {...props}
     >
@@ -397,7 +410,7 @@ const SidebarSeparator = React.forwardRef<
       className={cn(
         "mx-2 w-auto",
         state === "collapsed" ? "my-1" : "my-2",
-        className,
+        className
       )}
       {...props}
     >
@@ -421,7 +434,7 @@ const SidebarGroup = React.forwardRef<
       className={cn(
         "flex flex-col gap-1",
         state === "collapsed" && "gap-0",
-        className,
+        className
       )}
       {...props}
     />
@@ -448,7 +461,7 @@ const SidebarGroupLabel = React.forwardRef<
       ref={ref}
       className={cn(
         "flex h-8 items-center px-2 text-xs font-semibold text-muted-foreground",
-        className,
+        className
       )}
       {...props}
     />
@@ -488,7 +501,7 @@ const SidebarInput = React.forwardRef<
       className={cn(
         "h-8 w-full bg-background border-input px-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
         state === "collapsed" && "h-8 w-8 px-2 text-center",
-        className,
+        className
       )}
       {...props}
     />

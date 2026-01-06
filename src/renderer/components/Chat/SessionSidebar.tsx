@@ -5,17 +5,26 @@ import {
   Plus,
   ChatCircle,
   Folder,
+  ArrowsClockwise,
+  Spinner,
 } from "@phosphor-icons/react";
 import {
   filteredSessionsAtom,
+  activeSessionsAtom,
   sessionSearchQueryAtom,
   loadSessionDetailsAtom,
   currentSessionIdAtom,
   loadSessionsAtom,
   sessionsLoadingAtom,
+  sessionFilterAtom,
+  selectedProjectIdAtom,
+  projectsAtom,
+  startNewSessionAtom,
+  type SessionFilter,
 } from "@/renderer/stores";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Sidebar as AppSidebar,
   SidebarContent,
@@ -27,14 +36,41 @@ import {
 import { cn } from "@/utils/tailwind";
 import { formatDistanceToNow } from "date-fns";
 
-export const SessionSidebar: React.FC = () => {
+export interface SessionSidebarProps {
+  className?: string;
+}
+
+export const SessionSidebar: React.FC<SessionSidebarProps> = ({
+  className,
+}) => {
   const [sessions] = useAtom(filteredSessionsAtom);
+  const [activeSessions] = useAtom(activeSessionsAtom);
   const [searchQuery, setSearchQuery] = useAtom(sessionSearchQueryAtom);
   const [currentSessionId] = useAtom(currentSessionIdAtom);
   const [loading] = useAtom(sessionsLoadingAtom);
+  const [filter, setFilter] = useAtom(sessionFilterAtom);
+  const [selectedProjectId] = useAtom(selectedProjectIdAtom);
+  const [projects] = useAtom(projectsAtom);
 
   const loadSessionDetails = useSetAtom(loadSessionDetailsAtom);
   const reloadSessions = useSetAtom(loadSessionsAtom);
+  const startNewSession = useSetAtom(startNewSessionAtom);
+
+  const handleStartNewSession = async () => {
+    if (selectedProjectId) {
+      try {
+        await startNewSession(selectedProjectId);
+      } catch (error) {
+        console.error("Failed to start new session:", error);
+      }
+    }
+  };
+
+  // Get current project name for the filter label
+  const currentProjectName = useMemo(() => {
+    if (!selectedProjectId) return null;
+    return projects.find((p) => p.path === selectedProjectId)?.name;
+  }, [projects, selectedProjectId]);
 
   // Group sessions by date
   const groupedSessions = useMemo(() => {
@@ -73,30 +109,66 @@ export const SessionSidebar: React.FC = () => {
     reloadSessions();
   };
 
-  return (
-    <AppSidebar>
-      <SidebarHeader>
-        {/* Search */}
-        <div className="relative">
-          <MagnifyingGlass className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search sessions..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 h-9"
-          />
-        </div>
+  const isSessionStreaming = (sessionId: string) => {
+    return Array.from(activeSessions.values()).some(
+      (s) => s.sessionId === sessionId && s.isStreaming
+    );
+  };
 
-        {/* Actions */}
-        <div className="flex gap-2 mt-2">
+  return (
+    <AppSidebar side="right" className={className}>
+      <SidebarHeader>
+        {/* Search and Reload */}
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <MagnifyingGlass className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search sessions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8 h-9"
+            />
+          </div>
           <Button
-            className="flex-1"
-            size="sm"
+            size="icon"
+            variant="ghost"
+            className={cn("h-9 w-9 shrink-0", loading && "animate-spin")}
             onClick={handleReload}
             disabled={loading}
+            title="Reload sessions"
           >
-            <Plus className="h-4 w-4 mr-1" />
-            {loading ? "Loading..." : "Reload"}
+            <ArrowsClockwise className="h-4 w-4" weight="regular" />
+          </Button>
+        </div>
+
+        {/* Project Filter Toggle */}
+        {selectedProjectId && (
+          <div className="mt-2">
+            <Tabs
+              value={filter}
+              onValueChange={(v) => setFilter(v as SessionFilter)}
+            >
+              <TabsList>
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="project">
+                  {currentProjectName || "Project"}
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="mt-2">
+          <Button
+            className="w-full font-bold"
+            variant="default"
+            size="default"
+            onClick={handleStartNewSession}
+            disabled={!selectedProjectId}
+          >
+            <Plus className="h-4 w-4 mr-1" weight="bold" />
+            Start new session
           </Button>
         </div>
       </SidebarHeader>
@@ -126,8 +198,11 @@ export const SessionSidebar: React.FC = () => {
                       >
                         <ChatCircle className="h-4 w-4" />
                         <div className="flex-1 min-w-0">
-                          <div className="truncate text-sm font-medium">
-                            {session.previewMessage || "Empty session"}
+                          <div className="truncate text-sm font-medium flex items-center gap-2">
+                            <span className="truncate">{session.previewMessage || "Empty session"}</span>
+                            {isSessionStreaming(session.sessionId) && (
+                              <Spinner className="h-3 w-3 animate-spin text-primary flex-shrink-0" weight="bold" />
+                            )}
                           </div>
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Folder className="h-3 w-3 flex-shrink-0" />

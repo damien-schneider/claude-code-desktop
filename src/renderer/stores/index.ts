@@ -17,7 +17,10 @@ export {
   type ClaudeProject,
   type NavigationView,
   // UI state
+  leftSidebarCollapsedAtom,
+  rightSidebarCollapsedAtom,
   sidebarCollapsedAtom,
+  isScanningAtom,
   searchQueryAtom,
   showFavoritesOnlyAtom,
   showWithClaudeOnlyAtom,
@@ -35,6 +38,7 @@ export {
   setSearchQueryAtom,
   setShowFavoritesOnlyAtom,
   setShowWithClaudeOnlyAtom,
+  scanProjectsAtom,
 } from "./atoms";
 
 // Chat atoms
@@ -43,6 +47,11 @@ export {
   sessionsAtom,
   sessionsLoadingAtom,
   sessionsErrorAtom,
+  // Active sessions (real-time, not yet persisted)
+  activeSessionsAtom,
+  allSessionsAtom,
+  isSessionStreamingAtom,
+  type ActiveSession,
   // Filtering
   sessionFilterAtom,
   selectedProjectForSessionsAtom,

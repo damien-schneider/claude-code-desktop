@@ -85,7 +85,8 @@ export function clearClaudeExecutableCache(): void {
 
 export interface ProcessState {
   processId: string;
-  sessionId: string;
+  sessionId?: string;
+  sessionIdEmitted?: boolean; // Track if we've emitted the session ready event
   projectPath: string; // Store the project path for resuming
   query: Query | null;
   abortController: AbortController;
@@ -263,7 +264,7 @@ export const startClaudeSession = os
 
       const state: ProcessState = {
         processId,
-        sessionId: sessionId || processId,
+        sessionId: sessionId, // Use provided sessionId if available, otherwise undefined for new sessions
         projectPath, // Store the project path
         query: null,
         abortController,
@@ -272,11 +273,25 @@ export const startClaudeSession = os
 
       activeProcesses.set(processId, state);
 
+      // Emit session creation event to renderer
+      sendToRenderer("message", {
+        processId,
+        type: "session_created",
+        sessionId: state.sessionId,
+        projectPath,
+        projectName: projectPath.split("/").pop() || projectPath.split("\\").pop() || projectPath,
+        createdAt: new Date().toISOString(),
+      });
+
       // If there's an initial message, start processing it
+      // Use setImmediate to ensure the function returns the processId to the renderer
+      // before any streaming messages are sent, avoiding race conditions.
       if (initialMessage) {
-        processMessage(processId, projectPath, initialMessage, {
-          continue: continueLast,
-          permissionMode: permissionMode as PermissionMode,
+        setImmediate(() => {
+          processMessage(processId, projectPath, initialMessage, {
+            continue: continueLast,
+            permissionMode: permissionMode as PermissionMode,
+          });
         });
       }
 
@@ -590,6 +605,33 @@ async function processMessage(
  */
 function handleSDKMessage(processId: string, message: SDKMessage) {
   console.log("[SDK:handleSDKMessage] Received message type:", message.type);
+
+  // Capture session ID if not already set (for new sessions)
+  const state = activeProcesses.get(processId);
+  if (
+    state &&
+    !state.sessionId &&
+    "session_id" in message &&
+    message.session_id
+  ) {
+    state.sessionId = message.session_id as string;
+    console.log(
+      "[SDK:handleSDKMessage] Captured session ID from SDK:",
+      state.sessionId
+    );
+
+    // Emit session ready event when we have the session ID
+    if (state.sessionId && !state.sessionIdEmitted) {
+      state.sessionIdEmitted = true;
+      sendToRenderer("message", {
+        processId,
+        type: "session_ready",
+        sessionId: state.sessionId,
+        projectPath: state.projectPath,
+        projectName: state.projectPath.split("/").pop() || state.projectPath,
+      });
+    }
+  }
 
   switch (message.type) {
     case "assistant": {

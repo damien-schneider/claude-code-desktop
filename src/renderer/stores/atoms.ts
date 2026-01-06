@@ -1,29 +1,36 @@
-import { atom } from 'jotai';
-import { atomWithStorage } from 'jotai/utils';
+import { atom } from "jotai";
+import { atomWithStorage } from "jotai/utils";
 
 // =============================================================================
 // App Mode
 // =============================================================================
 
-export type AppMode = 'settings' | 'chat';
+export type AppMode = "settings" | "chat";
 
-export const appModeAtom = atom<AppMode>('settings');
+export const appModeAtom = atom<AppMode>("settings");
 
-export const setAppModeAtom = atom(
-  null,
-  (get, set, mode: AppMode) => {
-    set(appModeAtom, mode);
-  }
-);
+export const setAppModeAtom = atom(null, (get, set, mode: AppMode) => {
+  set(appModeAtom, mode);
+});
 
 // =============================================================================
 // Navigation & Project Selection
 // =============================================================================
 
-export type NavigationView = 'claudemd' | 'files' | 'hooks' | 'rules' | 'skills' | 'agents' | 'commands' | 'settings' | 'mcp';
+export type NavigationView =
+  | "chat"
+  | "claudemd"
+  | "files"
+  | "hooks"
+  | "rules"
+  | "skills"
+  | "agents"
+  | "commands"
+  | "settings"
+  | "mcp";
 
 // Current view/tab
-export const currentViewAtom = atom<NavigationView>('files');
+export const currentViewAtom = atom<NavigationView>("files");
 
 // Set current view (write-only atom)
 export const setCurrentViewAtom = atom(
@@ -34,44 +41,38 @@ export const setCurrentViewAtom = atom(
 );
 
 // Home path from main process (with setter)
-export const homePathAtom = atom<string>('');
-export const setHomePathAtom = atom(
-  null,
-  async (get, set, path: string) => {
-    set(homePathAtom, path);
-  }
-);
+export const homePathAtom = atom<string>("");
+export const setHomePathAtom = atom(null, async (get, set, path: string) => {
+  set(homePathAtom, path);
+});
 
 // Track home path initialization state
 export const homePathLoadingAtom = atom<boolean>(false);
 export const homePathInitializedAtom = atom<boolean>(false);
 
 // Write-only atom to initialize home path (fetches from main process)
-export const initializeHomePathAtom = atom(
-  null,
-  async (get, set) => {
-    const homePathInitialized = get(homePathInitializedAtom);
-    const homePath = get(homePathAtom);
+export const initializeHomePathAtom = atom(null, async (get, set) => {
+  const homePathInitialized = get(homePathInitializedAtom);
+  const homePath = get(homePathAtom);
 
-    // Already initialized
-    if (homePathInitialized || homePath) {
-      return;
-    }
-
-    set(homePathLoadingAtom, true);
-
-    try {
-      const { ipc } = await import('@/ipc/manager');
-      const home = await ipc.client.app.getHomePath();
-      set(homePathAtom, home);
-      set(homePathInitializedAtom, true);
-    } catch (error) {
-      console.error('[initializeHomePathAtom] Failed to get home path:', error);
-    } finally {
-      set(homePathLoadingAtom, false);
-    }
+  // Already initialized
+  if (homePathInitialized || homePath) {
+    return;
   }
-);
+
+  set(homePathLoadingAtom, true);
+
+  try {
+    const { ipc } = await import("@/ipc/manager");
+    const home = await ipc.client.app.getHomePath();
+    set(homePathAtom, home);
+    set(homePathInitializedAtom, true);
+  } catch (error) {
+    console.error("[initializeHomePathAtom] Failed to get home path:", error);
+  } finally {
+    set(homePathLoadingAtom, false);
+  }
+});
 
 // Selected project ID
 export const selectedProjectIdAtom = atom<string | null>(null);
@@ -99,7 +100,7 @@ export const activePathAtom = atom<string>((get) => {
   }
 
   // Otherwise use selected project
-  return selectedProjectId || '';
+  return selectedProjectId || "";
 });
 
 // =============================================================================
@@ -120,9 +121,15 @@ export const projectsAtom = atom<ClaudeProject[]>([]);
 // UI State
 // =============================================================================
 
-export const sidebarCollapsedAtom = atom<boolean>(false);
+export const leftSidebarCollapsedAtom = atom<boolean>(false);
+export const rightSidebarCollapsedAtom = atom<boolean>(false);
 
-export const searchQueryAtom = atom<string>('');
+// Re-export for compatibility
+export const sidebarCollapsedAtom = leftSidebarCollapsedAtom;
+
+export const isScanningAtom = atom<boolean>(false);
+
+export const searchQueryAtom = atom<string>("");
 
 export const showFavoritesOnlyAtom = atom<boolean>(false);
 
@@ -171,7 +178,10 @@ export const filteredProjectsAtom = atom<ClaudeProject[]>((get) => {
 // Favorites (persisted)
 // =============================================================================
 
-export const favoritePathsAtom = atomWithStorage<string[]>('claude-code-manager-favorites', []);
+export const favoritePathsAtom = atomWithStorage<string[]>(
+  "claude-code-manager-favorites",
+  []
+);
 
 // =============================================================================
 // Actions (write-only atoms)
@@ -189,23 +199,23 @@ export const setProjectsAtom = atom(
 export const selectProjectAtom = atom(
   null,
   (get, set, projectId: string | null) => {
-    console.log('[selectProjectAtom] called with:', projectId);
+    console.log("[selectProjectAtom] called with:", projectId);
     set(selectedProjectIdAtom, projectId);
     set(isGlobalSettingsSelectedAtom, false);
-    set(currentViewAtom, 'files');
-    console.log('[selectProjectAtom] completed - selectedProjectIdAtom set to:', projectId);
+    set(currentViewAtom, "files");
+    console.log(
+      "[selectProjectAtom] completed - selectedProjectIdAtom set to:",
+      projectId
+    );
   }
 );
 
 // Select global settings (clears project selection)
-export const selectGlobalSettingsAtom = atom(
-  null,
-  (get, set) => {
-    set(selectedProjectIdAtom, null);
-    set(isGlobalSettingsSelectedAtom, true);
-    set(currentViewAtom, 'files');
-  }
-);
+export const selectGlobalSettingsAtom = atom(null, (get, set) => {
+  set(selectedProjectIdAtom, null);
+  set(isGlobalSettingsSelectedAtom, true);
+  set(currentViewAtom, "files");
+});
 
 // Toggle favorite
 export const toggleFavoriteAtom = atom(
@@ -214,17 +224,23 @@ export const toggleFavoriteAtom = atom(
     const projects = get(projectsAtom);
     const favorites = get(favoritePathsAtom);
 
-    const project = projects.find(p => p.path === projectPath);
+    const project = projects.find((p) => p.path === projectPath);
     if (!project) return;
 
     // Update project favorite status
-    set(projectsAtom, projects.map(p =>
-      p.path === projectPath ? { ...p, isFavorite: !p.isFavorite } : p
-    ));
+    set(
+      projectsAtom,
+      projects.map((p) =>
+        p.path === projectPath ? { ...p, isFavorite: !p.isFavorite } : p
+      )
+    );
 
     // Update favorites list
     if (favorites.includes(projectPath)) {
-      set(favoritePathsAtom, favorites.filter(p => p !== projectPath));
+      set(
+        favoritePathsAtom,
+        favorites.filter((p) => p !== projectPath)
+      );
     } else {
       set(favoritePathsAtom, [...favorites, projectPath]);
     }
@@ -232,27 +248,57 @@ export const toggleFavoriteAtom = atom(
 );
 
 // Set search query
-export const setSearchQueryAtom = atom(
-  null,
-  (get, set, query: string) => {
-    set(searchQueryAtom, query);
-  }
-);
+export const setSearchQueryAtom = atom(null, (get, set, query: string) => {
+  set(searchQueryAtom, query);
+});
 
 // Toggle favorites filter
-export const setShowFavoritesOnlyAtom = atom(
-  null,
-  (get, set) => {
-    const current = get(showFavoritesOnlyAtom);
-    set(showFavoritesOnlyAtom, !current);
-  }
-);
+export const setShowFavoritesOnlyAtom = atom(null, (get, set) => {
+  const current = get(showFavoritesOnlyAtom);
+  set(showFavoritesOnlyAtom, !current);
+});
 
 // Toggle Claude filter
-export const setShowWithClaudeOnlyAtom = atom(
+export const setShowWithClaudeOnlyAtom = atom(null, (get, set) => {
+  const current = get(showWithClaudeOnlyAtom);
+  set(showWithClaudeOnlyAtom, !current);
+});
+
+// Scan projects
+export const scanProjectsAtom = atom(
   null,
-  (get, set) => {
-    const current = get(showWithClaudeOnlyAtom);
-    set(showWithClaudeOnlyAtom, !current);
+  async (get, set, options?: { maxDepth?: number }) => {
+    set(isScanningAtom, true);
+    try {
+      const { ipc } = await import("@/ipc/manager");
+      const { deduplicateProjects } = await import("./appStore");
+      const { showWarning, showSuccess, showError } = await import(
+        "@/renderer/lib/toast"
+      );
+
+      // Call the scanner IPC
+      const result = await ipc.client.scanner.scanProjects(
+        options || { maxDepth: 4 }
+      );
+
+      // Update projects with results
+      set(projectsAtom, deduplicateProjects(result.projects));
+
+      if (result.errors.length > 0) {
+        showWarning(
+          `Scan completed with ${result.errors.length} error(s). Check console for details.`
+        );
+        console.warn("Scan errors:", result.errors);
+      } else {
+        showSuccess(
+          `Scan completed: found ${result.projects.length} project(s)`
+        );
+      }
+    } catch (error) {
+      const { showError } = await import("@/renderer/lib/toast");
+      showError("Scan failed", error);
+    } finally {
+      set(isScanningAtom, false);
+    }
   }
 );

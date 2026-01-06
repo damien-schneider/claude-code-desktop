@@ -8,6 +8,7 @@ import {
   WarningCircle,
   CheckCircle,
   XCircle,
+  Lock,
 } from "@phosphor-icons/react";
 import {
   currentSessionMessagesAtom,
@@ -19,6 +20,7 @@ import {
   resumeSessionAtom,
   currentSessionIdAtom,
   sessionsAtom,
+  activeSessionsAtom,
   formatMessageContent,
   streamingErrorAtom,
   isThinkingAtom,
@@ -44,9 +46,16 @@ import {
   PromptInputSubmit,
 } from "@/components/ai-elements/prompt-input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ChatCircle } from "@phosphor-icons/react";
-import { PermissionModeSelector } from "./PermissionModeSelector";
 import { cn } from "@/utils/tailwind";
 import type { FileUIPart } from "ai";
 
@@ -57,6 +66,7 @@ export const ChatArea: React.FC = () => {
   const [activeProcessId] = useAtom(activeProcessIdAtom);
   const [currentSessionId] = useAtom(currentSessionIdAtom);
   const [sessions] = useAtom(sessionsAtom);
+  const [activeSessions] = useAtom(activeSessionsAtom);
   const [streamingError] = useAtom(streamingErrorAtom);
   const [isThinking] = useAtom(isThinkingAtom);
   const [lastQueryCost] = useAtom(lastQueryCostAtom);
@@ -82,6 +92,14 @@ export const ChatArea: React.FC = () => {
     ? sessions.find((s) => s.sessionId === currentSessionId)
     : null;
 
+  // Check if current session is active elsewhere (in activeSessions but not our activeProcessId)
+  const isSessionActiveElsewhere = currentSessionId
+    ? Array.from(activeSessions.values()).some(
+        (s) =>
+          s.sessionId === currentSessionId && s.processId !== activeProcessId
+      )
+    : false;
+
   // Auto-scroll to bottom when messages change or streaming
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -96,8 +114,34 @@ export const ChatArea: React.FC = () => {
 
     // If no active process but we have a session, try to resume it first
     if (!activeProcessId && currentSessionId && currentSession) {
-      await handleResumeSession();
-      // After resume, the message will be sent in the next interaction
+      setIsResuming(true);
+      try {
+        await resumeSession({
+          sessionId: currentSessionId,
+          projectPath: currentSession.projectPath,
+          permissionMode,
+        });
+        // After successful resume, send the message
+        setIsSending(true);
+        try {
+          setSendError(null);
+          await sendMessage(text);
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+          console.error("Failed to send message:", error);
+          setSendError(errorMessage);
+        } finally {
+          setIsSending(false);
+        }
+      } catch (error) {
+        console.error("Failed to resume session:", error);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        setSendError(errorMessage);
+      } finally {
+        setIsResuming(false);
+      }
       return;
     }
 
@@ -256,72 +300,108 @@ export const ChatArea: React.FC = () => {
           </div>
         )}
 
-        {activeProcessId ? (
-          // Active session - show full chat interface
-          <PromptInput onSubmit={handleSubmit}>
-            <PromptInputTextarea
-              placeholder={
-                isStreaming || isThinking
-                  ? "Waiting for response..."
-                  : "Send a message... (Enter to send, Shift+Enter for new line)"
-              }
-              disabled={
-                !activeProcessId || isStreaming || isThinking || isSending
-              }
-            />
-            <div className="flex items-center gap-2 p-2">
-              <div className="flex-1 text-xs text-muted-foreground flex items-center gap-2">
-                {isStreaming || isThinking ? (
-                  <>
-                    <Spinner className="h-3 w-3 animate-spin" />
-                    <span>
-                      Claude is {isThinking ? "thinking" : "responding"}...
-                    </span>
-                  </>
-                ) : lastQueryCost !== null ? (
-                  <span>Last query cost: ${lastQueryCost.toFixed(4)}</span>
-                ) : (
-                  <span>Claude Code session active</span>
-                )}
-              </div>
-              {isStreaming || isThinking ? (
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={handleStop}
-                  className="gap-2"
-                >
-                  <StopCircle className="h-4 w-4" />
-                  Stop
-                </Button>
-              ) : (
-                <PromptInputSubmit disabled={!activeProcessId || isSending}>
-                  {isSending && (
-                    <Spinner className="h-4 w-4 animate-spin mr-2" />
-                  )}
-                </PromptInputSubmit>
-              )}
-            </div>
-          </PromptInput>
-        ) : currentSessionId && currentSession ? (
-          // Viewing mode - show resume options
-          <div className="space-y-4">
-            <div className="text-center text-sm text-foreground">
-              <span className="font-medium">Session viewing mode</span>
-              <span className="text-muted-foreground mx-2">•</span>
-              <span className="text-muted-foreground">
-                {currentSession.projectName}
+        {/* Permission Mode Selector - always visible at top of input area */}
+        <div className="mb-3 flex items-center gap-3">
+          <label className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+            Permission Mode
+          </label>
+          <Select
+            value={permissionMode}
+            onValueChange={(value) =>
+              setPermissionMode(value as PermissionMode)
+            }
+            disabled={!!activeProcessId || isResuming}
+          >
+            <SelectTrigger className="h-8 text-sm">
+              <SelectValue placeholder="Select mode">
+                {permissionMode === "default" && "🔐 Default"}
+                {permissionMode === "plan" && "📋 Plan"}
+                {permissionMode === "acceptEdits" && "⚡ Auto-accept"}
+                {permissionMode === "bypassPermissions" && "⚠️ Bypass"}
+                {permissionMode === "delegate" && "🤝 Delegate"}
+                {permissionMode === "dontAsk" && "🚫 Don't Ask"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">
+                <div className="flex items-center gap-2">
+                  <span>🔐</span>
+                  <div>
+                    <div className="font-medium">Default</div>
+                    <div className="text-xs text-muted-foreground">
+                      Ask for tool permissions
+                    </div>
+                  </div>
+                </div>
+              </SelectItem>
+              <SelectItem value="plan">
+                <div className="flex items-center gap-2">
+                  <span>📋</span>
+                  <div>
+                    <div className="font-medium">Plan</div>
+                    <div className="text-xs text-muted-foreground">
+                      Read-only planning mode
+                    </div>
+                  </div>
+                </div>
+              </SelectItem>
+              <SelectItem value="acceptEdits">
+                <div className="flex items-center gap-2">
+                  <span>⚡</span>
+                  <div>
+                    <div className="font-medium">Auto-accept</div>
+                    <div className="text-xs text-muted-foreground">
+                      Auto-accept edit permissions
+                    </div>
+                  </div>
+                </div>
+              </SelectItem>
+              <SelectItem value="bypassPermissions">
+                <div className="flex items-center gap-2">
+                  <span>⚠️</span>
+                  <div>
+                    <div className="font-medium">Bypass</div>
+                    <div className="text-xs text-muted-foreground">
+                      Skip all permission checks
+                    </div>
+                  </div>
+                </div>
+              </SelectItem>
+              <SelectItem value="delegate">
+                <div className="flex items-center gap-2">
+                  <span>🤝</span>
+                  <div>
+                    <div className="font-medium">Delegate</div>
+                    <div className="text-xs text-muted-foreground">
+                      Delegate mode for subagents
+                    </div>
+                  </div>
+                </div>
+              </SelectItem>
+              <SelectItem value="dontAsk">
+                <div className="flex items-center gap-2">
+                  <span>🚫</span>
+                  <div>
+                    <div className="font-medium">Don't Ask</div>
+                    <div className="text-xs text-muted-foreground">
+                      Don't ask for permissions
+                    </div>
+                  </div>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {isSessionActiveElsewhere ? (
+          // Session is active elsewhere - show resume button with disabled input
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 bg-muted/50 rounded-md border">
+              <Lock className="h-4 w-4" />
+              <span>
+                This session is running elsewhere. Resume to take control.
               </span>
             </div>
-
-            {/* Permission Mode Selector */}
-            <PermissionModeSelector
-              value={permissionMode}
-              onChange={setPermissionMode}
-              disabled={isResuming}
-            />
-
-            {/* Resume Button */}
             <Button
               onClick={handleResumeSession}
               disabled={isResuming}
@@ -336,19 +416,76 @@ export const ChatArea: React.FC = () => {
               ) : (
                 <>
                   <Play className="h-4 w-4" />
-                  Resume & Send Message
+                  Resume Session
                 </>
               )}
             </Button>
-
-            <p className="text-xs text-center text-muted-foreground">
-              Resuming will start a new Claude Code process connected to this
-              session. You can then continue the conversation.
-            </p>
           </div>
+        ) : currentSessionId || activeProcessId ? (
+          // Session selected or active - show chat interface
+          <PromptInput onSubmit={handleSubmit}>
+            <div className="absolute -top-6 left-0 flex items-center gap-2 px-1 select-none pointer-events-none">
+              {activeProcessId && (isStreaming || isThinking) ? (
+                <div className="flex items-center gap-2">
+                  <Spinner className="h-3 w-3 animate-spin text-primary" />
+                  <span className="text-[10px] font-medium text-muted-foreground animate-pulse uppercase tracking-wider">
+                    Claude is {isThinking ? "thinking" : "responding"}...
+                  </span>
+                </div>
+              ) : activeProcessId ? (
+                <div className="flex items-center gap-2">
+                  <div className="relative flex h-1.5 w-1.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  </div>
+                  <span className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">
+                    Claude Code active
+                  </span>
+                </div>
+              ) : null}
+            </div>
+            {lastQueryCost !== null && !isStreaming && !isThinking && (
+              <Badge
+                variant="outline"
+                className="absolute top-2 right-2 opacity-0 group-hover/input-group:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm z-10"
+              >
+                Last query cost: ${lastQueryCost.toFixed(4)}
+              </Badge>
+            )}
+            <PromptInputTextarea
+              placeholder={
+                isStreaming || isThinking
+                  ? "Waiting for response..."
+                  : activeProcessId
+                    ? "Send a message... (Enter to send, Shift+Enter for new line)"
+                    : "Start a new session... (Enter to send, Shift+Enter for new line)"
+              }
+              disabled={isStreaming || isThinking || isSending}
+            />
+            <div className="flex items-center gap-2 p-2 justify-end">
+              {isStreaming || isThinking ? (
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={handleStop}
+                  className="gap-2"
+                >
+                  <StopCircle className="h-4 w-4" />
+                  Stop
+                </Button>
+              ) : (
+                <PromptInputSubmit disabled={isSending}>
+                  {isSending && (
+                    <Spinner className="h-4 w-4 animate-spin mr-2" />
+                  )}
+                </PromptInputSubmit>
+              )}
+            </div>
+          </PromptInput>
         ) : (
           // No session selected
-          <div className="text-center text-sm text-muted-foreground py-2">
+          <div className="text-center text-sm text-muted-foreground py-8">
+            <ChatCircle className="w-12 h-12 mx-auto mb-2 opacity-20" />
             Select a session from the sidebar to view or start a new session
           </div>
         )}

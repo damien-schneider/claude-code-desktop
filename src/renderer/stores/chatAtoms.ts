@@ -1,5 +1,6 @@
 import { atom } from "jotai";
 import { z } from "zod";
+import { selectedProjectIdAtom } from "./atoms";
 
 // =============================================================================
 // Permission Modes
@@ -300,6 +301,71 @@ export const sessionsLoadingAtom = atom<boolean>(false);
 export const sessionsErrorAtom = atom<string | null>(null);
 
 // =============================================================================
+// Active Sessions (real-time, not yet persisted)
+// =============================================================================
+
+/**
+ * Interface for tracking active sessions that may not be persisted yet
+ */
+export interface ActiveSession {
+  processId: string;
+  sessionId: string | null;
+  projectPath: string;
+  projectName: string;
+  createdAt: string;
+  isStreaming: boolean;
+  previewMessage?: string;
+}
+
+/**
+ * Atom tracking all active sessions by process ID
+ * These are sessions that have been started but may not be persisted to disk yet
+ */
+export const activeSessionsAtom = atom<Map<string, ActiveSession>>(new Map());
+
+/**
+ * Derived atom that combines persisted sessions with active sessions
+ * Ensures no duplicates by sessionId when both exist
+ */
+export const allSessionsAtom = atom<SessionSummary[]>((get) => {
+  const persistedSessions = get(sessionsAtom);
+  const activeSessions = get(activeSessionsAtom);
+
+  // Convert active sessions to SessionSummary format
+  const activeSessionSummaries: SessionSummary[] = Array.from(activeSessions.values())
+    .filter((active) => active.sessionId !== null) // Only include sessions with IDs
+    .map((active) => ({
+      sessionId: active.sessionId!,
+      projectPath: active.projectPath,
+      projectName: active.projectName,
+      createdAt: active.createdAt,
+      lastMessageAt: active.createdAt, // Use creation time for now
+      messageCount: 0, // Will be updated when persisted
+      previewMessage: active.previewMessage,
+    }));
+
+  // Merge: use persisted data when available, otherwise use active session data
+  const persistedSessionIds = new Set(persistedSessions.map((s) => s.sessionId));
+  const newActiveSessions = activeSessionSummaries.filter(
+    (s) => !persistedSessionIds.has(s.sessionId)
+  );
+
+  return [...persistedSessions, ...newActiveSessions];
+});
+
+/**
+ * Helper atom to check if a session is currently streaming
+ */
+export const isSessionStreamingAtom = atom(
+  (get) => (sessionId: string) => {
+    const activeSessions = get(activeSessionsAtom);
+    return Array.from(activeSessions.values()).some(
+      (s) => s.sessionId === sessionId && s.isStreaming
+    );
+  }
+);
+
+// =============================================================================
 // Session Filtering
 // =============================================================================
 
@@ -399,11 +465,14 @@ export const checkClaudeAvailabilityAtom = atom(null, async (get, set) => {
 
 /**
  * Derived atom that returns sessions filtered by search query and project
+ * Now includes both persisted and active sessions
  */
 export const filteredSessionsAtom = atom<SessionSummary[]>((get) => {
-  const sessions = get(sessionsAtom);
+  const sessions = get(allSessionsAtom);
   const filter = get(sessionFilterAtom);
-  const selectedProject = get(selectedProjectForSessionsAtom);
+  const activeSessions = get(activeSessionsAtom);
+  const selectedProject =
+    get(selectedProjectForSessionsAtom) || get(selectedProjectIdAtom);
   const searchQuery = get(sessionSearchQueryAtom);
 
   let filtered = sessions;
@@ -423,11 +492,20 @@ export const filteredSessionsAtom = atom<SessionSummary[]>((get) => {
     );
   }
 
-  // Sort by last message date (newest first)
-  return filtered.sort(
-    (a, b) =>
-      new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
-  );
+  // Sort: streaming sessions first, then by date
+  return filtered.sort((a, b) => {
+    const aStreaming = Array.from(activeSessions.values()).some(
+      (s) => s.sessionId === a.sessionId && s.isStreaming
+    );
+    const bStreaming = Array.from(activeSessions.values()).some(
+      (s) => s.sessionId === b.sessionId && s.isStreaming
+    );
+
+    if (aStreaming && !bStreaming) return -1;
+    if (!aStreaming && bStreaming) return 1;
+
+    return new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime();
+  });
 });
 
 // =============================================================================
@@ -566,6 +644,11 @@ export const startNewSessionAtom = atom(
         );
       }
 
+      // Reset state before starting new session
+      set(currentSessionMessagesAtom, []);
+      set(streamingMessageAtom, "");
+      set(streamingErrorAtom, null);
+
       const result = await ipc.client.claudeProcess.startClaudeSession({
         projectPath,
         continueLast: false,
@@ -573,6 +656,8 @@ export const startNewSessionAtom = atom(
       });
 
       set(activeProcessIdAtom, result.processId);
+      set(currentSessionIdAtom, result.sessionId || null);
+
       return result;
     } catch (error) {
       console.error("[startNewSessionAtom] Failed to start session:", error);

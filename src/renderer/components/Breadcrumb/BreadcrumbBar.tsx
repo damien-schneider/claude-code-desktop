@@ -10,11 +10,9 @@ import {
   selectedProjectIdAtom,
   isGlobalSettingsSelectedAtom,
   sidebarCollapsedAtom,
-  appModeAtom,
 } from "@/renderer/stores";
 import { cn } from "@/utils/tailwind";
 import { Button } from "@/components/ui/button";
-import ModeToggle from "@/renderer/components/ModeToggle";
 
 export interface BreadcrumbBarProps {
   className?: string;
@@ -23,6 +21,7 @@ export interface BreadcrumbBarProps {
 
 // View titles for breadcrumb
 const VIEW_TITLES: Record<string, string> = {
+  chat: "Chat",
   files: "Files",
   claudemd: "CLAUDE.md",
   rules: "Rules",
@@ -42,17 +41,10 @@ export const BreadcrumbBar: React.FC<BreadcrumbBarProps> = ({
   const [selectedProjectId] = useAtom(selectedProjectIdAtom);
   const [isGlobalSettingsSelected] = useAtom(isGlobalSettingsSelectedAtom);
   const [sidebarCollapsed, setSidebarCollapsed] = useAtom(sidebarCollapsedAtom);
-  const [appMode] = useAtom(appModeAtom);
 
   // Build breadcrumb segments
   const segments = React.useMemo(() => {
     const result: { label: string; key: string }[] = [];
-
-    // In chat mode, show "Chat Mode"
-    if (appMode === 'chat') {
-      result.push({ label: "Chat Mode", key: "mode" });
-      return result;
-    }
 
     // Context (project or global settings)
     if (isGlobalSettingsSelected) {
@@ -69,7 +61,7 @@ export const BreadcrumbBar: React.FC<BreadcrumbBarProps> = ({
     });
 
     return result;
-  }, [currentView, selectedProjectId, isGlobalSettingsSelected, appMode]);
+  }, [currentView, selectedProjectId, isGlobalSettingsSelected]);
 
   const handleToggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
@@ -140,9 +132,6 @@ export const BreadcrumbBar: React.FC<BreadcrumbBarProps> = ({
           </kbd>
         </Button>
       )}
-
-      {/* Mode Toggle - not draggable */}
-      <ModeToggle style={{ WebkitAppRegion: "no-drag" as any }} />
     </div>
   );
 };
