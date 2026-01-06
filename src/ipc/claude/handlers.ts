@@ -1,29 +1,21 @@
-import { os } from '@orpc/server';
-import { z } from 'zod';
-import { readFile, writeFile, mkdir, readdir, stat } from 'fs/promises';
-import { join } from 'path';
-import {
-  readDirectoryOptionsSchema,
-  pathSchema,
-  fileWriteSchema,
-  directoryWriteSchema,
-  settingsWriteSchema,
-  createClaudeDirectorySchema,
-} from './schemas';
-import { readClaudeDirectory as readClaudeDir, type ClaudeFile as ClaudeFileInternal } from './directory-reader';
+import { os } from "@orpc/server";
+import { mkdir, readdir, readFile, stat, writeFile } from "fs/promises";
+import { join } from "path";
+import { z } from "zod";
+import { readClaudeDirectory as readClaudeDir } from "./directory-reader";
 
 // Re-export types with the internal implementation
 export interface ClaudeFile {
   name: string;
   path: string;
-  type: 'file' | 'directory';
+  type: "file" | "directory";
   content?: string;
   category?: string;
 }
 
 export interface ClaudeDirectory {
   path: string;
-  type: 'skills' | 'commands' | 'agents' | 'rules' | 'hooks';
+  type: "skills" | "commands" | "agents" | "rules" | "hooks";
   files: ClaudeFile[];
 }
 
@@ -32,18 +24,23 @@ export interface ClaudeDirectory {
  * Uses the abstraction layer for consistent handling of different directory types
  */
 export const readClaudeDirectory = os
-  .input(z.object({
-    projectPath: z.string(),
-    type: z.enum(['skills', 'commands', 'agents', 'rules', 'hooks']),
-  }))
+  .input(
+    z.object({
+      projectPath: z.string(),
+      type: z.enum(["skills", "commands", "agents", "rules", "hooks"]),
+    })
+  )
   .handler(async ({ input: { projectPath, type } }) => {
-    console.log('[IPC readClaudeDirectory] Reading', type, 'from', projectPath);
+    console.log("[IPC readClaudeDirectory] Reading", type, "from", projectPath);
     const result = await readClaudeDir(projectPath, type);
-    console.log('[IPC readClaudeDirectory] Got', result.files.length, 'files');
+    console.log("[IPC readClaudeDirectory] Got", result.files.length, "files");
 
     // Log categories for debugging
-    const categories = new Set(result.files.map((f) => f.category || 'none'));
-    console.log('[IPC readClaudeDirectory] Categories:', Array.from(categories));
+    const categories = new Set(result.files.map((f) => f.category || "none"));
+    console.log(
+      "[IPC readClaudeDirectory] Categories:",
+      Array.from(categories)
+    );
 
     // Convert internal types to export types
     const files: ClaudeFile[] = result.files.map((f) => ({
@@ -55,8 +52,7 @@ export const readClaudeDirectory = os
     }));
 
     return { path: result.path, type: result.type, files };
-  }
-);
+  });
 
 /**
  * Read a specific file
@@ -64,7 +60,7 @@ export const readClaudeDirectory = os
 export const readClaudeFile = os
   .input(z.object({ filePath: z.string() }))
   .handler(async ({ input: { filePath } }) => {
-    const content = await readFile(filePath, 'utf-8');
+    const content = await readFile(filePath, "utf-8");
     return { path: filePath, content };
   });
 
@@ -74,7 +70,7 @@ export const readClaudeFile = os
 export const writeClaudeFile = os
   .input(z.object({ filePath: z.string(), content: z.string() }))
   .handler(async ({ input: { filePath, content } }) => {
-    await writeFile(filePath, content, 'utf-8');
+    await writeFile(filePath, content, "utf-8");
     return { success: true, path: filePath };
   });
 
@@ -82,10 +78,10 @@ export const writeClaudeFile = os
  * Generate default content for a new Claude item
  */
 function generateDefaultContent(type: string, name: string): string {
-  const normalizedName = name.toLowerCase().replace(/\s+/g, '-');
+  const normalizedName = name.toLowerCase().replace(/\s+/g, "-");
 
   switch (type) {
-    case 'skills':
+    case "skills":
       return `---
 name: ${normalizedName}
 description: Description of what this skill does and when to use it
@@ -100,7 +96,7 @@ description: Description of what this skill does and when to use it
 Add your skill instructions here.
 `;
 
-    case 'commands':
+    case "commands":
       return `---
 description: Description of what this command does
 ---
@@ -112,7 +108,7 @@ $ARGUMENTS
 Add your command instructions here.
 `;
 
-    case 'agents':
+    case "agents":
       return `---
 name: ${normalizedName}
 description: Description of what this agent does and when to delegate to it
@@ -130,7 +126,7 @@ You are a specialist agent for...
 Add your agent instructions here.
 `;
 
-    case 'rules':
+    case "rules":
       return `# ${name}
 
 ## When this rule applies
@@ -140,7 +136,7 @@ Add your agent instructions here.
 - Add specific instructions
 `;
 
-    case 'hooks':
+    case "hooks":
       return `{
   "description": "Description of what this hook does",
   "enabled": true,
@@ -149,36 +145,42 @@ Add your agent instructions here.
 }`;
 
     default:
-      return '';
+      return "";
   }
 }
 
 /**
  * Get the file path and name for a new Claude item
  */
-function getItemPath(projectPath: string, type: string, name: string): { filePath: string; dirPath?: string } {
-  const typeDir = join(projectPath, '.claude', type);
+function getItemPath(
+  projectPath: string,
+  type: string,
+  name: string
+): { filePath: string; dirPath?: string } {
+  const typeDir = join(projectPath, ".claude", type);
 
   switch (type) {
-    case 'skills':
+    case "skills": {
       // Skills are directories with SKILL.md inside
       const skillDir = join(typeDir, name);
-      return { filePath: join(skillDir, 'SKILL.md'), dirPath: skillDir };
+      return { filePath: join(skillDir, "SKILL.md"), dirPath: skillDir };
+    }
 
-    case 'commands':
+    case "commands": {
       // Commands are files in subdirectories or root
       const cmdPath = join(typeDir, `${name}.md`);
-      return { filePath: cmdPath, dirPath: join(cmdPath, '..') };
+      return { filePath: cmdPath, dirPath: join(cmdPath, "..") };
+    }
 
-    case 'agents':
+    case "agents":
       // Agents are flat .md files
       return { filePath: join(typeDir, `${name}.md`), dirPath: typeDir };
 
-    case 'rules':
+    case "rules":
       // Rules are flat .md files
       return { filePath: join(typeDir, `${name}.md`), dirPath: typeDir };
 
-    case 'hooks':
+    case "hooks":
       // Hooks are flat .json files
       return { filePath: join(typeDir, `${name}.json`), dirPath: typeDir };
 
@@ -192,17 +194,23 @@ function getItemPath(projectPath: string, type: string, name: string): { filePat
  * Handles both directory-based items (skills) and file-based items (agents, rules, hooks)
  */
 export const createClaudeItem = os
-  .input(z.object({
-    projectPath: z.string(),
-    type: z.enum(['skills', 'commands', 'agents', 'rules', 'hooks']),
-    name: z.string().optional(),
-  }))
+  .input(
+    z.object({
+      projectPath: z.string(),
+      type: z.enum(["skills", "commands", "agents", "rules", "hooks"]),
+      name: z.string().optional(),
+    })
+  )
   .handler(async ({ input: { projectPath, type, name } }) => {
     // Use default name if none provided
     const itemName = name || getDefaultName(type);
     const { filePath, dirPath } = getItemPath(projectPath, type, itemName);
 
-    console.log('[IPC createClaudeItem] Creating:', { type, name: itemName, filePath });
+    console.log("[IPC createClaudeItem] Creating:", {
+      type,
+      name: itemName,
+      filePath,
+    });
 
     // Create directory if needed
     if (dirPath) {
@@ -211,7 +219,7 @@ export const createClaudeItem = os
 
     // Generate and write default content
     const content = generateDefaultContent(type, itemName);
-    await writeFile(filePath, content, 'utf-8');
+    await writeFile(filePath, content, "utf-8");
 
     return { success: true, path: filePath, name: itemName };
   });
@@ -222,15 +230,15 @@ export const createClaudeItem = os
 function getDefaultName(type: string): string {
   const timestamp = Date.now().toString(36);
   switch (type) {
-    case 'skills':
+    case "skills":
       return `new-skill-${timestamp}`;
-    case 'commands':
+    case "commands":
       return `new-command-${timestamp}`;
-    case 'agents':
+    case "agents":
       return `new-agent-${timestamp}`;
-    case 'rules':
+    case "rules":
       return `new-rule-${timestamp}`;
-    case 'hooks':
+    case "hooks":
       return `new-hook-${timestamp}`;
     default:
       return `new-${type}-${timestamp}`;
@@ -242,17 +250,23 @@ function getDefaultName(type: string): string {
  * Create a directory (kept for backward compatibility)
  */
 export const createClaudeDirectory = os
-  .input(z.object({
-    projectPath: z.string(),
-    type: z.enum(['skills', 'commands', 'agents', 'rules', 'hooks']),
-    name: z.string(),
-  }))
+  .input(
+    z.object({
+      projectPath: z.string(),
+      type: z.enum(["skills", "commands", "agents", "rules", "hooks"]),
+      name: z.string(),
+    })
+  )
   .handler(async ({ input: { projectPath, type, name } }) => {
     // Use the same logic as createClaudeItem
     const itemName = name;
     const { filePath, dirPath } = getItemPath(projectPath, type, itemName);
 
-    console.log('[IPC createClaudeDirectory] Creating:', { type, name: itemName, filePath });
+    console.log("[IPC createClaudeDirectory] Creating:", {
+      type,
+      name: itemName,
+      filePath,
+    });
 
     // Create directory if needed
     if (dirPath) {
@@ -261,7 +275,7 @@ export const createClaudeDirectory = os
 
     // Generate and write default content
     const content = generateDefaultContent(type, itemName);
-    await writeFile(filePath, content, 'utf-8');
+    await writeFile(filePath, content, "utf-8");
 
     return { success: true, path: filePath, name: itemName };
   });
@@ -273,7 +287,7 @@ export const deleteClaudeItem = os
   .input(z.object({ itemPath: z.string() }))
   .handler(async ({ input: { itemPath } }) => {
     // Handle recursively
-    const { rm } = await import('fs/promises');
+    const { rm } = await import("fs/promises");
     await rm(itemPath, { recursive: true, force: true });
     return { success: true, path: itemPath };
   });
@@ -284,28 +298,36 @@ export const deleteClaudeItem = os
 export const getCLAUDEMD = os
   .input(z.object({ projectPath: z.string() }))
   .handler(async ({ input: { projectPath } }) => {
-    console.log('[IPC] getCLAUDEMD called with path:', projectPath);
+    console.log("[IPC] getCLAUDEMD called with path:", projectPath);
     const paths = [
-      join(projectPath, 'CLAUDE.md'),
-      join(projectPath, '.claude', 'CLAUDE.md'),
+      join(projectPath, "CLAUDE.md"),
+      join(projectPath, ".claude", "CLAUDE.md"),
     ];
 
-    console.log('[IPC] Trying paths:', paths);
+    console.log("[IPC] Trying paths:", paths);
 
     for (const path of paths) {
       try {
-        console.log('[IPC] Attempting to read:', path);
-        const content = await readFile(path, 'utf-8');
-        console.log('[IPC] Successfully read file, content length:', content.length);
+        console.log("[IPC] Attempting to read:", path);
+        const content = await readFile(path, "utf-8");
+        console.log(
+          "[IPC] Successfully read file, content length:",
+          content.length
+        );
         return { path, content, exists: true };
       } catch (error) {
-        console.log('[IPC] Failed to read', path, ':', (error as Error).message);
+        console.log(
+          "[IPC] Failed to read",
+          path,
+          ":",
+          (error as Error).message
+        );
         // Try next path
       }
     }
 
-    console.log('[IPC] No CLAUDE.md found in any location');
-    return { path: paths[0], content: '', exists: false };
+    console.log("[IPC] No CLAUDE.md found in any location");
+    return { path: paths[0], content: "", exists: false };
   });
 
 /**
@@ -314,9 +336,9 @@ export const getCLAUDEMD = os
 export const writeCLAUDEMD = os
   .input(z.object({ projectPath: z.string(), content: z.string() }))
   .handler(async ({ input: { projectPath, content } }) => {
-    const path = join(projectPath, '.claude', 'CLAUDE.md');
-    await mkdir(join(projectPath, '.claude'), { recursive: true });
-    await writeFile(path, content, 'utf-8');
+    const path = join(projectPath, ".claude", "CLAUDE.md");
+    await mkdir(join(projectPath, ".claude"), { recursive: true });
+    await writeFile(path, content, "utf-8");
     return { success: true, path };
   });
 
@@ -326,13 +348,11 @@ export const writeCLAUDEMD = os
 export const getSettings = os
   .input(z.object({ projectPath: z.string() }))
   .handler(async ({ input: { projectPath } }) => {
-    const paths = [
-      join(projectPath, '.claude', 'settings.json'),
-    ];
+    const paths = [join(projectPath, ".claude", "settings.json")];
 
     for (const path of paths) {
       try {
-        const content = await readFile(path, 'utf-8');
+        const content = await readFile(path, "utf-8");
         return { path, content, exists: true };
       } catch {
         // Try next path
@@ -344,7 +364,11 @@ export const getSettings = os
       allowedTools: [],
       modelPreferences: {},
     };
-    return { path: paths[0], content: JSON.stringify(defaultSettings, null, 2), exists: false };
+    return {
+      path: paths[0],
+      content: JSON.stringify(defaultSettings, null, 2),
+      exists: false,
+    };
   });
 
 /**
@@ -353,13 +377,13 @@ export const getSettings = os
 export const writeSettings = os
   .input(z.object({ projectPath: z.string(), content: z.string() }))
   .handler(async ({ input: { projectPath, content } }) => {
-    const path = join(projectPath, '.claude', 'settings.json');
-    await mkdir(join(projectPath, '.claude'), { recursive: true });
+    const path = join(projectPath, ".claude", "settings.json");
+    await mkdir(join(projectPath, ".claude"), { recursive: true });
 
     // Validate JSON
     JSON.parse(content);
 
-    await writeFile(path, content, 'utf-8');
+    await writeFile(path, content, "utf-8");
     return { success: true, path };
   });
 
@@ -369,7 +393,7 @@ export const writeSettings = os
 export interface ExplorerItem {
   name: string;
   path: string;
-  type: 'file' | 'directory';
+  type: "file" | "directory";
   extension?: string;
   size?: number;
 }
@@ -383,28 +407,30 @@ export interface ExplorerDirectory {
  * Read a directory for file explorer
  */
 export const readDirectory = os
-  .input(z.object({
-    dirPath: z.string(),
-    includeHidden: z.boolean().optional(),
-  }))
+  .input(
+    z.object({
+      dirPath: z.string(),
+      includeHidden: z.boolean().optional(),
+    })
+  )
   .handler(async ({ input: { dirPath, includeHidden } }) => {
-    console.log('[IPC] readDirectory called with path:', dirPath);
+    console.log("[IPC] readDirectory called with path:", dirPath);
     try {
       await stat(dirPath);
     } catch {
       // Directory doesn't exist
-      console.log('[IPC] Directory does not exist:', dirPath);
+      console.log("[IPC] Directory does not exist:", dirPath);
       return { path: dirPath, items: [] };
     }
 
     const entries = await readdir(dirPath, { withFileTypes: true });
     const items: ExplorerItem[] = [];
 
-    console.log('[IPC] Found', entries.length, 'entries in directory');
+    console.log("[IPC] Found", entries.length, "entries in directory");
 
     for (const entry of entries) {
       // Skip hidden files unless requested
-      if (!includeHidden && entry.name.startsWith('.')) {
+      if (!includeHidden && entry.name.startsWith(".")) {
         continue;
       }
 
@@ -412,15 +438,15 @@ export const readDirectory = os
       const item: ExplorerItem = {
         name: entry.name,
         path: fullPath,
-        type: entry.isDirectory() ? 'directory' : 'file',
+        type: entry.isDirectory() ? "directory" : "file",
       };
 
       if (entry.isFile()) {
         try {
           const stats = await stat(fullPath);
           item.size = stats.size;
-          const extIndex = entry.name.lastIndexOf('.');
-          item.extension = extIndex > 0 ? entry.name.slice(extIndex + 1) : '';
+          const extIndex = entry.name.lastIndexOf(".");
+          item.extension = extIndex > 0 ? entry.name.slice(extIndex + 1) : "";
         } catch {
           // File might not be accessible
         }
@@ -434,10 +460,10 @@ export const readDirectory = os
       if (a.type === b.type) {
         return a.name.localeCompare(b.name);
       }
-      return a.type === 'directory' ? -1 : 1;
+      return a.type === "directory" ? -1 : 1;
     });
 
-    console.log('[IPC] Returning', items.length, 'items');
+    console.log("[IPC] Returning", items.length, "items");
     return { path: dirPath, items };
   });
 
@@ -448,14 +474,14 @@ export const readFileContent = os
   .input(z.object({ filePath: z.string() }))
   .handler(async ({ input: { filePath } }) => {
     try {
-      const content = await readFile(filePath, 'utf-8');
+      const content = await readFile(filePath, "utf-8");
       return { path: filePath, content, exists: true };
     } catch (error) {
       return {
         path: filePath,
-        content: '',
+        content: "",
         exists: false,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   });
@@ -467,13 +493,13 @@ export const writeFileContent = os
   .input(z.object({ filePath: z.string(), content: z.string() }))
   .handler(async ({ input: { filePath, content } }) => {
     try {
-      await writeFile(filePath, content, 'utf-8');
+      await writeFile(filePath, content, "utf-8");
       return { path: filePath, success: true };
     } catch (error) {
       return {
         path: filePath,
         success: false,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   });
@@ -483,17 +509,17 @@ export const writeFileContent = os
  */
 export const createFile = os
   .input(z.object({ filePath: z.string(), content: z.string().optional() }))
-  .handler(async ({ input: { filePath, content = '' } }) => {
+  .handler(async ({ input: { filePath, content = "" } }) => {
     try {
-      const dirPath = join(filePath, '..');
+      const dirPath = join(filePath, "..");
       await mkdir(dirPath, { recursive: true });
-      await writeFile(filePath, content, 'utf-8');
+      await writeFile(filePath, content, "utf-8");
       return { path: filePath, success: true };
     } catch (error) {
       return {
         path: filePath,
         success: false,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   });
@@ -511,7 +537,7 @@ export const createDirectory = os
       return {
         path: dirPath,
         success: false,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   });
@@ -523,14 +549,14 @@ export const deleteItem = os
   .input(z.object({ itemPath: z.string() }))
   .handler(async ({ input: { itemPath } }) => {
     try {
-      const { rm } = await import('fs/promises');
+      const { rm } = await import("fs/promises");
       await rm(itemPath, { recursive: true, force: true });
       return { path: itemPath, success: true };
     } catch (error) {
       return {
         path: itemPath,
         success: false,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   });
@@ -555,9 +581,9 @@ export interface McpConfig {
 export const readMcpConfig = os
   .input(z.object({ projectPath: z.string() }))
   .handler(async ({ input: { projectPath } }) => {
-    const mcpJsonPath = join(projectPath, '.mcp.json');
+    const mcpJsonPath = join(projectPath, ".mcp.json");
     try {
-      const content = await readFile(mcpJsonPath, 'utf-8');
+      const content = await readFile(mcpJsonPath, "utf-8");
       return JSON.parse(content) as McpConfig;
     } catch {
       return { mcpServers: {} }; // Default empty config
@@ -568,25 +594,30 @@ export const readMcpConfig = os
  * Write .mcp.json configuration
  */
 export const writeMcpConfig = os
-  .input(z.object({
-    projectPath: z.string(),
-    config: z.object({
-      mcpServers: z.record(z.string(), z.object({
-        command: z.string(),
-        args: z.array(z.string()),
-        env: z.record(z.string(), z.string()).optional(),
-      }))
+  .input(
+    z.object({
+      projectPath: z.string(),
+      config: z.object({
+        mcpServers: z.record(
+          z.string(),
+          z.object({
+            command: z.string(),
+            args: z.array(z.string()),
+            env: z.record(z.string(), z.string()).optional(),
+          })
+        ),
+      }),
     })
-  }))
+  )
   .handler(async ({ input: { projectPath, config } }) => {
-    const mcpJsonPath = join(projectPath, '.mcp.json');
+    const mcpJsonPath = join(projectPath, ".mcp.json");
     try {
-      await writeFile(mcpJsonPath, JSON.stringify(config, null, 2), 'utf-8');
+      await writeFile(mcpJsonPath, JSON.stringify(config, null, 2), "utf-8");
       return { success: true };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       };
     }
   });

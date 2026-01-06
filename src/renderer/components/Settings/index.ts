@@ -3,33 +3,30 @@
  * Exports all settings-related components and types
  */
 
-// Main component
-export { SettingsTab } from './settings-tab';
-
+export { HooksEditor } from "./hooks-editor";
+export { McpServerConfig } from "./mcp-server-config";
+export { McpServersEditor } from "./mcp-servers-editor";
+export { ModeToggle } from "./mode-toggle";
+export { PermissionsEditor } from "./permissions-editor";
 // Form components
-export { SettingsForm } from './settings-form';
-export { PermissionsEditor } from './permissions-editor';
-export { McpServersEditor } from './mcp-servers-editor';
-export { HooksEditor } from './hooks-editor';
-
-// Shared components
-export { ToolPatternList } from './tool-pattern-list';
-export { McpServerConfig } from './mcp-server-config';
-export { SettingsJSONEditor } from './settings-json-editor';
-export { ModeToggle } from './mode-toggle';
-
+export { SettingsForm } from "./settings-form";
+export { SettingsJSONEditor } from "./settings-json-editor";
+// Main component
+export { SettingsTab } from "./settings-tab";
 // Types
 export type {
-  ClaudeSettings,
-  ClaudePermissions,
-  McpServerConfig as McpServerConfigType,
   ClaudeHook,
-  ToolPatternListProps,
-  PermissionsEditorProps,
-  McpServersEditorProps,
-  McpServerConfigProps,
+  ClaudePermissions,
+  ClaudeSettings,
+  EditorMode,
   HooksEditorProps,
+  McpServerConfig as McpServerConfigType,
+  McpServerConfigProps,
+  McpServersEditorProps,
+  PermissionsEditorProps,
   SettingsFormProps,
   SettingsJSONEditorProps,
-  EditorMode,
-} from './settings-types';
+  ToolPatternListProps,
+} from "./settings-types";
+// Shared components
+export { ToolPatternList } from "./tool-pattern-list";

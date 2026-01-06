@@ -1,25 +1,25 @@
 // Use SDK-based handlers (primary) with fallback support
 import {
-  startClaudeSession,
-  sendMessage,
-  stopClaudeSession,
-  getActiveSessions,
-  resumeSession,
-  getPermissionModes,
   checkClaude,
-  queryOnce,
+  getActiveSessions,
+  getPermissionModes,
   processEvents,
+  queryOnce,
+  resumeSession,
+  sendMessage,
+  startClaudeSession,
+  stopClaudeSession,
 } from "./sdk-handlers";
 
 // Re-export SDK message types for consumers
 export type {
-  SDKMessage,
+  PermissionMode,
   SDKAssistantMessage,
-  SDKUserMessage,
+  SDKMessage,
+  SDKPartialAssistantMessage,
   SDKResultMessage,
   SDKSystemMessage,
-  SDKPartialAssistantMessage,
-  PermissionMode,
+  SDKUserMessage,
 } from "./sdk-handlers";
 
 export const claudeProcess = {
@@ -29,13 +29,13 @@ export const claudeProcess = {
   stopClaudeSession,
   getActiveSessions,
   resumeSession,
-  
+
   // Configuration
   getPermissionModes,
-  
+
   // Health check
   checkClaude,
-  
+
   // One-shot queries
   queryOnce,
 };

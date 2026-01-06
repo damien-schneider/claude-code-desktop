@@ -7,32 +7,38 @@
  * Reference: https://docs.anthropic.com/en/docs/build-with-claude/settings
  */
 
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * Individual tool permission pattern
  * Matches patterns like "Edit", "Bash(git:*)", "Read(*)", etc.
  */
-export const toolPermissionSchema = z.string()
-  .min(1, 'Tool permission cannot be empty')
-  .refine(val => {
+export const toolPermissionSchema = z
+  .string()
+  .min(1, "Tool permission cannot be empty")
+  .refine((val) => {
     // Must be alphanumeric with colons, parentheses, asterisks, dashes, underscores
     return /^[a-zA-Z0-9_*():\-/]+$/.test(val);
-  }, 'Invalid tool permission format');
+  }, "Invalid tool permission format");
 
 /**
  * Model identifier (supports shorthands and full model names)
  */
-export const modelIdentifierSchema = z.string()
-  .min(1, 'Model identifier cannot be empty')
-  .max(200, 'Model identifier too long');
+export const modelIdentifierSchema = z
+  .string()
+  .min(1, "Model identifier cannot be empty")
+  .max(200, "Model identifier too long");
 
 /**
  * Environment variable key
  */
-export const envVarKeySchema = z.string()
-  .min(1, 'Environment variable key cannot be empty')
-  .regex(/^[A-Z_][A-Z0-9_]*$/, 'Environment variable keys must be uppercase with underscores');
+export const envVarKeySchema = z
+  .string()
+  .min(1, "Environment variable key cannot be empty")
+  .regex(
+    /^[A-Z_][A-Z0-9_]*$/,
+    "Environment variable keys must be uppercase with underscores"
+  );
 
 /**
  * Environment variable value
@@ -42,17 +48,19 @@ export const envVarValueSchema = z.string();
 /**
  * Theme preference
  */
-export const themeSchema = z.enum(['light', 'dark', 'system']);
+export const themeSchema = z.enum(["light", "dark", "system"]);
 
 /**
  * MCP server type
  */
-export const mcpServerTypeSchema = z.enum(['stdio', 'sse']);
+export const mcpServerTypeSchema = z.enum(["stdio", "sse"]);
 
 /**
  * MCP server environment variables
  */
-export const mcpServerEnvSchema = z.record(envVarKeySchema, envVarValueSchema).optional();
+export const mcpServerEnvSchema = z
+  .record(envVarKeySchema, envVarValueSchema)
+  .optional();
 
 /**
  * MCP server configuration
@@ -80,7 +88,9 @@ export const settingsJsonSchema = z.object({
   allowedTools: z.array(toolPermissionSchema).optional(),
 
   // Model preferences per provider
-  modelPreferences: z.record(modelIdentifierSchema, modelIdentifierSchema).optional(),
+  modelPreferences: z
+    .record(modelIdentifierSchema, modelIdentifierSchema)
+    .optional(),
 
   // Theme preference
   theme: themeSchema.optional(),
@@ -92,7 +102,7 @@ export const settingsJsonSchema = z.object({
   humanInstructions: z.string().max(5000).optional(),
 
   // Custom prompt template
-  customPrompt: z.string().max(10000).optional(),
+  customPrompt: z.string().max(10_000).optional(),
 });
 
 /**
@@ -123,12 +133,12 @@ export function parseSettingsJson(content: string): {
 
     return {
       success: false,
-      error: result.error.issues.map((e) => e.message).join(', '),
+      error: result.error.issues.map((e) => e.message).join(", "),
     };
   } catch (e) {
     return {
       success: false,
-      error: e instanceof Error ? e.message : 'Invalid JSON',
+      error: e instanceof Error ? e.message : "Invalid JSON",
     };
   }
 }
@@ -140,7 +150,7 @@ export function buildDefaultSettings(): string {
   const defaultSettings = {
     allowedTools: [],
     modelPreferences: {},
-    theme: 'system' as const,
+    theme: "system" as const,
   };
 
   return JSON.stringify(defaultSettings, null, 2);
@@ -150,8 +160,8 @@ export function buildDefaultSettings(): string {
  * Helper to format allowed tools array to string for editing
  */
 export function formatAllowedTools(tools: string[]): string {
-  if (tools.length === 0) return '';
-  return tools.join('\n');
+  if (tools.length === 0) return "";
+  return tools.join("\n");
 }
 
 /**
@@ -159,8 +169,8 @@ export function formatAllowedTools(tools: string[]): string {
  */
 export function parseAllowedTools(input: string): string[] {
   return input
-    .split('\n')
-    .map(line => line.trim())
+    .split("\n")
+    .map((line) => line.trim())
     .filter(Boolean);
 }
 
@@ -169,8 +179,8 @@ export function parseAllowedTools(input: string): string[] {
  */
 export function formatModelPreferences(prefs: Record<string, string>): string {
   const entries = Object.entries(prefs);
-  if (entries.length === 0) return '';
-  return entries.map(([key, value]) => `${key}=${value}`).join('\n');
+  if (entries.length === 0) return "";
+  return entries.map(([key, value]) => `${key}=${value}`).join("\n");
 }
 
 /**
@@ -178,14 +188,14 @@ export function formatModelPreferences(prefs: Record<string, string>): string {
  */
 export function parseModelPreferences(input: string): Record<string, string> {
   const result: Record<string, string> = {};
-  const lines = input.split('\n');
+  const lines = input.split("\n");
 
   for (const line of lines) {
     const trimmed = line.trim();
-    if (!trimmed || !trimmed.includes('=')) continue;
+    if (!(trimmed && trimmed.includes("="))) continue;
 
-    const [key, ...valueParts] = trimmed.split('=');
-    const value = valueParts.join('=').trim();
+    const [key, ...valueParts] = trimmed.split("=");
+    const value = valueParts.join("=").trim();
 
     if (key && value) {
       result[key.trim()] = value;

@@ -1,5 +1,5 @@
-import { cn } from "@/utils/tailwind";
 import type { Experimental_GeneratedImage } from "ai";
+import { cn } from "@/utils/tailwind";
 
 export type ImageProps = Experimental_GeneratedImage & {
   className?: string;

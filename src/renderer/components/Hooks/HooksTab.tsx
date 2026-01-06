@@ -1,29 +1,22 @@
-import React, { useEffect, useState, useCallback } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Plus,
-  PlusCircle,
-  Trash,
-  FloppyDisk,
+  CheckCircle,
   Download,
-  Upload,
+  FloppyDisk,
+  Play,
+  PlusCircle,
   Power,
   Prohibit,
-  WarningCircle,
-  CheckCircle,
   Spinner,
-  Play,
+  Trash,
+  Upload,
+  WarningCircle,
 } from "@phosphor-icons/react";
+import { useAtom } from "jotai";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Form,
   FormControl,
@@ -31,28 +24,33 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import { CodeEditor } from "@/renderer/components/CodeEditor";
-import { useAtom } from "jotai";
+import { Input } from "@/components/ui/input";
 import {
-  activePathAtom,
-  homePathAtom,
-  currentViewAtom,
-} from "@/renderer/stores";
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ipc } from "@/ipc/manager";
+import { CodeEditor } from "@/renderer/components/CodeEditor";
 import { showError, showSuccess } from "@/renderer/lib/toast";
 import {
-  hookTypeSchema,
-  hookJsonSchema,
-  hookCreateSchema,
-  type HookType,
-  type HookJson,
-  type HookCreateValues,
-} from "@/schemas/claude";
+  activePathAtom,
+  currentViewAtom,
+  homePathAtom,
+} from "@/renderer/stores";
 import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable";
+  type HookCreateValues,
+  type HookJson,
+  type HookType,
+  hookCreateSchema,
+} from "@/schemas/claude";
 import { cn } from "@/utils/tailwind";
 
 const HOOK_TYPES: HookType[] = [
@@ -133,7 +131,7 @@ export const HooksTab: React.FC = () => {
       console.log("Hooks result:", result);
 
       const loadedHooks: HookFile[] = result.files.map((file) => {
-        let hookData: HookFile = {
+        const hookData: HookFile = {
           name: file.name.replace(".json", ""),
           path: file.path,
           content: file.content || "",
@@ -175,24 +173,26 @@ export const HooksTab: React.FC = () => {
 
   // Validate hook JSON structure
   const validateHookJSON = (
-    content: string,
+    content: string
   ): { valid: boolean; error?: string } => {
     try {
       const parsed = JSON.parse(content);
-      if (!parsed.hookType || !HOOK_TYPES.includes(parsed.hookType)) {
+      if (!(parsed.hookType && HOOK_TYPES.includes(parsed.hookType))) {
         return {
           valid: false,
           error: `Invalid hookType. Must be one of: ${HOOK_TYPES.join(", ")}`,
         };
       }
       if (
-        !parsed.script &&
-        !parsed.onStart &&
-        !parsed.onSubmit &&
-        !parsed.onToolUse &&
-        !parsed.onToolOutput &&
-        !parsed.onResponse &&
-        !parsed.onEnd
+        !(
+          parsed.script ||
+          parsed.onStart ||
+          parsed.onSubmit ||
+          parsed.onToolUse ||
+          parsed.onToolOutput ||
+          parsed.onResponse ||
+          parsed.onEnd
+        )
       ) {
         return {
           valid: false,
@@ -247,7 +247,7 @@ export const HooksTab: React.FC = () => {
 
     if (
       !confirm(
-        `Are you sure you want to delete hook "${selectedHookData.name}"?`,
+        `Are you sure you want to delete hook "${selectedHookData.name}"?`
       )
     ) {
       return;
@@ -263,7 +263,7 @@ export const HooksTab: React.FC = () => {
     } catch (error) {
       showError("Failed to delete hook", error);
       setError(
-        error instanceof Error ? error.message : "Failed to delete hook",
+        error instanceof Error ? error.message : "Failed to delete hook"
       );
     }
   };
@@ -309,7 +309,7 @@ console.log('${hookType} hook executed:', {
     } catch (error) {
       showError("Failed to create hook", error);
       setError(
-        error instanceof Error ? error.message : "Failed to create hook",
+        error instanceof Error ? error.message : "Failed to create hook"
       );
     }
   };
@@ -321,7 +321,7 @@ console.log('${hookType} hook executed:', {
 
   const handleToggleEnabled = async (hookName: string) => {
     const hook = hooks.find((h) => h.name === hookName);
-    if (!hook || !hook.content) return;
+    if (!(hook && hook.content)) return;
 
     try {
       const parsed: HookJson = JSON.parse(hook.content);
@@ -336,7 +336,7 @@ console.log('${hookType} hook executed:', {
     } catch (error) {
       console.error("Failed to toggle hook:", error);
       setError(
-        error instanceof Error ? error.message : "Failed to toggle hook",
+        error instanceof Error ? error.message : "Failed to toggle hook"
       );
     }
   };
@@ -395,7 +395,7 @@ console.log('${hookType} hook executed:', {
       } catch (error) {
         console.error("Failed to import hooks:", error);
         setError(
-          error instanceof Error ? error.message : "Failed to import hooks",
+          error instanceof Error ? error.message : "Failed to import hooks"
         );
       }
     };
@@ -414,7 +414,7 @@ console.log('${hookType} hook executed:', {
           new Function(parsed.script);
         } catch (e) {
           throw new Error(
-            `Script syntax error: ${e instanceof Error ? e.message : "Unknown error"}`,
+            `Script syntax error: ${e instanceof Error ? e.message : "Unknown error"}`
           );
         }
       }
@@ -434,7 +434,7 @@ console.log('${hookType} hook executed:', {
             new Function(methodValue as string);
           } catch (e) {
             throw new Error(
-              `${method} syntax error: ${e instanceof Error ? e.message : "Unknown error"}`,
+              `${method} syntax error: ${e instanceof Error ? e.message : "Unknown error"}`
             );
           }
         }
@@ -443,7 +443,7 @@ console.log('${hookType} hook executed:', {
       alert("Hook validation passed! The hook structure and syntax are valid.");
     } catch (error) {
       alert(
-        `Hook validation failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+        `Hook validation failed: ${error instanceof Error ? error.message : "Unknown error"}`
       );
     } finally {
       setTestingHook(null);
@@ -451,22 +451,22 @@ console.log('${hookType} hook executed:', {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       {/* Error display */}
       {error && (
-        <div className="mx-4 mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-md flex items-start gap-3">
+        <div className="mx-4 mt-4 flex items-start gap-3 rounded-md border border-red-500/20 bg-red-500/10 p-3">
           <WarningCircle
-            className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5"
+            className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600"
             weight="regular"
           />
-          <p className="text-sm text-red-700">{error}</p>
+          <p className="text-red-700 text-sm">{error}</p>
         </div>
       )}
 
       {/* No project selected */}
-      {!activePath && !loading && (
-        <div className="flex items-center justify-center h-full">
-          <p className="text-sm text-muted-foreground">
+      {!(activePath || loading) && (
+        <div className="flex h-full items-center justify-center">
+          <p className="text-muted-foreground text-sm">
             Select a project to manage hooks
           </p>
         </div>
@@ -475,193 +475,194 @@ console.log('${hookType} hook executed:', {
       {/* Main content */}
       {activePath && (
         <ResizablePanelGroup
-          direction="horizontal"
           className="flex-1 overflow-hidden"
+          direction="horizontal"
         >
           {/* Hooks List */}
           <ResizablePanel
+            className="min-w-[200px] border-r bg-muted/30"
             defaultSize={25}
-            minSize={15}
             maxSize={40}
-            className="border-r bg-muted/30 min-w-[200px]"
+            minSize={15}
           >
             {loading ? (
-              <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+              <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
                 <Spinner
                   className="h-6 w-6 animate-spin text-muted-foreground"
                   weight="regular"
                 />
               </div>
             ) : (
-              <div className="flex flex-col h-full overflow-hidden">
-                <div className="p-2 space-y-1 flex-shrink-0">
-                {/* Add Hook Button / Form */}
-                {isAdding ? (
-                  <div className="p-3 rounded-md bg-primary/10 border border-primary/20">
-                    <Form {...createForm}>
-                      <form
-                        onSubmit={createForm.handleSubmit(handleConfirmAdd)}
-                        className="space-y-2"
-                      >
-                        <FormField
-                          control={createForm.control}
-                          name="hookType"
-                          render={({ field }) => (
-                            <FormItem>
-                              <Select
-                                onValueChange={(value) => {
-                                  field.onChange(value);
-                                  createForm.setValue(
-                                    "name",
-                                    `my-${value.toLowerCase()}-hook`,
-                                  );
-                                }}
-                                defaultValue={field.value}
-                              >
+              <div className="flex h-full flex-col overflow-hidden">
+                <div className="flex-shrink-0 space-y-1 p-2">
+                  {/* Add Hook Button / Form */}
+                  {isAdding ? (
+                    <div className="rounded-md border border-primary/20 bg-primary/10 p-3">
+                      <Form {...createForm}>
+                        <form
+                          className="space-y-2"
+                          onSubmit={createForm.handleSubmit(handleConfirmAdd)}
+                        >
+                          <FormField
+                            control={createForm.control}
+                            name="hookType"
+                            render={({ field }) => (
+                              <FormItem>
+                                <Select
+                                  defaultValue={field.value}
+                                  onValueChange={(value) => {
+                                    field.onChange(value);
+                                    createForm.setValue(
+                                      "name",
+                                      `my-${value.toLowerCase()}-hook`
+                                    );
+                                  }}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select hook type" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {HOOK_TYPES.map((type) => (
+                                      <SelectItem key={type} value={type}>
+                                        {type}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={createForm.control}
+                            name="name"
+                            render={({ field }) => (
+                              <FormItem>
                                 <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select hook type" />
-                                  </SelectTrigger>
+                                  <Input
+                                    {...field}
+                                    autoFocus
+                                    className="font-mono text-sm"
+                                  />
                                 </FormControl>
-                                <SelectContent>
-                                  {HOOK_TYPES.map((type) => (
-                                    <SelectItem key={type} value={type}>
-                                      {type}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={createForm.control}
-                          name="name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  className="font-mono text-sm"
-                                  autoFocus
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <div className="flex gap-2">
-                          <Button type="submit" size="sm" className="flex-1">
-                            Create
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={handleCancelAdd}
-                            className="flex-1"
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </form>
-                    </Form>
-                  </div>
-                ) : (
-                  <Button
-                    onClick={handleAdd}
-                    variant="ghost"
-                    className="w-full p-3 border"
-                  >
-                    <PlusCircle className="h-5 w-5" weight="regular" />
-                    <span className="text-sm font-medium">Add Hook</span>
-                  </Button>
-                )}
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <div className="flex gap-2">
+                            <Button className="flex-1" size="sm" type="submit">
+                              Create
+                            </Button>
+                            <Button
+                              className="flex-1"
+                              onClick={handleCancelAdd}
+                              size="sm"
+                              type="button"
+                              variant="outline"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </form>
+                      </Form>
+                    </div>
+                  ) : (
+                    <Button
+                      className="w-full border p-3"
+                      onClick={handleAdd}
+                      variant="ghost"
+                    >
+                      <PlusCircle className="h-5 w-5" weight="regular" />
+                      <span className="font-medium text-sm">Add Hook</span>
+                    </Button>
+                  )}
                 </div>
 
                 {/* Hooks List */}
                 {hooks.length === 0 && !isAdding ? (
-                  <div className="flex items-center justify-center flex-1 min-h-0 text-muted-foreground">
+                  <div className="flex min-h-0 flex-1 items-center justify-center text-muted-foreground">
                     <div className="text-center">
                       <WarningCircle
-                        className="h-8 w-8 mx-auto mb-2 opacity-50"
+                        className="mx-auto mb-2 h-8 w-8 opacity-50"
                         weight="regular"
                       />
                       <p className="text-sm">No hooks configured</p>
-                      <p className="text-xs mt-1">
+                      <p className="mt-1 text-xs">
                         Create hooks to customize behavior
                       </p>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex-1 overflow-y-auto p-2 space-y-1 min-h-0">
-                  {hooks.map((hook) => {
-                    const validationError = validationErrors[hook.name];
-                    const isValid = hook.isValid !== false && !validationError;
+                  <div className="min-h-0 flex-1 space-y-1 overflow-y-auto p-2">
+                    {hooks.map((hook) => {
+                      const validationError = validationErrors[hook.name];
+                      const isValid =
+                        hook.isValid !== false && !validationError;
 
-                    return (
-                      <div
-                        key={hook.name}
-                        className={cn(
-                          "p-3 rounded-md cursor-pointer transition-colors",
-                          selectedHook === hook.name
-                            ? "bg-primary text-primary-foreground"
-                            : "hover:bg-muted",
-                        )}
-                        onClick={() => setSelectedHook(hook.name)}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium truncate">
-                                {hook.name}
+                      return (
+                        <div
+                          className={cn(
+                            "cursor-pointer rounded-md p-3 transition-colors",
+                            selectedHook === hook.name
+                              ? "bg-primary text-primary-foreground"
+                              : "hover:bg-muted"
+                          )}
+                          key={hook.name}
+                          onClick={() => setSelectedHook(hook.name)}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="truncate font-medium text-sm">
+                                  {hook.name}
+                                </span>
+                                {isValid ? (
+                                  <CheckCircle
+                                    className="h-3 w-3 flex-shrink-0 text-green-500"
+                                    weight="regular"
+                                  />
+                                ) : (
+                                  <WarningCircle
+                                    className="h-3 w-3 flex-shrink-0 text-red-500"
+                                    weight="regular"
+                                  />
+                                )}
+                              </div>
+                              <span className="text-xs opacity-70">
+                                {hook.hookType || "Unknown"}
                               </span>
-                              {isValid ? (
-                                <CheckCircle
-                                  className="h-3 w-3 text-green-500 flex-shrink-0"
+                            </div>
+                            <button
+                              className="flex-shrink-0 rounded p-1 hover:bg-background/20"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleEnabled(hook.name);
+                              }}
+                              title={hook.enabled ? "Disable" : "Enable"}
+                            >
+                              {hook.enabled ? (
+                                <Power
+                                  className="h-4 w-4 text-green-500"
                                   weight="regular"
                                 />
                               ) : (
-                                <WarningCircle
-                                  className="h-3 w-3 text-red-500 flex-shrink-0"
+                                <Prohibit
+                                  className="h-4 w-4 text-gray-500"
                                   weight="regular"
                                 />
                               )}
-                            </div>
-                            <span className="text-xs opacity-70">
-                              {hook.hookType || "Unknown"}
-                            </span>
+                            </button>
                           </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleEnabled(hook.name);
-                            }}
-                            className="flex-shrink-0 p-1 rounded hover:bg-background/20"
-                            title={hook.enabled ? "Disable" : "Enable"}
-                          >
-                            {hook.enabled ? (
-                              <Power
-                                className="h-4 w-4 text-green-500"
-                                weight="regular"
-                              />
-                            ) : (
-                              <Prohibit
-                                className="h-4 w-4 text-gray-500"
-                                weight="regular"
-                              />
-                            )}
-                          </button>
+                          {validationError && (
+                            <p className="mt-1 text-red-500 text-xs">
+                              {validationError}
+                            </p>
+                          )}
                         </div>
-                        {validationError && (
-                          <p className="text-xs text-red-500 mt-1">
-                            {validationError}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -673,61 +674,61 @@ console.log('${hookType} hook executed:', {
           {/* Hook Editor */}
           <ResizablePanel defaultSize={75} minSize={60}>
             {selectedHookData ? (
-              <div className="flex-1 flex flex-col overflow-hidden h-full">
+              <div className="flex h-full flex-1 flex-col overflow-hidden">
                 {/* Toolbar */}
-                <div className="p-3 border-b bg-background flex items-center justify-between">
+                <div className="flex items-center justify-between border-b bg-background p-3">
                   <div className="flex gap-2">
                     <Button
+                      disabled={hooks.length === 0}
+                      onClick={handleImport}
                       size="sm"
                       variant="outline"
-                      onClick={handleImport}
-                      disabled={hooks.length === 0}
                     >
-                      <Upload className="h-4 w-4 mr-1" weight="regular" />
+                      <Upload className="mr-1 h-4 w-4" weight="regular" />
                       Import
                     </Button>
                     <Button
+                      disabled={hooks.length === 0}
+                      onClick={handleExport}
                       size="sm"
                       variant="outline"
-                      onClick={handleExport}
-                      disabled={hooks.length === 0}
                     >
-                      <Download className="h-4 w-4 mr-1" weight="regular" />
+                      <Download className="mr-1 h-4 w-4" weight="regular" />
                       Export
                     </Button>
                   </div>
                   <div className="flex gap-2">
                     <Button
+                      disabled={testingHook === selectedHookData.name}
+                      onClick={handleTestHook}
                       size="sm"
                       variant="outline"
-                      onClick={handleTestHook}
-                      disabled={testingHook === selectedHookData.name}
                     >
                       {testingHook === selectedHookData.name ? (
                         <Spinner
-                          className="h-4 w-4 mr-1 animate-spin"
+                          className="mr-1 h-4 w-4 animate-spin"
                           weight="regular"
                         />
                       ) : (
-                        <Play className="h-4 w-4 mr-1" weight="regular" />
+                        <Play className="mr-1 h-4 w-4" weight="regular" />
                       )}
                       Test
                     </Button>
                     <Button
+                      disabled={saving}
+                      onClick={handleSave}
                       size="sm"
                       variant="outline"
-                      onClick={handleSave}
-                      disabled={saving}
                     >
-                      <FloppyDisk className="h-4 w-4 mr-1" weight="regular" />
+                      <FloppyDisk className="mr-1 h-4 w-4" weight="regular" />
                       {saving ? "Saving..." : "Save"}
                     </Button>
                     <Button
+                      onClick={handleDelete}
                       size="sm"
                       variant="destructive"
-                      onClick={handleDelete}
                     >
-                      <Trash className="h-4 w-4 mr-1" weight="regular" />
+                      <Trash className="mr-1 h-4 w-4" weight="regular" />
                       Delete
                     </Button>
                   </div>
@@ -736,15 +737,16 @@ console.log('${hookType} hook executed:', {
                 {/* Editor Content */}
                 <div className="flex-1 overflow-auto">
                   <CodeEditor
-                    value={selectedHookData.content || ""}
+                    height="100%"
+                    language="json"
                     onChange={(value) => {
                       if (value !== undefined && selectedHook) {
                         setHooks(
                           hooks.map((h) =>
                             h.name === selectedHook
                               ? { ...h, content: value }
-                              : h,
-                          ),
+                              : h
+                          )
                         );
                         setValidationErrors((prev) => {
                           const next = { ...prev };
@@ -753,15 +755,14 @@ console.log('${hookType} hook executed:', {
                         });
                       }
                     }}
-                    language="json"
-                    height="100%"
+                    value={selectedHookData.content || ""}
                   />
                 </div>
 
                 {/* Validation status */}
                 {validationErrors[selectedHookData.name] && (
-                  <div className="p-3 bg-red-500/10 border-t border-red-500/20">
-                    <p className="text-sm text-red-700 flex items-center gap-2">
+                  <div className="border-red-500/20 border-t bg-red-500/10 p-3">
+                    <p className="flex items-center gap-2 text-red-700 text-sm">
                       <WarningCircle className="h-4 w-4" weight="regular" />
                       {validationErrors[selectedHookData.name]}
                     </p>
@@ -769,14 +770,14 @@ console.log('${hookType} hook executed:', {
                 )}
               </div>
             ) : (
-              <div className="flex items-center justify-center h-full text-muted-foreground">
+              <div className="flex h-full items-center justify-center text-muted-foreground">
                 <div className="text-center">
                   <WarningCircle
-                    className="h-12 w-12 mx-auto mb-3 opacity-50"
+                    className="mx-auto mb-3 h-12 w-12 opacity-50"
                     weight="regular"
                   />
                   <p>Select a hook to edit</p>
-                  <p className="text-sm mt-1">
+                  <p className="mt-1 text-sm">
                     Or create a new hook to get started
                   </p>
                 </div>

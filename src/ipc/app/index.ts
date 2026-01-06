@@ -1,4 +1,9 @@
-import { appVersion, currentPlatfom, getHomePath, getCurrentWorkingDirectory } from "./handlers";
+import {
+  appVersion,
+  currentPlatfom,
+  getCurrentWorkingDirectory,
+  getHomePath,
+} from "./handlers";
 
 export const app = {
   currentPlatfom,

@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, FloppyDisk, Trash, HardDrives, FolderOpen, Pencil, FileText, PlusCircle } from '@phosphor-icons/react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  FileText,
+  FloppyDisk,
+  HardDrives,
+  PlusCircle,
+  Trash,
+} from "@phosphor-icons/react";
+import type React from "react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -14,41 +18,43 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { TipTapEditor } from '@/renderer/components/TipTapEditor';
-import { useClaudeItems } from '../Hooks/useClaudeItems';
-import { showError } from '@/renderer/lib/toast';
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  parseFrontmatter,
-  buildFrontmatter,
-  agentFrontmatterSchema,
   type AgentFrontmatter,
-} from '@/ipc/schemas';
-import { cn } from '@/utils/tailwind';
+  agentFrontmatterSchema,
+  buildFrontmatter,
+  parseFrontmatter,
+} from "@/ipc/schemas";
+import { TipTapEditor } from "@/renderer/components/TipTapEditor";
+import { showError } from "@/renderer/lib/toast";
 import {
-  agentFormSchema,
-  agentCreateSchema,
-  type AgentFormValues,
   type AgentCreateValues,
-} from '@/schemas/claude';
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from '@/components/ui/resizable';
+  type AgentFormValues,
+  agentCreateSchema,
+  agentFormSchema,
+} from "@/schemas/claude";
+import { cn } from "@/utils/tailwind";
+import { useClaudeItems } from "../Hooks/useClaudeItems";
 
 interface Agent {
   name: string;
   path: string;
   content: string;
-  type: 'file' | 'directory';
+  type: "file" | "directory";
   // Parsed from frontmatter
   displayName?: string;
   description?: string;
@@ -59,12 +65,23 @@ interface Agent {
   color?: string;
 }
 
-const parseAgentContent = (content: string): { frontmatter?: AgentFrontmatter; body?: string } => {
+const parseAgentContent = (
+  content: string
+): { frontmatter?: AgentFrontmatter; body?: string } => {
   return parseFrontmatter(content, agentFrontmatterSchema);
 };
 
 const buildAgentContent = (values: AgentFormValues): string => {
-  const { name, description, instructions, tools, permissions, model, color, content = '' } = values;
+  const {
+    name,
+    description,
+    instructions,
+    tools,
+    permissions,
+    model,
+    color,
+    content = "",
+  } = values;
 
   const frontmatterData: Record<string, string | string[]> = {
     name,
@@ -73,10 +90,16 @@ const buildAgentContent = (values: AgentFormValues): string => {
 
   if (instructions) frontmatterData.instructions = instructions;
   if (tools) {
-    frontmatterData.tools = tools.split(',').map(t => t.trim()).filter(Boolean);
+    frontmatterData.tools = tools
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
   }
   if (permissions) {
-    frontmatterData.permissions = permissions.split(',').map(p => p.trim()).filter(Boolean);
+    frontmatterData.permissions = permissions
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean);
   }
   if (model) frontmatterData.model = model;
   if (color) frontmatterData.color = color;
@@ -93,7 +116,7 @@ export const AgentsTab: React.FC = () => {
     deleteItem,
     saveItem,
     loadItems,
-  } = useClaudeItems({ type: 'agents', currentView: 'agents' });
+  } = useClaudeItems({ type: "agents", currentView: "agents" });
 
   // Parse agents to extract frontmatter
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -121,21 +144,21 @@ export const AgentsTab: React.FC = () => {
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [isRawMode, setIsRawMode] = useState(false);
-  const [rawContent, setRawContent] = useState('');
+  const [rawContent, setRawContent] = useState("");
   const [isAdding, setIsAdding] = useState(false);
 
   // Form for agent editing
   const form = useForm<AgentFormValues>({
     resolver: zodResolver(agentFormSchema),
     defaultValues: {
-      name: '',
-      description: '',
-      instructions: '',
-      tools: '',
-      permissions: '',
-      model: '',
-      color: '',
-      content: '',
+      name: "",
+      description: "",
+      instructions: "",
+      tools: "",
+      permissions: "",
+      model: "",
+      color: "",
+      content: "",
     },
   });
 
@@ -143,7 +166,7 @@ export const AgentsTab: React.FC = () => {
   const createForm = useForm<AgentCreateValues>({
     resolver: zodResolver(agentCreateSchema),
     defaultValues: {
-      name: '',
+      name: "",
     },
   });
 
@@ -151,7 +174,7 @@ export const AgentsTab: React.FC = () => {
   useEffect(() => {
     if (!selectedAgent) {
       form.reset();
-      setRawContent('');
+      setRawContent("");
       return;
     }
 
@@ -160,13 +183,13 @@ export const AgentsTab: React.FC = () => {
       const parsed = parseAgentContent(agent.content);
       form.reset({
         name: parsed.frontmatter?.name || agent.name,
-        description: parsed.frontmatter?.description || '',
-        instructions: parsed.frontmatter?.instructions || '',
-        tools: parsed.frontmatter?.tools?.join(', ') || '',
-        permissions: parsed.frontmatter?.permissions?.join(', ') || '',
-        model: parsed.frontmatter?.model || '',
-        color: parsed.frontmatter?.color || '',
-        content: parsed.body || '',
+        description: parsed.frontmatter?.description || "",
+        instructions: parsed.frontmatter?.instructions || "",
+        tools: parsed.frontmatter?.tools?.join(", ") || "",
+        permissions: parsed.frontmatter?.permissions?.join(", ") || "",
+        model: parsed.frontmatter?.model || "",
+        color: parsed.frontmatter?.color || "",
+        content: parsed.body || "",
       });
       setRawContent(agent.content);
     }
@@ -179,14 +202,12 @@ export const AgentsTab: React.FC = () => {
 
     setSaving(true);
     try {
-      const agentContent = isRawMode
-        ? rawContent
-        : buildAgentContent(values);
+      const agentContent = isRawMode ? rawContent : buildAgentContent(values);
 
       await saveItem(selectedAgent, agentContent);
       await loadItems();
     } catch (error) {
-      console.error('Failed to save agent:', error);
+      console.error("Failed to save agent:", error);
     } finally {
       setSaving(false);
     }
@@ -195,7 +216,7 @@ export const AgentsTab: React.FC = () => {
   const handleDelete = async () => {
     if (!selectedAgent) return;
 
-    if (confirm('Are you sure you want to delete this agent?')) {
+    if (confirm("Are you sure you want to delete this agent?")) {
       const success = await deleteItem(selectedAgent);
       if (success) {
         setSelectedAgent(null);
@@ -205,7 +226,10 @@ export const AgentsTab: React.FC = () => {
 
   const handleAdd = () => {
     if (!activePath) {
-      showError('Cannot add agent', 'Please select a project or global settings first');
+      showError(
+        "Cannot add agent",
+        "Please select a project or global settings first"
+      );
       return;
     }
     setIsAdding(true);
@@ -228,22 +252,33 @@ export const AgentsTab: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       {/* Main Content */}
-      <ResizablePanelGroup direction="horizontal" className="flex-1 overflow-hidden">
+      <ResizablePanelGroup
+        className="flex-1 overflow-hidden"
+        direction="horizontal"
+      >
         {/* Agents List */}
-        <ResizablePanel defaultSize={25} minSize={15} maxSize={40} className="border-r bg-muted/30">
+        <ResizablePanel
+          className="border-r bg-muted/30"
+          defaultSize={25}
+          maxSize={40}
+          minSize={15}
+        >
           {loading ? (
-            <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+            <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
               Loading...
             </div>
           ) : (
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+            <div className="flex-1 space-y-1 overflow-y-auto p-2">
               {/* Add Agent Button / Form */}
               {isAdding ? (
-                <div className="p-2 rounded-md bg-primary/10 border border-primary/20">
+                <div className="rounded-md border border-primary/20 bg-primary/10 p-2">
                   <Form {...createForm}>
-                    <form onSubmit={createForm.handleSubmit(handleConfirmAdd)} className="space-y-2">
+                    <form
+                      className="space-y-2"
+                      onSubmit={createForm.handleSubmit(handleConfirmAdd)}
+                    >
                       <FormField
                         control={createForm.control}
                         name="name"
@@ -252,12 +287,12 @@ export const AgentsTab: React.FC = () => {
                             <FormControl>
                               <Input
                                 {...field}
-                                placeholder="my-agent-name (optional, leave empty for auto-name)"
-                                className="font-mono text-sm"
                                 autoFocus
+                                className="font-mono text-sm"
                                 onKeyDown={(e) => {
-                                  if (e.key === 'Escape') handleCancelAdd();
+                                  if (e.key === "Escape") handleCancelAdd();
                                 }}
+                                placeholder="my-agent-name (optional, leave empty for auto-name)"
                               />
                             </FormControl>
                             <FormMessage />
@@ -265,10 +300,16 @@ export const AgentsTab: React.FC = () => {
                         )}
                       />
                       <div className="flex gap-2">
-                        <Button type="submit" size="sm" className="flex-1">
+                        <Button className="flex-1" size="sm" type="submit">
                           Create
                         </Button>
-                        <Button type="button" size="sm" variant="outline" onClick={handleCancelAdd} className="flex-1">
+                        <Button
+                          className="flex-1"
+                          onClick={handleCancelAdd}
+                          size="sm"
+                          type="button"
+                          variant="outline"
+                        >
                           Cancel
                         </Button>
                       </div>
@@ -277,47 +318,60 @@ export const AgentsTab: React.FC = () => {
                 </div>
               ) : (
                 <button
-                  onClick={handleAdd}
-                  disabled={!activePath}
                   className={cn(
-                    'w-full p-3 rounded-md border-2 border-dashed transition-colors flex items-center justify-center gap-2',
+                    "flex w-full items-center justify-center gap-2 rounded-md border-2 border-dashed p-3 transition-colors",
                     activePath
-                      ? 'border-primary/50 hover:border-primary hover:bg-primary/5 cursor-pointer'
-                      : 'border-muted opacity-50 cursor-not-allowed'
+                      ? "cursor-pointer border-primary/50 hover:border-primary hover:bg-primary/5"
+                      : "cursor-not-allowed border-muted opacity-50"
                   )}
-                  title={!activePath ? "Select a project or global settings first" : "Add new agent"}
+                  disabled={!activePath}
+                  onClick={handleAdd}
+                  title={
+                    activePath
+                      ? "Add new agent"
+                      : "Select a project or global settings first"
+                  }
                 >
                   <PlusCircle className="h-5 w-5" weight="regular" />
-                  <span className="text-sm font-medium">Add Agent</span>
+                  <span className="font-medium text-sm">Add Agent</span>
                 </button>
               )}
 
               {/* Agents List */}
               {agents.length === 0 && !isAdding ? (
-                <div className="flex items-center justify-center h-[calc(100%-60px)] text-muted-foreground">
+                <div className="flex h-[calc(100%-60px)] items-center justify-center text-muted-foreground">
                   <div className="text-center">
-                    <HardDrives className="h-8 w-8 mx-auto mb-2 opacity-50" weight="regular" />
+                    <HardDrives
+                      className="mx-auto mb-2 h-8 w-8 opacity-50"
+                      weight="regular"
+                    />
                     <p className="text-sm">No agents found</p>
-                    <p className="text-xs mt-1">Create agents to delegate specialized tasks</p>
+                    <p className="mt-1 text-xs">
+                      Create agents to delegate specialized tasks
+                    </p>
                   </div>
                 </div>
               ) : (
                 agents.map((agent) => (
                   <div
-                    key={agent.path}
                     className={cn(
-                      'p-2 rounded-md cursor-pointer transition-colors',
+                      "cursor-pointer rounded-md p-2 transition-colors",
                       selectedAgent === agent.path
-                        ? 'bg-primary text-primary-foreground'
-                        : 'hover:bg-muted/50'
+                        ? "bg-primary text-primary-foreground"
+                        : "hover:bg-muted/50"
                     )}
+                    key={agent.path}
                     onClick={() => setSelectedAgent(agent.path)}
                   >
                     <div className="flex items-start gap-2">
-                      <FileText className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">{agent.displayName || agent.name}</div>
-                        <div className="text-xs opacity-70 truncate">{agent.description || 'No description'}</div>
+                      <FileText className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate font-medium text-sm">
+                          {agent.displayName || agent.name}
+                        </div>
+                        <div className="truncate text-xs opacity-70">
+                          {agent.description || "No description"}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -331,34 +385,43 @@ export const AgentsTab: React.FC = () => {
 
         {/* Agent Editor */}
         <ResizablePanel defaultSize={75} minSize={60}>
-          <div className="flex-1 flex flex-col overflow-hidden h-full">
+          <div className="flex h-full flex-1 flex-col overflow-hidden">
             {selectedAgentData ? (
               <>
                 {/* Toolbar */}
-                <div className="p-3 border-b bg-background flex items-center justify-between">
+                <div className="flex items-center justify-between border-b bg-background p-3">
                   <div className="flex gap-2">
                     <Button
-                      size="sm"
-                      variant={isRawMode ? 'outline' : 'default'}
                       onClick={() => setIsRawMode(false)}
+                      size="sm"
+                      variant={isRawMode ? "outline" : "default"}
                     >
                       Form
                     </Button>
                     <Button
-                      size="sm"
-                      variant={isRawMode ? 'default' : 'outline'}
                       onClick={() => setIsRawMode(true)}
+                      size="sm"
+                      variant={isRawMode ? "default" : "outline"}
                     >
                       Raw
                     </Button>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={form.handleSubmit(handleSave)} disabled={saving}>
-                      <FloppyDisk className="h-4 w-4 mr-1" weight="regular" />
-                      {saving ? 'Saving...' : 'Save'}
+                    <Button
+                      disabled={saving}
+                      onClick={form.handleSubmit(handleSave)}
+                      size="sm"
+                      variant="outline"
+                    >
+                      <FloppyDisk className="mr-1 h-4 w-4" weight="regular" />
+                      {saving ? "Saving..." : "Save"}
                     </Button>
-                    <Button size="sm" variant="destructive" onClick={handleDelete}>
-                      <Trash className="h-4 w-4 mr-1" weight="regular" />
+                    <Button
+                      onClick={handleDelete}
+                      size="sm"
+                      variant="destructive"
+                    >
+                      <Trash className="mr-1 h-4 w-4" weight="regular" />
                       Delete
                     </Button>
                   </div>
@@ -368,14 +431,17 @@ export const AgentsTab: React.FC = () => {
                 <div className="flex-1 overflow-auto">
                   {isRawMode ? (
                     <TipTapEditor
+                      className="min-h-full"
                       content={rawContent}
                       onChange={setRawContent}
                       placeholder="---\nname: agent-name\ndescription: Description of when to use this agent\n---\n\n# Agent Name\n\nAdd your agent instructions here..."
-                      className="min-h-full"
                     />
                   ) : (
                     <Form {...form}>
-                      <form onSubmit={form.handleSubmit(handleSave)} className="p-4 space-y-4">
+                      <form
+                        className="space-y-4 p-4"
+                        onSubmit={form.handleSubmit(handleSave)}
+                      >
                         <FormField
                           control={form.control}
                           name="name"
@@ -383,10 +449,15 @@ export const AgentsTab: React.FC = () => {
                             <FormItem>
                               <FormLabel>Name (internal ID)</FormLabel>
                               <FormControl>
-                                <Input {...field} placeholder="my-agent-name" className="font-mono text-sm" />
+                                <Input
+                                  {...field}
+                                  className="font-mono text-sm"
+                                  placeholder="my-agent-name"
+                                />
                               </FormControl>
                               <FormDescription>
-                                Lowercase letters, numbers, and hyphens only. Max 64 characters.
+                                Lowercase letters, numbers, and hyphens only.
+                                Max 64 characters.
                               </FormDescription>
                               <FormMessage />
                             </FormItem>
@@ -400,7 +471,12 @@ export const AgentsTab: React.FC = () => {
                             <FormItem>
                               <FormLabel>Description *</FormLabel>
                               <FormControl>
-                                <Textarea {...field} placeholder="Describe what this agent does and when Claude should use it..." rows={3} className="text-sm" />
+                                <Textarea
+                                  {...field}
+                                  className="text-sm"
+                                  placeholder="Describe what this agent does and when Claude should use it..."
+                                  rows={3}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -412,9 +488,16 @@ export const AgentsTab: React.FC = () => {
                           name="instructions"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Instructions (in frontmatter)</FormLabel>
+                              <FormLabel>
+                                Instructions (in frontmatter)
+                              </FormLabel>
                               <FormControl>
-                                <Textarea {...field} placeholder="Additional instructions stored in frontmatter..." rows={2} className="text-sm" />
+                                <Textarea
+                                  {...field}
+                                  className="text-sm"
+                                  placeholder="Additional instructions stored in frontmatter..."
+                                  rows={2}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -428,7 +511,11 @@ export const AgentsTab: React.FC = () => {
                             <FormItem>
                               <FormLabel>Tools (comma-separated)</FormLabel>
                               <FormControl>
-                                <Input {...field} placeholder="tool1, tool2, tool3" className="font-mono text-sm" />
+                                <Input
+                                  {...field}
+                                  className="font-mono text-sm"
+                                  placeholder="tool1, tool2, tool3"
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -440,9 +527,15 @@ export const AgentsTab: React.FC = () => {
                           name="permissions"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Permissions (comma-separated)</FormLabel>
+                              <FormLabel>
+                                Permissions (comma-separated)
+                              </FormLabel>
                               <FormControl>
-                                <Input {...field} placeholder="perm1, perm2, perm3" className="font-mono text-sm" />
+                                <Input
+                                  {...field}
+                                  className="font-mono text-sm"
+                                  placeholder="perm1, perm2, perm3"
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -457,7 +550,11 @@ export const AgentsTab: React.FC = () => {
                               <FormItem>
                                 <FormLabel>Model</FormLabel>
                                 <FormControl>
-                                  <Input {...field} placeholder="opus, sonnet, haiku" className="text-sm" />
+                                  <Input
+                                    {...field}
+                                    className="text-sm"
+                                    placeholder="opus, sonnet, haiku"
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -470,7 +567,10 @@ export const AgentsTab: React.FC = () => {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>Color</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select
+                                  defaultValue={field.value}
+                                  onValueChange={field.onChange}
+                                >
                                   <FormControl>
                                     <SelectTrigger>
                                       <SelectValue placeholder="Select a color" />
@@ -479,13 +579,21 @@ export const AgentsTab: React.FC = () => {
                                   <SelectContent>
                                     <SelectItem value="blue">Blue</SelectItem>
                                     <SelectItem value="green">Green</SelectItem>
-                                    <SelectItem value="purple">Purple</SelectItem>
+                                    <SelectItem value="purple">
+                                      Purple
+                                    </SelectItem>
                                     <SelectItem value="red">Red</SelectItem>
-                                    <SelectItem value="orange">Orange</SelectItem>
-                                    <SelectItem value="yellow">Yellow</SelectItem>
+                                    <SelectItem value="orange">
+                                      Orange
+                                    </SelectItem>
+                                    <SelectItem value="yellow">
+                                      Yellow
+                                    </SelectItem>
                                     <SelectItem value="pink">Pink</SelectItem>
                                     <SelectItem value="cyan">Cyan</SelectItem>
-                                    <SelectItem value="indigo">Indigo</SelectItem>
+                                    <SelectItem value="indigo">
+                                      Indigo
+                                    </SelectItem>
                                     <SelectItem value="teal">Teal</SelectItem>
                                   </SelectContent>
                                 </Select>
@@ -503,7 +611,8 @@ export const AgentsTab: React.FC = () => {
                               <FormLabel>Agent Instructions (body)</FormLabel>
                               <FormControl>
                                 <TipTapEditor
-                                  content={field.value || ''}
+                                  className="min-h-[400px]"
+                                  content={field.value || ""}
                                   onChange={field.onChange}
                                   placeholder={`# Agent Name
 
@@ -514,7 +623,6 @@ You are a specialist agent for...
 - Best practices
 - Examples
 `}
-                                  className="min-h-[400px]"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -527,11 +635,16 @@ You are a specialist agent for...
                 </div>
               </>
             ) : (
-              <div className="flex items-center justify-center h-full text-muted-foreground">
+              <div className="flex h-full items-center justify-center text-muted-foreground">
                 <div className="text-center">
-                  <HardDrives className="h-12 w-12 mx-auto mb-3 opacity-50" weight="regular" />
+                  <HardDrives
+                    className="mx-auto mb-3 h-12 w-12 opacity-50"
+                    weight="regular"
+                  />
                   <p>Select an agent to edit</p>
-                  <p className="text-sm mt-1">Or create a new agent to get started</p>
+                  <p className="mt-1 text-sm">
+                    Or create a new agent to get started
+                  </p>
                 </div>
               </div>
             )}

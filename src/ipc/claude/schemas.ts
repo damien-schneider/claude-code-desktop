@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // Schema for readDirectory options
 export const readDirectoryOptionsSchema = z.object({
@@ -29,6 +29,6 @@ export const settingsWriteSchema = z.object({
 // Schema for create directory
 export const createClaudeDirectorySchema = z.object({
   projectPath: z.string(),
-  type: z.enum(['skills', 'commands', 'agents', 'rules', 'hooks']),
+  type: z.enum(["skills", "commands", "agents", "rules", "hooks"]),
   name: z.string(),
 });

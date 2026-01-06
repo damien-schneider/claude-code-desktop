@@ -1,7 +1,7 @@
-import React from "react";
+import { HardDrives, Pencil, Trash } from "@phosphor-icons/react";
+import type React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Pencil, Trash, HardDrives } from "@phosphor-icons/react";
 import type { McpServerConfig } from "@/ipc/claude/handlers";
 
 interface McpServerCardProps {
@@ -21,28 +21,31 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
   onDelete,
 }) => {
   return (
-    <Card className="hover:border-primary/50 transition-colors">
+    <Card className="transition-colors hover:border-primary/50">
       <CardContent className="">
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <HardDrives className="h-4 w-4 flex-shrink-0 text-muted-foreground" weight="regular" />
-            <div className="flex-1 min-w-0">
-              <h4 className="font-medium truncate">{name}</h4>
-              <p className="text-sm text-muted-foreground font-mono truncate">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <HardDrives
+              className="h-4 w-4 flex-shrink-0 text-muted-foreground"
+              weight="regular"
+            />
+            <div className="min-w-0 flex-1">
+              <h4 className="truncate font-medium">{name}</h4>
+              <p className="truncate font-mono text-muted-foreground text-sm">
                 {config.command} {config.args.join(" ")}
               </p>
               {config.env && Object.keys(config.env).length > 0 && (
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="mt-1 text-muted-foreground text-xs">
                   {Object.keys(config.env).length} environment variable(s)
                 </p>
               )}
             </div>
           </div>
-          <div className="flex gap-2 flex-shrink-0">
-            <Button size="sm" variant="outline" onClick={onEdit}>
+          <div className="flex flex-shrink-0 gap-2">
+            <Button onClick={onEdit} size="sm" variant="outline">
               <Pencil className="h-3 w-3" weight="regular" />
             </Button>
-            <Button size="sm" variant="destructive" onClick={onDelete}>
+            <Button onClick={onDelete} size="sm" variant="destructive">
               <Trash className="h-3 w-3" weight="regular" />
             </Button>
           </div>

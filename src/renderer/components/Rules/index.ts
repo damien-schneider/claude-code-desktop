@@ -1,1 +1,1 @@
-export { RulesTab } from './RulesTab';
+export { RulesTab } from "./RulesTab";

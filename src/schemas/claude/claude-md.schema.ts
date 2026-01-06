@@ -7,7 +7,7 @@
  * Reference: https://docs.anthropic.com/en/docs/build-with-claude/project-instructions
  */
 
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * CLAUDE.md section types
@@ -23,16 +23,16 @@ export const claudeMdSectionSchema = z.object({
  * These are the common sections found in well-structured CLAUDE.md files
  */
 export const standardSectionsEnum = z.enum([
-  'overview',
-  'architecture',
-  'coding-standards',
-  'testing',
-  'deployment',
-  'development-workflow',
-  'documentation',
-  'troubleshooting',
-  'glossary',
-  'appendix',
+  "overview",
+  "architecture",
+  "coding-standards",
+  "testing",
+  "deployment",
+  "development-workflow",
+  "documentation",
+  "troubleshooting",
+  "glossary",
+  "appendix",
 ]);
 
 /**
@@ -41,12 +41,14 @@ export const standardSectionsEnum = z.enum([
  */
 export const claudeMdContentSchema = z.object({
   // Optional YAML frontmatter
-  frontmatter: z.object({
-    version: z.string().optional(),
-    lastUpdated: z.string().optional(),
-    author: z.string().optional(),
-    tags: z.array(z.string()).optional(),
-  }).optional(),
+  frontmatter: z
+    .object({
+      version: z.string().optional(),
+      lastUpdated: z.string().optional(),
+      author: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+    })
+    .optional(),
 
   // Main content sections
   sections: z.array(claudeMdSectionSchema).optional(),
@@ -60,7 +62,7 @@ export const claudeMdContentSchema = z.object({
  * Simplified for the UI
  */
 export const claudeMdFormSchema = z.object({
-  content: z.string().min(1, 'CLAUDE.md content cannot be empty'),
+  content: z.string().min(1, "CLAUDE.md content cannot be empty"),
 });
 
 /**
@@ -80,7 +82,7 @@ export function parseClaudeMd(content: string): {
 } {
   const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
 
-  let frontmatter: Record<string, any> = {};
+  const frontmatter: Record<string, any> = {};
   let rawContent = content;
   let hasFrontmatter = false;
 
@@ -100,16 +102,17 @@ export function parseClaudeMd(content: string): {
     if (authorMatch) frontmatter.author = authorMatch[1].trim();
     if (tagsMatch) {
       frontmatter.tags = tagsMatch[1]
-        .split(',')
-        .map(t => t.trim().replace(/^['"]|['"]$/g, ''))
+        .split(",")
+        .map((t) => t.trim().replace(/^['"]|['"]$/g, ""))
         .filter(Boolean);
     }
   }
 
   // Extract sections by parsing headers
   const sections: Array<{ title: string; content: string; level: number }> = [];
-  const lines = rawContent.split('\n');
-  let currentSection: { title: string; content: string; level: number } | null = null;
+  const lines = rawContent.split("\n");
+  let currentSection: { title: string; content: string; level: number } | null =
+    null;
   let currentContent: string[] = [];
 
   for (const line of lines) {
@@ -120,14 +123,14 @@ export function parseClaudeMd(content: string): {
       if (currentSection) {
         sections.push({
           ...currentSection,
-          content: currentContent.join('\n').trim(),
+          content: currentContent.join("\n").trim(),
         });
       }
 
       // Start new section
       const level = headerMatch[1].length;
       const title = headerMatch[2].trim();
-      currentSection = { title, content: '', level };
+      currentSection = { title, content: "", level };
       currentContent = [];
     } else if (currentSection) {
       currentContent.push(line);
@@ -138,7 +141,7 @@ export function parseClaudeMd(content: string): {
   if (currentSection) {
     sections.push({
       ...currentSection,
-      content: currentContent.join('\n').trim(),
+      content: currentContent.join("\n").trim(),
     });
   }
 
@@ -169,28 +172,28 @@ export function buildClaudeMd(options: {
   };
 }): string {
   const {
-    projectName = 'My Project',
-    overview = 'Brief description of the project.',
-    architecture = '',
-    codingStandards = '',
-    testing = '',
-    deployment = '',
-    developmentWorkflow = '',
+    projectName = "My Project",
+    overview = "Brief description of the project.",
+    architecture = "",
+    codingStandards = "",
+    testing = "",
+    deployment = "",
+    developmentWorkflow = "",
     frontmatter,
   } = options;
 
-  let content = '';
+  let content = "";
 
   // Add frontmatter if provided
   if (frontmatter && Object.keys(frontmatter).length > 0) {
-    content += '---\n';
+    content += "---\n";
     if (frontmatter.version) content += `version: ${frontmatter.version}\n`;
     if (frontmatter.author) content += `author: ${frontmatter.author}\n`;
     if (frontmatter.tags && frontmatter.tags.length > 0) {
-      content += `tags: [${frontmatter.tags.map(t => `"${t}"`).join(', ')}]\n`;
+      content += `tags: [${frontmatter.tags.map((t) => `"${t}"`).join(", ")}]\n`;
     }
-    content += `lastUpdated: ${new Date().toISOString().split('T')[0]}\n`;
-    content += '---\n\n';
+    content += `lastUpdated: ${new Date().toISOString().split("T")[0]}\n`;
+    content += "---\n\n";
   }
 
   // Add sections
@@ -232,7 +235,7 @@ export function validateClaudeMd(content: string): {
   const warnings: string[] = [];
 
   if (!content.trim()) {
-    errors.push('CLAUDE.md content cannot be empty');
+    errors.push("CLAUDE.md content cannot be empty");
   }
 
   // Check for common sections
@@ -240,20 +243,22 @@ export function validateClaudeMd(content: string): {
   const hasArchitecture = /##?\s*Architecture/i.test(content);
 
   if (!hasOverview) {
-    warnings.push('Missing Overview section - recommended for all projects');
+    warnings.push("Missing Overview section - recommended for all projects");
   }
 
   // Check for proper markdown heading format
   const invalidHeaders = content.match(/^(#+\s*)$/gm);
   if (invalidHeaders) {
-    warnings.push('Some headers appear to be missing titles');
+    warnings.push("Some headers appear to be missing titles");
   }
 
   // Check for very long lines that might indicate formatting issues
-  const lines = content.split('\n');
-  const veryLongLines = lines.filter(line => line.length > 500);
+  const lines = content.split("\n");
+  const veryLongLines = lines.filter((line) => line.length > 500);
   if (veryLongLines.length > 0) {
-    warnings.push(`Found ${veryLongLines.length} very long lines that might need formatting`);
+    warnings.push(
+      `Found ${veryLongLines.length} very long lines that might need formatting`
+    );
   }
 
   return {
@@ -283,9 +288,12 @@ export function extractClaudeMdImports(content: string): string[] {
  * Helper to resolve import paths
  * Converts relative import paths to absolute paths based on project root
  */
-export function resolveImportPath(importPath: string, projectRoot: string): string {
+export function resolveImportPath(
+  importPath: string,
+  projectRoot: string
+): string {
   // Remove leading ./
-  const relativePath = importPath.replace(/^\.\//, '');
+  const relativePath = importPath.replace(/^\.\//, "");
   return `${projectRoot}/${relativePath}`;
 }
 

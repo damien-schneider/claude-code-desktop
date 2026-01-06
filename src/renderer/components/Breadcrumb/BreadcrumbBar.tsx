@@ -1,18 +1,18 @@
-import React from "react";
-import { useAtom, useSetAtom } from "jotai";
 import {
   CaretRight,
   MagnifyingGlass,
   Sidebar as SidebarIcon,
 } from "@phosphor-icons/react";
+import { useAtom } from "jotai";
+import React from "react";
+import { Button } from "@/components/ui/button";
 import {
   currentViewAtom,
-  selectedProjectIdAtom,
   isGlobalSettingsSelectedAtom,
+  selectedProjectIdAtom,
   sidebarCollapsedAtom,
 } from "@/renderer/stores";
 import { cn } from "@/utils/tailwind";
-import { Button } from "@/components/ui/button";
 
 export interface BreadcrumbBarProps {
   className?: string;
@@ -70,19 +70,19 @@ export const BreadcrumbBar: React.FC<BreadcrumbBarProps> = ({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 px-4 py-2 border-b bg-background min-h-11 select-none",
-        className,
+        "flex min-h-11 select-none items-center gap-2 border-b bg-background px-4 py-2",
+        className
       )}
       style={{ WebkitAppRegion: "drag" as any }}
     >
       {/* Sidebar Trigger - not draggable */}
       <Button
-        variant="ghost"
-        size="icon"
         className="h-7 w-7"
-        onClick={handleToggleSidebar}
         data-sidebar="trigger"
+        onClick={handleToggleSidebar}
+        size="icon"
         style={{ WebkitAppRegion: "no-drag" as any }}
+        variant="ghost"
       >
         <SidebarIcon className="h-4 w-4" weight="regular" />
         <span className="sr-only">Toggle Sidebar</span>
@@ -90,8 +90,8 @@ export const BreadcrumbBar: React.FC<BreadcrumbBarProps> = ({
 
       {/* Breadcrumb - draggable for window movement */}
       <nav
-        className="flex items-center gap-1 text-sm"
         aria-label="Breadcrumb"
+        className="flex items-center gap-1 text-sm"
         style={{ WebkitAppRegion: "drag" as any }}
       >
         {segments.map((segment, index) => (
@@ -106,7 +106,7 @@ export const BreadcrumbBar: React.FC<BreadcrumbBarProps> = ({
               className={cn(
                 index === segments.length - 1
                   ? "font-medium text-foreground"
-                  : "text-muted-foreground",
+                  : "text-muted-foreground"
               )}
             >
               {segment.label}
@@ -120,14 +120,14 @@ export const BreadcrumbBar: React.FC<BreadcrumbBarProps> = ({
       {/* Quick Open Button - not draggable */}
       {onQuickOpen && (
         <Button
-          variant="ghost"
-          size="sm"
-          onClick={onQuickOpen}
           className="h-7 gap-1.5 px-2"
+          onClick={onQuickOpen}
+          size="sm"
           style={{ WebkitAppRegion: "no-drag" as any }}
+          variant="ghost"
         >
           <MagnifyingGlass className="h-3.5 w-3.5" weight="regular" />
-          <kbd className="min-w-[1rem] px-1 py-0.5 text-[10px] font-mono text-muted-foreground/70 bg-muted/50 rounded">
+          <kbd className="min-w-[1rem] rounded bg-muted/50 px-1 py-0.5 font-mono text-[10px] text-muted-foreground/70">
             ⌘P
           </kbd>
         </Button>

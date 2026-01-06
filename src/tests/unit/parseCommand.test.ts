@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from "vitest";
 
-describe('parseCommand', () => {
-  it('should parse command with valid frontmatter', () => {
+describe("parseCommand", () => {
+  it("should parse command with valid frontmatter", () => {
     const content = `---
 description: My command
 ---
@@ -19,12 +19,12 @@ $ARGUMENTS
         frontmatter: frontmatterMatch[1],
         body: frontmatterMatch[2],
       };
-      expect(result.frontmatter).toBe('description: My command');
-      expect(result.body).toContain('# Command');
+      expect(result.frontmatter).toBe("description: My command");
+      expect(result.body).toContain("# Command");
     }
   });
 
-  it('should return null frontmatter when no frontmatter exists', () => {
+  it("should return null frontmatter when no frontmatter exists", () => {
     const content = `# Command without frontmatter
 
 $ARGUMENTS
@@ -34,7 +34,7 @@ $ARGUMENTS
     expect(frontmatterMatch).toBeNull();
   });
 
-  it('should indicate when frontmatter is missing', () => {
+  it("should indicate when frontmatter is missing", () => {
     const content = `# Command
 
 $ARGUMENTS`;
@@ -43,13 +43,13 @@ $ARGUMENTS`;
     expect(hasFrontmatter).toBe(false);
   });
 
-  it('should detect frontmatter presence correctly', () => {
+  it("should detect frontmatter presence correctly", () => {
     const withFrontmatter = `---
 description: Test
 ---
 
 Content`;
-    const withoutFrontmatter = `Just content`;
+    const withoutFrontmatter = "Just content";
 
     expect(/^---\n[\s\S]*?\n---/.test(withFrontmatter)).toBe(true);
     expect(/^---\n[\s\S]*?\n---/.test(withoutFrontmatter)).toBe(false);

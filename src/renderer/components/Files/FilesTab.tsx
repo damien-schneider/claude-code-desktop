@@ -1,41 +1,40 @@
-import React, { useState, useEffect, useCallback } from 'react';
 import {
+  CaretRight,
+  Code,
   File,
+  FileText,
+  FilmStrip,
+  FloppyDisk,
   Folder,
   FolderOpen,
-  CaretRight,
-  FloppyDisk,
-  Trash,
-  Plus,
-  PlusCircle,
-  FileText,
-  Code,
-  Package,
   Image,
-  FilmStrip,
   MusicNote,
-  WarningCircle,
-} from '@phosphor-icons/react';
-import { Button } from '@/components/ui/button';
-import { TipTapEditor } from '@/renderer/components/TipTapEditor';
+  Package,
+  Plus,
+  Trash,
+} from "@phosphor-icons/react";
+import { useAtom, useSetAtom } from "jotai";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
-  ResizablePanelGroup,
-  ResizablePanel,
   ResizableHandle,
-} from '@/components/ui/resizable';
-import { useAtom, useSetAtom } from 'jotai';
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
+import type { ExplorerItem } from "@/ipc/claude/handlers";
+import { ipc } from "@/ipc/manager";
+import { TipTapEditor } from "@/renderer/components/TipTapEditor";
 import {
-  selectedProjectIdAtom,
-  isGlobalSettingsSelectedAtom,
   currentViewAtom,
   homePathAtom,
   homePathInitializedAtom,
   homePathLoadingAtom,
   initializeHomePathAtom,
-} from '@/renderer/stores';
-import { ipc } from '@/ipc/manager';
-import type { ExplorerItem } from '@/ipc/claude/handlers';
-import { cn } from '@/utils/tailwind';
+  isGlobalSettingsSelectedAtom,
+  selectedProjectIdAtom,
+} from "@/renderer/stores";
+import { cn } from "@/utils/tailwind";
 
 interface FileNode extends ExplorerItem {
   children?: FileNode[];
@@ -45,28 +44,48 @@ interface FileNode extends ExplorerItem {
 }
 
 const getFileIcon = (item: FileNode) => {
-  if (item.type === 'directory') {
+  if (item.type === "directory") {
     return item.isExpanded ? FolderOpen : Folder;
   }
 
   const ext = item.extension?.toLowerCase();
 
-  if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'ico'].includes(ext || '')) {
+  if (["jpg", "jpeg", "png", "gif", "svg", "webp", "ico"].includes(ext || "")) {
     return Image;
   }
-  if (['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(ext || '')) {
+  if (["mp4", "mov", "avi", "mkv", "webm"].includes(ext || "")) {
     return FilmStrip;
   }
-  if (['mp3', 'wav', 'ogg', 'flac', 'aac'].includes(ext || '')) {
+  if (["mp3", "wav", "ogg", "flac", "aac"].includes(ext || "")) {
     return MusicNote;
   }
-  if (['zip', 'tar', 'gz', 'rar', '7z'].includes(ext || '')) {
+  if (["zip", "tar", "gz", "rar", "7z"].includes(ext || "")) {
     return Package;
   }
-  if (['js', 'ts', 'jsx', 'tsx', 'py', 'rb', 'go', 'rs', 'java', 'c', 'cpp', 'h', 'cs'].includes(ext || '')) {
+  if (
+    [
+      "js",
+      "ts",
+      "jsx",
+      "tsx",
+      "py",
+      "rb",
+      "go",
+      "rs",
+      "java",
+      "c",
+      "cpp",
+      "h",
+      "cs",
+    ].includes(ext || "")
+  ) {
     return Code;
   }
-  if (['md', 'txt', 'json', 'xml', 'yaml', 'yml', 'toml', 'ini', 'cfg'].includes(ext || '')) {
+  if (
+    ["md", "txt", "json", "xml", "yaml", "yml", "toml", "ini", "cfg"].includes(
+      ext || ""
+    )
+  ) {
     return FileText;
   }
 
@@ -82,79 +101,102 @@ export const FilesTab: React.FC = () => {
   const [homeLoading] = useAtom(homePathLoadingAtom);
   const initializeHomePath = useSetAtom(initializeHomePathAtom);
 
-  const [rootPath, setRootPath] = useState<string>('');
+  const [rootPath, setRootPath] = useState<string>("");
   const [fileTree, setFileTree] = useState<FileNode[]>([]);
   const [selectedFile, setSelectedFile] = useState<FileNode | null>(null);
-  const [fileContent, setFileContent] = useState<string>('');
+  const [fileContent, setFileContent] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Initialize home path once
   useEffect(() => {
-    if (!homeInitialized && !homePath) {
+    if (!(homeInitialized || homePath)) {
       initializeHomePath();
     }
   }, [homeInitialized, homePath, initializeHomePath]);
 
   // Debug logging
   useEffect(() => {
-    console.log('FilesTab state:', {
+    console.log("FilesTab state:", {
       selectedProjectId,
       isGlobalSettingsSelected,
       homePath,
       rootPath,
       fileTreeLength: fileTree.length,
     });
-  }, [selectedProjectId, isGlobalSettingsSelected, homePath, rootPath, fileTree.length]);
+  }, [
+    selectedProjectId,
+    isGlobalSettingsSelected,
+    homePath,
+    rootPath,
+    fileTree.length,
+  ]);
 
   // Load a directory's contents
-  const loadDirectoryContents = useCallback(async (dirPath: string): Promise<FileNode[]> => {
-    console.log('Loading directory contents for:', dirPath);
-    try {
-      const result = await ipc.client.claude.readDirectory({ dirPath, includeHidden: true });
-      console.log('Directory result:', result);
-      return result.items.map(item => ({
-        ...item,
-        level: 0,
-        isExpanded: false,
-        loaded: false,
-        children: item.type === 'directory' ? [] : undefined,
-      }));
-    } catch (error) {
-      console.error('Failed to load directory:', error);
-      return [];
-    }
-  }, []);
+  const loadDirectoryContents = useCallback(
+    async (dirPath: string): Promise<FileNode[]> => {
+      console.log("Loading directory contents for:", dirPath);
+      try {
+        const result = await ipc.client.claude.readDirectory({
+          dirPath,
+          includeHidden: true,
+        });
+        console.log("Directory result:", result);
+        return result.items.map((item) => ({
+          ...item,
+          level: 0,
+          isExpanded: false,
+          loaded: false,
+          children: item.type === "directory" ? [] : undefined,
+        }));
+      } catch (error) {
+        console.error("Failed to load directory:", error);
+        return [];
+      }
+    },
+    []
+  );
 
   // Recursively build the tree
-  const buildTree = useCallback(async (basePath: string): Promise<FileNode[]> => {
-    const items = await loadDirectoryContents(basePath);
+  const buildTree = useCallback(
+    async (basePath: string): Promise<FileNode[]> => {
+      const items = await loadDirectoryContents(basePath);
 
-    // For each directory, add an empty children array that will be loaded on expand
-    return items.map(item => ({
-      ...item,
-      children: item.type === 'directory' ? [] : undefined,
-    }));
-  }, [loadDirectoryContents]);
+      // For each directory, add an empty children array that will be loaded on expand
+      return items.map((item) => ({
+        ...item,
+        children: item.type === "directory" ? [] : undefined,
+      }));
+    },
+    [loadDirectoryContents]
+  );
 
   // Load tree - unified effect that handles all cases
   useEffect(() => {
     // Only load if we're on the files tab
-    if (currentView !== 'files') return;
+    if (currentView !== "files") return;
 
-    const basePath = isGlobalSettingsSelected ? homePath : selectedProjectId || '';
+    const basePath = isGlobalSettingsSelected
+      ? homePath
+      : selectedProjectId || "";
     // For Files tab, show the .claude/ folder
-    const claudePath = basePath ? `${basePath}/.claude` : '';
+    const claudePath = basePath ? `${basePath}/.claude` : "";
 
     if (!claudePath) {
       setFileTree([]);
-      setRootPath('');
+      setRootPath("");
       return;
     }
 
     setRootPath(claudePath);
     buildTree(claudePath).then(setFileTree);
-  }, [isGlobalSettingsSelected, selectedProjectId, homePath, currentView, buildTree]);
+  }, [
+    isGlobalSettingsSelected,
+    selectedProjectId,
+    homePath,
+    currentView,
+    buildTree,
+  ]);
 
   const loadFileContent = useCallback(async (filePath: string) => {
     setLoading(true);
@@ -163,26 +205,31 @@ export const FilesTab: React.FC = () => {
       if (result.exists) {
         setFileContent(result.content);
       } else {
-        setFileContent('');
+        setFileContent("");
       }
     } catch (error) {
-      console.error('Failed to load file:', error);
-      setFileContent('');
+      console.error("Failed to load file:", error);
+      setFileContent("");
     } finally {
       setLoading(false);
     }
   }, []);
 
   // Expand/collapse directory and load its children if needed
-  const toggleDirectory = async (node: FileNode, tree: FileNode[]): Promise<FileNode[]> => {
+  const toggleDirectory = async (
+    node: FileNode,
+    tree: FileNode[]
+  ): Promise<FileNode[]> => {
     const updateNode = (nodes: FileNode[]): FileNode[] => {
-      return nodes.map(item => {
+      return nodes.map((item) => {
         if (item.path === node.path) {
           const isExpanded = !item.isExpanded;
-          if (isExpanded && !item.loaded && item.type === 'directory') {
+          if (isExpanded && !item.loaded && item.type === "directory") {
             // Load children
-            loadDirectoryContents(item.path).then(children => {
-              setFileTree(prev => updateNodeWithChildren(prev, node.path, children));
+            loadDirectoryContents(item.path).then((children) => {
+              setFileTree((prev) =>
+                updateNodeWithChildren(prev, node.path, children)
+              );
             });
             return { ...item, isExpanded: true, loaded: true };
           }
@@ -198,20 +245,27 @@ export const FilesTab: React.FC = () => {
     return updateNode(tree);
   };
 
-  const updateNodeWithChildren = (nodes: FileNode[], path: string, children: FileNode[]): FileNode[] => {
-    return nodes.map(item => {
+  const updateNodeWithChildren = (
+    nodes: FileNode[],
+    path: string,
+    children: FileNode[]
+  ): FileNode[] => {
+    return nodes.map((item) => {
       if (item.path === path) {
         return { ...item, children, loaded: true };
       }
       if (item.children) {
-        return { ...item, children: updateNodeWithChildren(item.children, path, children) };
+        return {
+          ...item,
+          children: updateNodeWithChildren(item.children, path, children),
+        };
       }
       return item;
     });
   };
 
   const handleFileClick = async (node: FileNode) => {
-    if (node.type === 'directory') {
+    if (node.type === "directory") {
       setFileTree(await toggleDirectory(node, fileTree));
     } else {
       setSelectedFile(node);
@@ -224,14 +278,17 @@ export const FilesTab: React.FC = () => {
 
     setSaving(true);
     try {
-      const result = await ipc.client.claude.writeFileContent({ filePath: selectedFile.path, content: fileContent });
+      const result = await ipc.client.claude.writeFileContent({
+        filePath: selectedFile.path,
+        content: fileContent,
+      });
       if (result.success) {
-        console.log('File saved successfully');
+        console.log("File saved successfully");
       } else {
-        console.error('Failed to save file:', result.error);
+        console.error("Failed to save file:", result.error);
       }
     } catch (error) {
-      console.error('Failed to save file:', error);
+      console.error("Failed to save file:", error);
     } finally {
       setSaving(false);
     }
@@ -240,34 +297,39 @@ export const FilesTab: React.FC = () => {
   const handleCreateFile = async () => {
     if (!rootPath) return;
 
-    const fileName = prompt('Enter file name:');
+    const fileName = prompt("Enter file name:");
     if (!fileName) return;
 
     const filePath = `${rootPath}/${fileName}`;
     try {
-      const result = await ipc.client.claude.createFile({ filePath, content: '' });
+      const result = await ipc.client.claude.createFile({
+        filePath,
+        content: "",
+      });
       if (result.success) {
         buildTree(rootPath).then(setFileTree);
       }
     } catch (error) {
-      console.error('Failed to create file:', error);
+      console.error("Failed to create file:", error);
     }
   };
 
   const handleCreateFolder = async () => {
     if (!rootPath) return;
 
-    const folderName = prompt('Enter folder name:');
+    const folderName = prompt("Enter folder name:");
     if (!folderName) return;
 
     const folderPath = `${rootPath}/${folderName}`;
     try {
-      const result = await ipc.client.claude.createDirectory({ dirPath: folderPath });
+      const result = await ipc.client.claude.createDirectory({
+        dirPath: folderPath,
+      });
       if (result.success) {
         buildTree(rootPath).then(setFileTree);
       }
     } catch (error) {
-      console.error('Failed to create folder:', error);
+      console.error("Failed to create folder:", error);
     }
   };
 
@@ -276,54 +338,87 @@ export const FilesTab: React.FC = () => {
 
     if (confirm(`Are you sure you want to delete ${selectedFile.name}?`)) {
       try {
-        const result = await ipc.client.claude.deleteItem({ itemPath: selectedFile.path });
+        const result = await ipc.client.claude.deleteItem({
+          itemPath: selectedFile.path,
+        });
         if (result.success) {
           setSelectedFile(null);
-          setFileContent('');
+          setFileContent("");
           buildTree(rootPath).then(setFileTree);
         }
       } catch (error) {
-        console.error('Failed to delete item:', error);
+        console.error("Failed to delete item:", error);
       }
     }
   };
 
   const isEditableFile = (item: FileNode | null) => {
-    if (!item || item.type === 'directory') return false;
+    if (!item || item.type === "directory") return false;
 
     const ext = item.extension?.toLowerCase();
     const editableExts = [
-      'md', 'txt', 'json', 'xml', 'yaml', 'yml', 'toml', 'ini', 'cfg',
-      'js', 'ts', 'jsx', 'tsx', 'py', 'rb', 'go', 'rs', 'java', 'c', 'cpp', 'h', 'cs',
-      'html', 'css', 'scss', 'less', 'svg', 'sh', 'bash', 'zsh',
-      'env', 'example', 'gitignore', 'biomerc', 'jsonc'
+      "md",
+      "txt",
+      "json",
+      "xml",
+      "yaml",
+      "yml",
+      "toml",
+      "ini",
+      "cfg",
+      "js",
+      "ts",
+      "jsx",
+      "tsx",
+      "py",
+      "rb",
+      "go",
+      "rs",
+      "java",
+      "c",
+      "cpp",
+      "h",
+      "cs",
+      "html",
+      "css",
+      "scss",
+      "less",
+      "svg",
+      "sh",
+      "bash",
+      "zsh",
+      "env",
+      "example",
+      "gitignore",
+      "biomerc",
+      "jsonc",
     ];
 
-    return editableExts.includes(ext || '') || !ext;
+    return editableExts.includes(ext || "") || !ext;
   };
 
   // Recursively render file tree
-  const renderFileTree = (nodes: FileNode[], level: number = 0): React.ReactNode => {
+  const renderFileTree = (nodes: FileNode[], level = 0): React.ReactNode => {
     return nodes.map((node) => {
       const Icon = getFileIcon(node);
       const isSelected = selectedFile?.path === node.path;
-      const hasChildren = node.type === 'directory';
+      const hasChildren = node.type === "directory";
 
       return (
         <div key={node.path}>
           <div
             className={cn(
-              'flex items-center gap-2 px-2 py-1 rounded-sm cursor-pointer hover:bg-muted/50 transition-colors text-sm',
-              isSelected && 'bg-accent'
+              "flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 text-sm transition-colors hover:bg-muted/50",
+              isSelected && "bg-accent"
             )}
-            style={{ paddingLeft: `${8 + level * 16}px` }}
             onClick={() => handleFileClick(node)}
+            style={{ paddingLeft: `${8 + level * 16}px` }}
           >
             {hasChildren && (
               <CaretRight
                 className={cn(
-                  'h-3 w-3 transition-transform flex-shrink-0',
-                  node.isExpanded && 'transform rotate-90'
+                  "h-3 w-3 flex-shrink-0 transition-transform",
+                  node.isExpanded && "rotate-90 transform"
                 )}
                 weight="regular"
               />
@@ -331,9 +426,13 @@ export const FilesTab: React.FC = () => {
             {!hasChildren && <div className="w-3" />}
             <Icon className="h-4 w-4 flex-shrink-0" weight="regular" />
             <span className="flex-1 truncate">{node.name}</span>
-            {node.type === 'file' && node.size && (
-              <span className="text-xs text-muted-foreground flex-shrink-0">
-                {node.size < 1024 ? `${node.size}B` : node.size < 1024 * 1024 ? `${Math.round(node.size / 1024)}KB` : `${Math.round(node.size / (1024 * 1024))}MB`}
+            {node.type === "file" && node.size && (
+              <span className="flex-shrink-0 text-muted-foreground text-xs">
+                {node.size < 1024
+                  ? `${node.size}B`
+                  : node.size < 1024 * 1024
+                    ? `${Math.round(node.size / 1024)}KB`
+                    : `${Math.round(node.size / (1024 * 1024))}MB`}
               </span>
             )}
           </div>
@@ -345,35 +444,57 @@ export const FilesTab: React.FC = () => {
     });
   };
 
-  const SelectedFileIconComponent = selectedFile ? getFileIcon(selectedFile) : File;
+  const SelectedFileIconComponent = selectedFile
+    ? getFileIcon(selectedFile)
+    : File;
 
   // Show loading state while home path is being initialized
-  if (homeLoading || (!homeInitialized && !homePath)) {
+  if (homeLoading || !(homeInitialized || homePath)) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <div className="text-sm text-muted-foreground">Loading workspace...</div>
+          <div className="text-muted-foreground text-sm">
+            Loading workspace...
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <ResizablePanelGroup direction="horizontal" className="h-full">
+    <ResizablePanelGroup className="h-full" direction="horizontal">
       {/* File Tree */}
-      <ResizablePanel defaultSize={25} minSize={15} maxSize={40} className="border-r bg-muted/30 flex flex-col">
+      <ResizablePanel
+        className="flex flex-col border-r bg-muted/30"
+        defaultSize={25}
+        maxSize={40}
+        minSize={15}
+      >
         {/* Header with path and create buttons */}
-        <div className="p-3 border-b bg-background">
-          <div className="text-xs text-muted-foreground truncate mb-2" title={rootPath}>
+        <div className="border-b bg-background p-3">
+          <div
+            className="mb-2 truncate text-muted-foreground text-xs"
+            title={rootPath}
+          >
             {rootPath}
           </div>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="flex-1" onClick={handleCreateFile}>
-              <Plus className="h-3 w-3 mr-1" weight="regular" />
+            <Button
+              className="flex-1"
+              onClick={handleCreateFile}
+              size="sm"
+              variant="outline"
+            >
+              <Plus className="mr-1 h-3 w-3" weight="regular" />
               File
             </Button>
-            <Button size="sm" variant="outline" className="flex-1" onClick={handleCreateFolder}>
-              <Plus className="h-3 w-3 mr-1" weight="regular" />
+            <Button
+              className="flex-1"
+              onClick={handleCreateFolder}
+              size="sm"
+              variant="outline"
+            >
+              <Plus className="mr-1 h-3 w-3" weight="regular" />
               Folder
             </Button>
           </div>
@@ -382,11 +503,16 @@ export const FilesTab: React.FC = () => {
         {/* File List */}
         <div className="flex-1 overflow-y-auto p-2">
           {loading && fileTree.length === 0 ? (
-            <div className="text-sm text-muted-foreground text-center py-8">Loading...</div>
+            <div className="py-8 text-center text-muted-foreground text-sm">
+              Loading...
+            </div>
           ) : fileTree.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
+            <div className="flex h-full items-center justify-center text-muted-foreground">
               <div className="text-center">
-                <Folder className="h-8 w-8 mx-auto mb-2 opacity-50" weight="regular" />
+                <Folder
+                  className="mx-auto mb-2 h-8 w-8 opacity-50"
+                  weight="regular"
+                />
                 <p className="text-sm">This folder is empty</p>
               </div>
             </div>
@@ -401,25 +527,37 @@ export const FilesTab: React.FC = () => {
       {/* File Editor / Preview */}
       <ResizablePanel defaultSize={75} minSize={60}>
         {selectedFile ? (
-          <div className="flex-1 flex flex-col h-full">
+          <div className="flex h-full flex-1 flex-col">
             {/* File Header */}
-            <div className="p-3 border-b bg-background flex items-center justify-between">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <SelectedFileIconComponent className="h-4 w-4 flex-shrink-0 text-muted-foreground" weight="regular" />
+            <div className="flex items-center justify-between border-b bg-background p-3">
+              <div className="flex min-w-0 flex-1 items-center gap-2">
+                <SelectedFileIconComponent
+                  className="h-4 w-4 flex-shrink-0 text-muted-foreground"
+                  weight="regular"
+                />
                 <div className="min-w-0">
-                  <div className="text-sm font-medium truncate">{selectedFile.name}</div>
-                  <div className="text-xs text-muted-foreground truncate">{selectedFile.path}</div>
+                  <div className="truncate font-medium text-sm">
+                    {selectedFile.name}
+                  </div>
+                  <div className="truncate text-muted-foreground text-xs">
+                    {selectedFile.path}
+                  </div>
                 </div>
               </div>
               <div className="flex gap-2">
                 {isEditableFile(selectedFile) && (
-                  <Button size="sm" variant="outline" onClick={handleSave} disabled={saving}>
-                    <FloppyDisk className="h-4 w-4 mr-1" weight="regular" />
-                    {saving ? 'Saving...' : 'Save'}
+                  <Button
+                    disabled={saving}
+                    onClick={handleSave}
+                    size="sm"
+                    variant="outline"
+                  >
+                    <FloppyDisk className="mr-1 h-4 w-4" weight="regular" />
+                    {saving ? "Saving..." : "Save"}
                   </Button>
                 )}
-                <Button size="sm" variant="destructive" onClick={handleDelete}>
-                  <Trash className="h-4 w-4 mr-1" weight="regular" />
+                <Button onClick={handleDelete} size="sm" variant="destructive">
+                  <Trash className="mr-1 h-4 w-4" weight="regular" />
                   Delete
                 </Button>
               </div>
@@ -429,30 +567,40 @@ export const FilesTab: React.FC = () => {
             <div className="flex-1 overflow-auto p-4">
               {isEditableFile(selectedFile) ? (
                 loading ? (
-                  <div className="text-sm text-muted-foreground text-center py-8">Loading file...</div>
+                  <div className="py-8 text-center text-muted-foreground text-sm">
+                    Loading file...
+                  </div>
                 ) : (
                   <TipTapEditor
+                    className="min-h-full"
                     content={fileContent}
                     onChange={setFileContent}
                     placeholder="File content..."
-                    className="min-h-full"
                   />
                 )
               ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
+                <div className="flex h-full items-center justify-center text-muted-foreground">
                   <div className="text-center">
-                    <File className="h-12 w-12 mx-auto mb-3 opacity-50" weight="regular" />
+                    <File
+                      className="mx-auto mb-3 h-12 w-12 opacity-50"
+                      weight="regular"
+                    />
                     <p className="text-sm">This file type cannot be edited</p>
-                    <p className="text-xs mt-1">Use an external editor for this file</p>
+                    <p className="mt-1 text-xs">
+                      Use an external editor for this file
+                    </p>
                   </div>
                 </div>
               )}
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
+          <div className="flex h-full items-center justify-center text-muted-foreground">
             <div className="text-center">
-              <File className="h-12 w-12 mx-auto mb-3 opacity-50" weight="regular" />
+              <File
+                className="mx-auto mb-3 h-12 w-12 opacity-50"
+                weight="regular"
+              />
               <p>Select a file to view or edit</p>
             </div>
           </div>

@@ -7,18 +7,19 @@
  * Reference: https://docs.anthropic.com/en/docs/build-with-claude/rules
  */
 
-import { z } from 'zod';
-import { claudeNameSchema } from './base';
+import { z } from "zod";
+import { claudeNameSchema } from "./base";
 
 /**
  * Rule frontmatter schema (optional)
  */
 export const ruleFrontmatterSchema = z.object({
   name: claudeNameSchema.optional(),
-  description: z.string()
-    .max(500, 'Description must be 500 characters or less')
+  description: z
+    .string()
+    .max(500, "Description must be 500 characters or less")
     .optional(),
-  priority: z.enum(['low', 'medium', 'high']).optional(),
+  priority: z.enum(["low", "medium", "high"]).optional(),
   category: z.string().optional(),
 });
 
@@ -27,14 +28,14 @@ export const ruleFrontmatterSchema = z.object({
  */
 export const ruleContentSchema = z.object({
   frontmatter: ruleFrontmatterSchema.optional(),
-  body: z.string().min(1, 'Rule content cannot be empty'),
+  body: z.string().min(1, "Rule content cannot be empty"),
 });
 
 /**
  * Rule form schema for the UI
  */
 export const ruleFormSchema = z.object({
-  content: z.string().min(1, 'Rule content cannot be empty'),
+  content: z.string().min(1, "Rule content cannot be empty"),
 });
 
 /**
@@ -64,7 +65,8 @@ export function parseRuleContent(content: string): {
     const categoryMatch = yaml.match(/^category:\s*(.+)$/m);
 
     if (nameMatch) frontmatter.name = nameMatch[1].trim();
-    if (descMatch) frontmatter.description = descMatch[1].trim().replace(/^["']|["']$/g, '');
+    if (descMatch)
+      frontmatter.description = descMatch[1].trim().replace(/^["']|["']$/g, "");
     if (priorityMatch) frontmatter.priority = priorityMatch[1].trim();
     if (categoryMatch) frontmatter.category = categoryMatch[1].trim();
 
@@ -81,18 +83,21 @@ export function parseRuleContent(content: string): {
 /**
  * Helper to build rule file content
  */
-export function buildRuleContent(frontmatter: z.infer<typeof ruleFrontmatterSchema> | undefined, body: string): string {
+export function buildRuleContent(
+  frontmatter: z.infer<typeof ruleFrontmatterSchema> | undefined,
+  body: string
+): string {
   if (!frontmatter || Object.keys(frontmatter).length === 0) {
     return body;
   }
 
-  let yaml = '---\n';
+  let yaml = "---\n";
   for (const [key, value] of Object.entries(frontmatter)) {
     if (value !== undefined) {
       yaml += `${key}: ${value}\n`;
     }
   }
-  yaml += '---\n';
+  yaml += "---\n";
 
   return `${yaml}\n${body}`;
 }

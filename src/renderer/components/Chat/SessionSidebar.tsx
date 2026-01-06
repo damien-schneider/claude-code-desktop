@@ -1,30 +1,14 @@
-import React, { useMemo } from "react";
-import { useAtom, useSetAtom } from "jotai";
 import {
-  MagnifyingGlass,
-  Plus,
+  ArrowsClockwise,
   ChatCircle,
   Folder,
-  ArrowsClockwise,
+  MagnifyingGlass,
+  Plus,
   Spinner,
 } from "@phosphor-icons/react";
-import {
-  filteredSessionsAtom,
-  activeSessionsAtom,
-  sessionSearchQueryAtom,
-  loadSessionDetailsAtom,
-  currentSessionIdAtom,
-  loadSessionsAtom,
-  sessionsLoadingAtom,
-  sessionFilterAtom,
-  selectedProjectIdAtom,
-  projectsAtom,
-  startNewSessionAtom,
-  type SessionFilter,
-} from "@/renderer/stores";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatDistanceToNow } from "date-fns";
+import { useAtom, useSetAtom } from "jotai";
+import React, { useMemo } from "react";
 import {
   Sidebar as AppSidebar,
   SidebarContent,
@@ -33,8 +17,24 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/app-sidebar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  activeSessionsAtom,
+  currentSessionIdAtom,
+  filteredSessionsAtom,
+  loadSessionDetailsAtom,
+  loadSessionsAtom,
+  projectsAtom,
+  type SessionFilter,
+  selectedProjectIdAtom,
+  sessionFilterAtom,
+  sessionSearchQueryAtom,
+  sessionsLoadingAtom,
+  startNewSessionAtom,
+} from "@/renderer/stores";
 import { cn } from "@/utils/tailwind";
-import { formatDistanceToNow } from "date-fns";
 
 export interface SessionSidebarProps {
   className?: string;
@@ -116,26 +116,26 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
   };
 
   return (
-    <AppSidebar side="right" className={className}>
+    <AppSidebar className={className} side="right">
       <SidebarHeader>
         {/* Search and Reload */}
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <MagnifyingGlass className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <MagnifyingGlass className="absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
+              className="h-9 pl-8"
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search sessions..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 h-9"
             />
           </div>
           <Button
-            size="icon"
-            variant="ghost"
             className={cn("h-9 w-9 shrink-0", loading && "animate-spin")}
-            onClick={handleReload}
             disabled={loading}
+            onClick={handleReload}
+            size="icon"
             title="Reload sessions"
+            variant="ghost"
           >
             <ArrowsClockwise className="h-4 w-4" weight="regular" />
           </Button>
@@ -145,8 +145,8 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
         {selectedProjectId && (
           <div className="mt-2">
             <Tabs
-              value={filter}
               onValueChange={(v) => setFilter(v as SessionFilter)}
+              value={filter}
             >
               <TabsList>
                 <TabsTrigger value="all">All</TabsTrigger>
@@ -162,12 +162,12 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
         <div className="mt-2">
           <Button
             className="w-full font-bold"
-            variant="default"
-            size="default"
-            onClick={handleStartNewSession}
             disabled={!selectedProjectId}
+            onClick={handleStartNewSession}
+            size="default"
+            variant="default"
           >
-            <Plus className="h-4 w-4 mr-1" weight="bold" />
+            <Plus className="mr-1 h-4 w-4" weight="bold" />
             Start new session
           </Button>
         </div>
@@ -175,10 +175,10 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
 
       <SidebarContent>
         {sessions.length === 0 && !loading ? (
-          <div className="px-3 py-8 text-center text-sm text-muted-foreground">
-            <ChatCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
+          <div className="px-3 py-8 text-center text-muted-foreground text-sm">
+            <ChatCircle className="mx-auto mb-2 h-12 w-12 opacity-50" />
             <p>No sessions found</p>
-            <p className="text-xs mt-1">
+            <p className="mt-1 text-xs">
               Start a conversation in your terminal with Claude Code
             </p>
           </div>
@@ -186,7 +186,7 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
           Object.entries(groupedSessions).map(([groupName, groupSessions]) =>
             groupSessions.length > 0 ? (
               <React.Fragment key={groupName}>
-                <div className="px-3 py-2 text-xs font-medium text-muted-foreground">
+                <div className="px-3 py-2 font-medium text-muted-foreground text-xs">
                   {groupName}
                 </div>
                 <SidebarMenu>
@@ -197,14 +197,19 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
                         onClick={() => handleSessionClick(session.sessionId)}
                       >
                         <ChatCircle className="h-4 w-4" />
-                        <div className="flex-1 min-w-0">
-                          <div className="truncate text-sm font-medium flex items-center gap-2">
-                            <span className="truncate">{session.previewMessage || "Empty session"}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 truncate font-medium text-sm">
+                            <span className="truncate">
+                              {session.previewMessage || "Empty session"}
+                            </span>
                             {isSessionStreaming(session.sessionId) && (
-                              <Spinner className="h-3 w-3 animate-spin text-primary flex-shrink-0" weight="bold" />
+                              <Spinner
+                                className="h-3 w-3 flex-shrink-0 animate-spin text-primary"
+                                weight="bold"
+                              />
                             )}
                           </div>
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1 text-muted-foreground text-xs">
                             <Folder className="h-3 w-3 flex-shrink-0" />
                             <span className="truncate">
                               {session.projectName}

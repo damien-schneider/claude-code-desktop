@@ -1,6 +1,6 @@
-import { cn } from "@/utils/tailwind";
 import { NodeToolbar, Position } from "@xyflow/react";
 import type { ComponentProps } from "react";
+import { cn } from "@/utils/tailwind";
 
 type ToolbarProps = ComponentProps<typeof NodeToolbar>;
 

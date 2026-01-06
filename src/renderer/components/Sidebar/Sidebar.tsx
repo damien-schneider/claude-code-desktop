@@ -1,29 +1,16 @@
-import React, { useState, useEffect, useCallback } from "react";
 import {
-  MagnifyingGlass,
+  ArrowsClockwise,
+  CaretDown,
+  CaretRight,
   Folder,
   GitBranch,
   House,
-  CaretDown,
-  CaretRight,
-  ArrowsClockwise,
+  MagnifyingGlass,
   Spinner,
 } from "@phosphor-icons/react";
 import { useAtom, useSetAtom } from "jotai";
-import {
-  selectedProjectIdAtom,
-  isGlobalSettingsSelectedAtom,
-  searchQueryAtom,
-  showWithClaudeOnlyAtom,
-  filteredProjectsAtom,
-  selectProjectAtom,
-  selectGlobalSettingsAtom,
-  setSearchQueryAtom,
-  setShowWithClaudeOnlyAtom,
-  sidebarCollapsedAtom,
-} from "@/renderer/stores";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Sidebar as AppSidebar,
   SidebarContent,
@@ -33,17 +20,29 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuBadge,
   SidebarSeparator,
 } from "@/components/ui/app-sidebar";
+import { Button } from "@/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { cn } from "@/utils/tailwind";
+import { Input } from "@/components/ui/input";
+import {
+  filteredProjectsAtom,
+  isGlobalSettingsSelectedAtom,
+  searchQueryAtom,
+  selectedProjectIdAtom,
+  selectGlobalSettingsAtom,
+  selectProjectAtom,
+  setShowWithClaudeOnlyAtom,
+  showWithClaudeOnlyAtom,
+  sidebarCollapsedAtom,
+} from "@/renderer/stores";
 
 export interface SidebarProps {
   className?: string;
@@ -94,7 +93,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     (projectPath: string) => {
       selectProject(projectPath);
     },
-    [selectProject],
+    [selectProject]
   );
 
   const handleGlobalSettingsClick = useCallback(() => {
@@ -109,48 +108,48 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {/* Search */}
             <div className="relative flex-1">
               <MagnifyingGlass
-                className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                className="absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                 weight="regular"
               />
               <Input
+                className="h-9 pl-8"
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 h-9"
               />
             </div>
           </div>
 
           {/* Claude filter */}
           <Button
-            variant={showWithClaudeOnly ? "default" : "outline"}
-            size="sm"
-            className="w-full mt-2"
+            className="mt-2 w-full"
             onClick={() => setShowWithClaudeOnlyAction()}
+            size="sm"
+            variant={showWithClaudeOnly ? "default" : "outline"}
           >
-            <GitBranch className="h-3 w-3 mr-1" weight="regular" />
+            <GitBranch className="mr-1 h-3 w-3" weight="regular" />
             <span className="sidebar-label">Claude Projects Only</span>
           </Button>
 
           {/* Scan Button */}
           <Button
-            variant="default"
-            size="sm"
-            className="w-full mt-2"
-            onClick={handleScan}
+            className="mt-2 w-full"
             disabled={scanningProp}
+            onClick={handleScan}
+            size="sm"
+            variant="default"
           >
             {scanningProp ? (
               <>
                 <Spinner
-                  className="h-4 w-4 mr-1 animate-spin"
+                  className="mr-1 h-4 w-4 animate-spin"
                   weight="regular"
                 />
                 <span className="sidebar-label">Scanning...</span>
               </>
             ) : (
               <>
-                <ArrowsClockwise className="h-4 w-4 mr-1" weight="regular" />
+                <ArrowsClockwise className="mr-1 h-4 w-4" weight="regular" />
                 <span className="sidebar-label">Scan</span>
               </>
             )}
@@ -180,7 +179,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <Folder className="h-4 w-4" weight="regular" />
                   {project.hasClaudeConfig && (
                     <GitBranch
-                      className="h-3 w-3 absolute right-2 opacity-70"
+                      className="absolute right-2 h-3 w-3 opacity-70"
                       weight="regular"
                     />
                   )}
@@ -191,20 +190,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
         ) : (
           <>
             {/* Global Settings */}
-            <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen}>
+            <Collapsible onOpenChange={setSettingsOpen} open={settingsOpen}>
               <SidebarGroup>
                 <CollapsibleTrigger asChild>
                   <SidebarGroupLabel>
-                    <House className="h-4 w-4 mr-2" weight="regular" />
+                    <House className="mr-2 h-4 w-4" weight="regular" />
                     <span className="sidebar-label">Global Settings</span>
                     {settingsOpen ? (
                       <CaretDown
-                        className="ml-auto h-4 w-4 sidebar-label"
+                        className="sidebar-label ml-auto h-4 w-4"
                         weight="regular"
                       />
                     ) : (
                       <CaretRight
-                        className="ml-auto h-4 w-4 sidebar-label"
+                        className="sidebar-label ml-auto h-4 w-4"
                         weight="regular"
                       />
                     )}
@@ -231,23 +230,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <SidebarSeparator />
 
             {/* Projects */}
-            <Collapsible open={projectsOpen} onOpenChange={setProjectsOpen}>
+            <Collapsible onOpenChange={setProjectsOpen} open={projectsOpen}>
               <SidebarGroup>
                 <CollapsibleTrigger asChild>
                   <SidebarGroupLabel>
-                    <Folder className="h-4 w-4 mr-2" weight="regular" />
+                    <Folder className="mr-2 h-4 w-4" weight="regular" />
                     <span className="sidebar-label">Projects</span>
-                    <SidebarMenuBadge className="ml-auto sidebar-label">
+                    <SidebarMenuBadge className="sidebar-label ml-auto">
                       {filteredProjects.length}
                     </SidebarMenuBadge>
                     {projectsOpen ? (
                       <CaretDown
-                        className="ml-auto h-4 w-4 sidebar-label"
+                        className="sidebar-label ml-auto h-4 w-4"
                         weight="regular"
                       />
                     ) : (
                       <CaretRight
-                        className="ml-auto h-4 w-4 sidebar-label"
+                        className="sidebar-label ml-auto h-4 w-4"
                         weight="regular"
                       />
                     )}
@@ -257,7 +256,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <SidebarGroupContent>
                     <SidebarMenu>
                       {filteredProjects.length === 0 ? (
-                        <div className="px-3 py-4 text-sm text-muted-foreground text-center sidebar-label">
+                        <div className="sidebar-label px-3 py-4 text-center text-muted-foreground text-sm">
                           {searchQuery || showWithClaudeOnly
                             ? "No projects match"
                             : "No projects found"}
@@ -270,7 +269,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               onClick={() => handleProjectClick(project.path)}
                             >
                               <Folder className="h-4 w-4" weight="regular" />
-                              <div className="flex-1 min-w-0 sidebar-label">
+                              <div className="sidebar-label min-w-0 flex-1">
                                 <div className="truncate font-medium">
                                   {project.name}
                                 </div>
@@ -280,7 +279,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               </div>
                               {project.hasClaudeConfig && (
                                 <GitBranch
-                                  className="h-3 w-3 flex-shrink-0 opacity-70 sidebar-label"
+                                  className="sidebar-label h-3 w-3 flex-shrink-0 opacity-70"
                                   weight="regular"
                                 />
                               )}
@@ -299,7 +298,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {state === "expanded" && (
         <SidebarFooter>
-          <div className="text-xs text-muted-foreground text-center sidebar-label">
+          <div className="sidebar-label text-center text-muted-foreground text-xs">
             Press ⌘B to toggle
           </div>
         </SidebarFooter>

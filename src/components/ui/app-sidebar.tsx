@@ -1,18 +1,16 @@
 "use client";
 
-import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
-import { VariantProps, cva } from "class-variance-authority";
 import { Sidebar as SidebarIcon } from "@phosphor-icons/react";
-
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
 import { useAtom } from "jotai";
+import * as React from "react";
+import { Button } from "@/components/ui/button";
 import {
   leftSidebarCollapsedAtom,
   rightSidebarCollapsedAtom,
-  sidebarCollapsedAtom,
 } from "@/renderer/stores";
 import { cn } from "@/utils/tailwind";
-import { Button } from "@/components/ui/button";
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state";
 const SIDEBAR_WIDTH = "20rem";
@@ -118,14 +116,14 @@ const Sidebar = React.forwardRef<
     return (
       <SidebarContext.Provider value={contextValue}>
         <div
-          ref={ref}
-          data-state={state}
           className={cn(
-            "flex flex-col h-full bg-muted/30",
+            "flex h-full flex-col bg-muted/30",
             side === "left" ? "border-r" : "border-l",
             state === "collapsed" ? "w-16" : "w-64",
             className
           )}
+          data-state={state}
+          ref={ref}
           {...props}
         >
           {children}
@@ -144,12 +142,12 @@ const SidebarHeader = React.forwardRef<
 
   return (
     <div
-      ref={ref}
       className={cn(
         "flex flex-col gap-2 p-2",
         state === "collapsed" && "p-2",
         className
       )}
+      ref={ref}
       {...props}
     />
   );
@@ -164,12 +162,12 @@ const SidebarContent = React.forwardRef<
 
   return (
     <div
-      ref={ref}
       className={cn(
         "flex-1 overflow-y-auto",
         state === "collapsed" ? "p-1" : "p-2",
         className
       )}
+      ref={ref}
       {...props}
     />
   );
@@ -184,8 +182,8 @@ const SidebarFooter = React.forwardRef<
 
   return (
     <div
-      ref={ref}
       className={cn("border-t p-4", state === "collapsed" && "p-2", className)}
+      ref={ref}
       {...props}
     />
   );
@@ -204,8 +202,8 @@ const SidebarTitle = React.forwardRef<
 
   return (
     <div
+      className={cn("font-semibold text-base", className)}
       ref={ref}
-      className={cn("text-base font-semibold", className)}
       {...props}
     />
   );
@@ -224,8 +222,8 @@ const SidebarSubtitle = React.forwardRef<
 
   return (
     <div
+      className={cn("text-muted-foreground text-sm", className)}
       ref={ref}
-      className={cn("text-sm text-muted-foreground", className)}
       {...props}
     />
   );
@@ -236,7 +234,7 @@ const SidebarMenu = React.forwardRef<
   HTMLUListElement,
   React.ComponentProps<"ul">
 >(({ className, ...props }, ref) => (
-  <ul ref={ref} className={cn("flex flex-col gap-1", className)} {...props} />
+  <ul className={cn("flex flex-col gap-1", className)} ref={ref} {...props} />
 ));
 SidebarMenu.displayName = "SidebarMenu";
 
@@ -245,8 +243,8 @@ const SidebarMenuItem = React.forwardRef<
   React.ComponentProps<"li">
 >(({ className, ...props }, ref) => (
   <li
-    ref={ref}
     className={cn("group/menu-item relative", className)}
+    ref={ref}
     {...props}
   />
 ));
@@ -306,14 +304,14 @@ const SidebarMenuButton = React.forwardRef<
 
     return (
       <Comp
-        ref={ref}
-        data-state={isActive ? "active" : "inactive"}
         className={cn(
           sidebarMenuButtonVariants({ variant, size }),
           state === "collapsed" && "justify-center px-2",
           isActive && "bg-primary text-primary-foreground hover:bg-primary",
           className
         )}
+        data-state={isActive ? "active" : "inactive"}
+        ref={ref}
         {...props}
       >
         {displayChildren}
@@ -335,11 +333,11 @@ const SidebarMenuAction = React.forwardRef<
 
   return (
     <button
-      ref={ref}
       className={cn(
-        "absolute right-1 top-1.5 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-muted-foreground outline-none ring-offset-background transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none focus-visible:ring-2 peer-hover/menu-button:text-foreground [&_svg]:size-3",
+        "absolute top-1.5 right-1 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-muted-foreground outline-none ring-offset-background transition-colors hover:bg-muted focus-visible:bg-muted focus-visible:outline-none focus-visible:ring-2 peer-hover/menu-button:text-foreground [&_svg]:size-3",
         className
       )}
+      ref={ref}
       {...props}
     />
   );
@@ -358,11 +356,11 @@ const SidebarMenuBadge = React.forwardRef<
 
   return (
     <div
-      ref={ref}
       className={cn(
-        "absolute right-1 top-1.5 flex h-5 min-w-5 items-center justify-center rounded-md px-1 text-xs font-medium tabular-nums text-muted-foreground select-none",
+        "absolute top-1.5 right-1 flex h-5 min-w-5 select-none items-center justify-center rounded-md px-1 font-medium text-muted-foreground text-xs tabular-nums",
         className
       )}
+      ref={ref}
       {...props}
     />
   );
@@ -379,12 +377,12 @@ const SidebarMenuSkeleton = React.forwardRef<
 
   return (
     <div
-      ref={ref}
       className={cn(
         "flex h-8 items-center gap-2 rounded-md px-2",
         state === "collapsed" && "h-8 w-8 justify-center",
         className
       )}
+      ref={ref}
       {...props}
     >
       {showIcon && (
@@ -406,16 +404,16 @@ const SidebarSeparator = React.forwardRef<
 
   return (
     <div
-      ref={ref}
       className={cn(
         "mx-2 w-auto",
         state === "collapsed" ? "my-1" : "my-2",
         className
       )}
+      ref={ref}
       {...props}
     >
       <div
-        className={cn("h-px bg-border", state === "collapsed" && "w-8 mx-auto")}
+        className={cn("h-px bg-border", state === "collapsed" && "mx-auto w-8")}
       />
     </div>
   );
@@ -430,12 +428,12 @@ const SidebarGroup = React.forwardRef<
 
   return (
     <div
-      ref={ref}
       className={cn(
         "flex flex-col gap-1",
         state === "collapsed" && "gap-0",
         className
       )}
+      ref={ref}
       {...props}
     />
   );
@@ -458,11 +456,11 @@ const SidebarGroupLabel = React.forwardRef<
 
   return (
     <Comp
-      ref={ref}
       className={cn(
-        "flex h-8 items-center px-2 text-xs font-semibold text-muted-foreground",
+        "flex h-8 items-center px-2 font-semibold text-muted-foreground text-xs",
         className
       )}
+      ref={ref}
       {...props}
     />
   );
@@ -473,7 +471,7 @@ const SidebarGroupContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div">
 >(({ className, ...props }, ref) => (
-  <div ref={ref} className={className} {...props} />
+  <div className={className} ref={ref} {...props} />
 ));
 SidebarGroupContent.displayName = "SidebarGroupContent";
 
@@ -482,8 +480,8 @@ const SidebarInset = React.forwardRef<
   React.ComponentProps<"main">
 >(({ className, ...props }, ref) => (
   <main
-    ref={ref}
     className={cn("flex flex-1 flex-col bg-background", className)}
+    ref={ref}
     {...props}
   />
 ));
@@ -497,12 +495,12 @@ const SidebarInput = React.forwardRef<
 
   return (
     <input
-      ref={ref}
       className={cn(
-        "h-8 w-full bg-background border-input px-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+        "h-8 w-full border-input bg-background px-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
         state === "collapsed" && "h-8 w-8 px-2 text-center",
         className
       )}
+      ref={ref}
       {...props}
     />
   );
@@ -517,15 +515,15 @@ const SidebarTrigger = React.forwardRef<
 
   return (
     <Button
-      ref={ref}
-      data-sidebar="trigger"
-      variant="ghost"
-      size="icon"
       className={cn("h-7 w-7", className)}
+      data-sidebar="trigger"
       onClick={(e) => {
         onClick?.(e);
         toggleSidebar();
       }}
+      ref={ref}
+      size="icon"
+      variant="ghost"
       {...props}
     >
       <SidebarIcon className="h-4 w-4" weight="regular" />

@@ -1,107 +1,106 @@
 // Jotai atoms (preferred for new code)
+
+// Zustand stores (legacy, will be phased out)
+export { deduplicateProjects, useAppStore } from "./appStore";
 export {
-  // Navigation & selection
-  currentViewAtom,
-  setCurrentViewAtom,
-  homePathAtom,
-  setHomePathAtom,
-  homePathLoadingAtom,
-  homePathInitializedAtom,
-  initializeHomePathAtom,
-  selectedProjectIdAtom,
-  isGlobalSettingsSelectedAtom,
+  type AppMode,
   activePathAtom,
-  // Projects
-  projectsAtom,
-  filteredProjectsAtom,
-  type ClaudeProject,
-  type NavigationView,
-  // UI state
-  leftSidebarCollapsedAtom,
-  rightSidebarCollapsedAtom,
-  sidebarCollapsedAtom,
-  isScanningAtom,
-  searchQueryAtom,
-  showFavoritesOnlyAtom,
-  showWithClaudeOnlyAtom,
   // App mode
   appModeAtom,
-  setAppModeAtom,
-  type AppMode,
+  type ClaudeProject,
+  // Navigation & selection
+  currentViewAtom,
   // Favorites
   favoritePathsAtom,
+  filteredProjectsAtom,
+  homePathAtom,
+  homePathInitializedAtom,
+  homePathLoadingAtom,
+  initializeHomePathAtom,
+  isGlobalSettingsSelectedAtom,
+  isScanningAtom,
+  // UI state
+  leftSidebarCollapsedAtom,
+  type NavigationView,
+  // Projects
+  projectsAtom,
+  rightSidebarCollapsedAtom,
+  scanProjectsAtom,
+  searchQueryAtom,
+  selectedProjectIdAtom,
+  selectGlobalSettingsAtom,
+  selectProjectAtom,
+  setAppModeAtom,
+  setCurrentViewAtom,
+  setHomePathAtom,
   // Actions
   setProjectsAtom,
-  selectProjectAtom,
-  selectGlobalSettingsAtom,
-  toggleFavoriteAtom,
   setSearchQueryAtom,
   setShowFavoritesOnlyAtom,
   setShowWithClaudeOnlyAtom,
-  scanProjectsAtom,
+  showFavoritesOnlyAtom,
+  showWithClaudeOnlyAtom,
+  sidebarCollapsedAtom,
+  toggleFavoriteAtom,
 } from "./atoms";
-
 // Chat atoms
 export {
-  // Session state
-  sessionsAtom,
-  sessionsLoadingAtom,
-  sessionsErrorAtom,
+  type ActiveSession,
+  // Active process
+  activeProcessIdAtom,
   // Active sessions (real-time, not yet persisted)
   activeSessionsAtom,
   allSessionsAtom,
-  isSessionStreamingAtom,
-  type ActiveSession,
-  // Filtering
-  sessionFilterAtom,
-  selectedProjectForSessionsAtom,
-  sessionSearchQueryAtom,
-  filteredSessionsAtom,
-  type SessionFilter,
-  // Current session
-  currentSessionIdAtom,
-  currentSessionMessagesAtom,
-  currentSessionLoadingAtom,
-  // Active process
-  activeProcessIdAtom,
-  isStreamingAtom,
-  streamingMessageAtom,
-  // Streaming UI state
-  streamingErrorAtom,
-  isThinkingAtom,
-  thinkingStartTimeAtom,
-  completionStatusAtom,
-  lastQueryCostAtom,
+  type ClaudeAvailability,
   type CompletionStatus,
+  checkClaudeAvailabilityAtom,
   // Claude availability
   claudeAvailabilityAtom,
-  checkClaudeAvailabilityAtom,
-  type ClaudeAvailability,
+  completionStatusAtom,
+  // Current session
+  currentSessionIdAtom,
+  currentSessionLoadingAtom,
+  currentSessionMessagesAtom,
+  filteredSessionsAtom,
+  // Helper functions
+  formatMessageContent,
+  isSessionStreamingAtom,
+  isStreamingAtom,
+  isThinkingAtom,
+  lastQueryCostAtom,
+  loadSessionDetailsAtom,
   // Actions
   loadSessionsAtom,
-  loadSessionDetailsAtom,
-  startNewSessionAtom,
-  sendMessageAtom,
-  stopSessionAtom,
-  resumeSessionAtom,
   // Permission modes
   type PermissionMode,
   type ResumeSessionOptions,
-  // Types
-  type SessionSummary,
+  resumeSessionAtom,
+  type SessionFilter,
   type SessionMessage,
   type SessionMessageContent,
-  // Helper functions
-  formatMessageContent,
+  // Types
+  type SessionSummary,
+  selectedProjectForSessionsAtom,
+  sendMessageAtom,
+  // Filtering
+  sessionFilterAtom,
+  sessionSearchQueryAtom,
+  // Session state
+  sessionsAtom,
+  sessionsErrorAtom,
+  sessionsLoadingAtom,
+  startNewSessionAtom,
+  stopSessionAtom,
+  // Streaming UI state
+  streamingErrorAtom,
+  streamingMessageAtom,
+  thinkingStartTimeAtom,
 } from "./chatAtoms";
-
-// Zustand stores (legacy, will be phased out)
-export { useAppStore, deduplicateProjects } from "./appStore";
 export {
-  useConfigStore,
+  type AgentConfig,
   type HookConfig,
   type RuleConfig,
-  type SkillConfig,
-  type AgentConfig,
   type SettingsConfig,
+  type SkillConfig,
+  useConfigStore,
 } from "./configStore";

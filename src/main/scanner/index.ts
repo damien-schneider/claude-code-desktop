@@ -1,8 +1,8 @@
 export {
-  scanForProjects,
-  scanMultipleDirectories,
-  getDefaultScanPaths,
   type ClaudeProject,
+  getDefaultScanPaths,
   type ScanOptions,
   type ScanResult,
-} from './scanner';
+  scanForProjects,
+  scanMultipleDirectories,
+} from "./scanner";

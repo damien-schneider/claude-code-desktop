@@ -1,25 +1,33 @@
 export enum FieldType {
-  STRING = 'string',
-  NUMBER = 'number',
-  BOOLEAN = 'boolean',
-  ARRAY = 'array',
-  OBJECT = 'object',
-  SECRET = 'secret',      // Password/token fields
-  URL = 'url',            // URL inputs
-  MODEL = 'model',        // Model selector
-  DURATION = 'duration',  // Timeout/duration with units
+  STRING = "string",
+  NUMBER = "number",
+  BOOLEAN = "boolean",
+  ARRAY = "array",
+  OBJECT = "object",
+  SECRET = "secret", // Password/token fields
+  URL = "url", // URL inputs
+  MODEL = "model", // Model selector
+  DURATION = "duration", // Timeout/duration with units
 }
 
 const SECRET_PATTERNS = [
-  'secret', 'password', 'token', 'api_key', 'apikey', 'auth',
-  'credential', 'private_key', 'secret_key', 'access_token',
+  "secret",
+  "password",
+  "token",
+  "api_key",
+  "apikey",
+  "auth",
+  "credential",
+  "private_key",
+  "secret_key",
+  "access_token",
 ];
 
-const URL_PATTERNS = ['url', 'uri', 'endpoint', 'base_url', 'redirect_uri'];
+const URL_PATTERNS = ["url", "uri", "endpoint", "base_url", "redirect_uri"];
 
-const MODEL_PATTERNS = ['model', 'haiku_model', 'sonnet_model', 'opus_model'];
+const MODEL_PATTERNS = ["model", "haiku_model", "sonnet_model", "opus_model"];
 
-const DURATION_PATTERNS = ['timeout', 'duration', 'delay', 'interval', 'ttl'];
+const DURATION_PATTERNS = ["timeout", "duration", "delay", "interval", "ttl"];
 
 /**
  * Detects the appropriate UI field type for a JSON value
@@ -52,19 +60,19 @@ export function detectFieldType(
   if (key) {
     const lowerKey = key.toLowerCase();
 
-    if (SECRET_PATTERNS.some(pattern => lowerKey.includes(pattern))) {
+    if (SECRET_PATTERNS.some((pattern) => lowerKey.includes(pattern))) {
       return FieldType.SECRET;
     }
 
-    if (URL_PATTERNS.some(pattern => lowerKey.includes(pattern))) {
+    if (URL_PATTERNS.some((pattern) => lowerKey.includes(pattern))) {
       return FieldType.URL;
     }
 
-    if (MODEL_PATTERNS.some(pattern => lowerKey.includes(pattern))) {
+    if (MODEL_PATTERNS.some((pattern) => lowerKey.includes(pattern))) {
       return FieldType.MODEL;
     }
 
-    if (DURATION_PATTERNS.some(pattern => lowerKey.includes(pattern))) {
+    if (DURATION_PATTERNS.some((pattern) => lowerKey.includes(pattern))) {
       return FieldType.DURATION;
     }
   }
@@ -74,11 +82,11 @@ export function detectFieldType(
     return FieldType.STRING;
   }
 
-  if (typeof actualValue === 'boolean') {
+  if (typeof actualValue === "boolean") {
     return FieldType.BOOLEAN;
   }
 
-  if (typeof actualValue === 'number') {
+  if (typeof actualValue === "number") {
     return FieldType.NUMBER;
   }
 
@@ -86,7 +94,11 @@ export function detectFieldType(
     return FieldType.ARRAY;
   }
 
-  if (typeof actualValue === 'object' && actualValue !== null && !Array.isArray(actualValue)) {
+  if (
+    typeof actualValue === "object" &&
+    actualValue !== null &&
+    !Array.isArray(actualValue)
+  ) {
     return FieldType.OBJECT;
   }
 
@@ -96,21 +108,23 @@ export function detectFieldType(
 export function getFieldLabel(key: string): string {
   // Convert snake_case or camelCase to Title Case
   return key
-    .replace(/_/g, ' ')
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/^\w/, c => c.toUpperCase())
+    .replace(/_/g, " ")
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^\w/, (c) => c.toUpperCase())
     .trim();
 }
 
 export function getFieldDescription(key: string): string {
   const descriptions: Record<string, string> = {
-    'anthropic_auth_token': 'Authentication token for Anthropic API',
-    'anthropic_base_url': 'Custom base URL for Anthropic API requests',
-    'api_timeout_ms': 'Request timeout in milliseconds',
-    'claude_code_disable_nonessential_traffic': 'Disable telemetry and non-essential network requests',
-    'always_thinking_enabled': 'Enable extended thinking mode for all conversations',
+    anthropic_auth_token: "Authentication token for Anthropic API",
+    anthropic_base_url: "Custom base URL for Anthropic API requests",
+    api_timeout_ms: "Request timeout in milliseconds",
+    claude_code_disable_nonessential_traffic:
+      "Disable telemetry and non-essential network requests",
+    always_thinking_enabled:
+      "Enable extended thinking mode for all conversations",
   };
 
   const lowerKey = key.toLowerCase();
-  return descriptions[lowerKey] || '';
+  return descriptions[lowerKey] || "";
 }

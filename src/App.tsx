@@ -1,10 +1,10 @@
+import { RouterProvider } from "@tanstack/react-router";
+import { createStore, Provider } from "jotai";
 import React, { useEffect } from "react";
 import { createRoot } from "react-dom/client";
-import { Provider, createStore } from "jotai";
-import { syncWithLocalTheme } from "./actions/theme";
 import { useTranslation } from "react-i18next";
 import { updateAppLanguage } from "./actions/language";
-import { RouterProvider } from "@tanstack/react-router";
+import { syncWithLocalTheme } from "./actions/theme";
 import { router } from "./utils/routes";
 import "./localization/i18n";
 
@@ -28,5 +28,5 @@ root.render(
     <Provider store={jotaiStore}>
       <App />
     </Provider>
-  </React.StrictMode>,
+  </React.StrictMode>
 );

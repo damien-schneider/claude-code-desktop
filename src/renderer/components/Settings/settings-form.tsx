@@ -1,13 +1,12 @@
-import React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PermissionsEditor } from './permissions-editor';
-import { McpServersEditor } from './mcp-servers-editor';
-import { HooksEditor } from './hooks-editor';
-import { EnvVarsEditor } from './env-vars-editor';
-import { EnabledPluginsEditor } from './enabled-plugins-editor';
-import { AdvancedSettingsEditor } from './advanced-settings-editor';
-import type { SettingsFormProps } from './settings-types';
-import type { ClaudePermissions, McpServerConfig as McpServerConfigType, ClaudeHook } from './settings-types';
+import type React from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdvancedSettingsEditor } from "./advanced-settings-editor";
+import { EnabledPluginsEditor } from "./enabled-plugins-editor";
+import { EnvVarsEditor } from "./env-vars-editor";
+import { HooksEditor } from "./hooks-editor";
+import { McpServersEditor } from "./mcp-servers-editor";
+import { PermissionsEditor } from "./permissions-editor";
+import type { SettingsFormProps } from "./settings-types";
 
 /**
  * Form-based editor for Claude settings
@@ -19,8 +18,21 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({
   onSectionChange,
 }) => {
   return (
-    <div className="h-full flex flex-col">
-      <Tabs value={activeSection} onValueChange={(v: string) => onSectionChange(v as 'permissions' | 'mcp' | 'hooks' | 'env' | 'plugins' | 'advanced')}>
+    <div className="flex h-full flex-col">
+      <Tabs
+        onValueChange={(v: string) =>
+          onSectionChange(
+            v as
+              | "permissions"
+              | "mcp"
+              | "hooks"
+              | "env"
+              | "plugins"
+              | "advanced"
+          )
+        }
+        value={activeSection}
+      >
         <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="permissions">Permissions</TabsTrigger>
           <TabsTrigger value="mcp">MCP Servers</TabsTrigger>
@@ -30,48 +42,56 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({
           <TabsTrigger value="advanced">Advanced</TabsTrigger>
         </TabsList>
 
-        <div className="flex-1 mt-4">
-          <TabsContent value="permissions" className="mt-0 h-full">
+        <div className="mt-4 flex-1">
+          <TabsContent className="mt-0 h-full" value="permissions">
             <PermissionsEditor
+              onChange={(perms) =>
+                onChange({ ...settings, permissions: perms })
+              }
               permissions={settings.permissions || {}}
-              onChange={(perms) => onChange({ ...settings, permissions: perms })}
             />
           </TabsContent>
 
-          <TabsContent value="mcp" className="mt-0 h-full">
+          <TabsContent className="mt-0 h-full" value="mcp">
             <McpServersEditor
               mcpServers={settings.mcpServers || {}}
-              onChange={(servers) => onChange({ ...settings, mcpServers: servers })}
+              onChange={(servers) =>
+                onChange({ ...settings, mcpServers: servers })
+              }
             />
           </TabsContent>
 
-          <TabsContent value="hooks" className="mt-0 h-full">
+          <TabsContent className="mt-0 h-full" value="hooks">
             <HooksEditor
               hooks={settings.hooks || {}}
               onChange={(hooks) => onChange({ ...settings, hooks })}
             />
           </TabsContent>
 
-          <TabsContent value="env" className="mt-0 h-full">
+          <TabsContent className="mt-0 h-full" value="env">
             <EnvVarsEditor
               env={settings.env || {}}
               onChange={(env) => onChange({ ...settings, env })}
             />
           </TabsContent>
 
-          <TabsContent value="plugins" className="mt-0 h-full">
+          <TabsContent className="mt-0 h-full" value="plugins">
             <EnabledPluginsEditor
               enabledPlugins={settings.enabledPlugins || {}}
-              onChange={(plugins) => onChange({ ...settings, enabledPlugins: plugins })}
+              onChange={(plugins) =>
+                onChange({ ...settings, enabledPlugins: plugins })
+              }
             />
           </TabsContent>
 
-          <TabsContent value="advanced" className="mt-0 h-full">
+          <TabsContent className="mt-0 h-full" value="advanced">
             <AdvancedSettingsEditor
+              onChange={(advancedSettings) =>
+                onChange({ ...settings, ...advancedSettings })
+              }
               settings={{
                 alwaysThinkingEnabled: settings.alwaysThinkingEnabled,
               }}
-              onChange={(advancedSettings) => onChange({ ...settings, ...advancedSettings })}
             />
           </TabsContent>
         </div>

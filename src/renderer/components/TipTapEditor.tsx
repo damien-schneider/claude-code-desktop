@@ -1,5 +1,5 @@
-import React from 'react';
-import { cn } from '@/utils/tailwind';
+import type React from "react";
+import { cn } from "@/utils/tailwind";
 
 interface MarkdownEditorProps {
   content: string;
@@ -14,7 +14,7 @@ interface MarkdownEditorProps {
 export const TipTapEditor: React.FC<MarkdownEditorProps> = ({
   content,
   onChange,
-  placeholder = 'Write content here...',
+  placeholder = "Write content here...",
   editable = true,
   className,
   hasChanges = false,
@@ -25,20 +25,23 @@ export const TipTapEditor: React.FC<MarkdownEditorProps> = ({
   };
 
   return (
-    <div className={cn('border rounded-md overflow-hidden flex flex-col relative', className)}>
+    <div
+      className={cn(
+        "relative flex flex-col overflow-hidden rounded-md border",
+        className
+      )}
+    >
       <textarea
-        value={content}
+        className="min-h-[200px] flex-1 resize-none bg-transparent p-4 font-mono text-sm leading-relaxed focus:outline-none"
+        disabled={!editable}
         onChange={handleChange}
         placeholder={placeholder}
-        disabled={!editable}
-        className="flex-1 min-h-[200px] p-4 resize-none focus:outline-none bg-transparent font-mono text-sm leading-relaxed"
-        style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+        style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}
+        value={content}
       />
       {/* Floating action buttons */}
       {actions && (
-        <div className="absolute bottom-4 right-4 shadow-lg">
-          {actions}
-        </div>
+        <div className="absolute right-4 bottom-4 shadow-lg">{actions}</div>
       )}
     </div>
   );

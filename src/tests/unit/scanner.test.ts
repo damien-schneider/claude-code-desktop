@@ -1,25 +1,25 @@
-import { describe, it, expect } from 'vitest';
-import { deduplicateProjects, type ClaudeProject } from '@/renderer/stores';
+import { describe, expect, it } from "vitest";
+import { type ClaudeProject, deduplicateProjects } from "@/renderer/stores";
 
-describe('scanner deduplication', () => {
-  it('should deduplicate projects with the same path', () => {
+describe("scanner deduplication", () => {
+  it("should deduplicate projects with the same path", () => {
     // Simulate the actual bug: the same project path appears twice
     const projectsWithDuplicates: ClaudeProject[] = [
       {
-        path: '/Users/test/my-project',
-        name: 'my-project',
+        path: "/Users/test/my-project",
+        name: "my-project",
         hasClaudeConfig: true,
         isFavorite: false,
       },
       {
-        path: '/Users/test/my-project', // Duplicate!
-        name: 'my-project',
+        path: "/Users/test/my-project", // Duplicate!
+        name: "my-project",
         hasClaudeConfig: true,
         isFavorite: false,
       },
       {
-        path: '/Users/test/other-project',
-        name: 'other-project',
+        path: "/Users/test/other-project",
+        name: "other-project",
         hasClaudeConfig: false,
         isFavorite: false,
       },
@@ -36,10 +36,13 @@ describe('scanner deduplication', () => {
     expect(paths.length).toBe(uniquePaths.size);
 
     // Verify the correct projects remain
-    expect(deduplicated.map((p) => p.name)).toEqual(['my-project', 'other-project']);
+    expect(deduplicated.map((p) => p.name)).toEqual([
+      "my-project",
+      "other-project",
+    ]);
   });
 
-  it('should handle empty project arrays', () => {
+  it("should handle empty project arrays", () => {
     expect(deduplicateProjects([])).toEqual([]);
   });
 });

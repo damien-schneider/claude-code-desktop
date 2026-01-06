@@ -1,11 +1,11 @@
 import {
-  scanProjects,
-  scanDirectory,
+  checkCacheValid,
+  clearCache,
   getCachedProjects,
   getDefaultPaths,
-  clearCache,
-  checkCacheValid,
-} from './handlers';
+  scanDirectory,
+  scanProjects,
+} from "./handlers";
 
 export const scanner = {
   scanProjects,

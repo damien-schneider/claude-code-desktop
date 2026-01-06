@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
-import { useAtom } from "jotai";
 import { Brain } from "@phosphor-icons/react";
-import { thinkingStartTimeAtom } from "@/renderer/stores/chatAtoms";
+import { useAtom } from "jotai";
+import type React from "react";
+import { useEffect, useState } from "react";
 import { Shimmer } from "@/components/ai-elements/shimmer";
+import { thinkingStartTimeAtom } from "@/renderer/stores/chatAtoms";
 import { cn } from "@/utils/tailwind";
 
 interface ThinkingIndicatorProps {
@@ -50,7 +51,7 @@ export const ThinkingIndicator: React.FC<ThinkingIndicatorProps> = ({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 text-muted-foreground text-sm py-3",
+        "flex items-center gap-2 py-3 text-muted-foreground text-sm",
         className
       )}
     >

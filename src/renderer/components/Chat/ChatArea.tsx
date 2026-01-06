@@ -1,35 +1,17 @@
-import { useRef, useEffect, useState } from "react";
-import type React from "react";
-import { useAtom, useSetAtom } from "jotai";
 import {
-  StopCircle,
+  ChatCircle,
+  CheckCircle,
+  Lock,
   Play,
   Spinner,
+  StopCircle,
   WarningCircle,
-  CheckCircle,
   XCircle,
-  Lock,
 } from "@phosphor-icons/react";
-import {
-  currentSessionMessagesAtom,
-  isStreamingAtom,
-  streamingMessageAtom,
-  activeProcessIdAtom,
-  sendMessageAtom,
-  stopSessionAtom,
-  resumeSessionAtom,
-  currentSessionIdAtom,
-  sessionsAtom,
-  activeSessionsAtom,
-  formatMessageContent,
-  streamingErrorAtom,
-  isThinkingAtom,
-  lastQueryCostAtom,
-  type SessionMessage,
-  type PermissionMode,
-} from "@/renderer/stores/chatAtoms";
-import { useClaudeStream } from "@/renderer/hooks/useClaudeStream";
-import { ThinkingIndicator } from "./ThinkingIndicator";
+import type { FileUIPart } from "ai";
+import { useAtom, useSetAtom } from "jotai";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Conversation,
   ConversationContent,
@@ -42,12 +24,12 @@ import {
 } from "@/components/ai-elements/message";
 import {
   PromptInput,
-  PromptInputTextarea,
   PromptInputSubmit,
+  PromptInputTextarea,
 } from "@/components/ai-elements/prompt-input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -55,9 +37,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChatCircle } from "@phosphor-icons/react";
+import { useClaudeStream } from "@/renderer/hooks/useClaudeStream";
+import {
+  activeProcessIdAtom,
+  activeSessionsAtom,
+  currentSessionIdAtom,
+  currentSessionMessagesAtom,
+  formatMessageContent,
+  isStreamingAtom,
+  isThinkingAtom,
+  lastQueryCostAtom,
+  type PermissionMode,
+  resumeSessionAtom,
+  type SessionMessage,
+  sendMessageAtom,
+  sessionsAtom,
+  stopSessionAtom,
+  streamingErrorAtom,
+  streamingMessageAtom,
+} from "@/renderer/stores/chatAtoms";
 import { cn } from "@/utils/tailwind";
-import type { FileUIPart } from "ai";
+import { ThinkingIndicator } from "./ThinkingIndicator";
 
 export const ChatArea: React.FC = () => {
   const [messages] = useAtom(currentSessionMessagesAtom);
@@ -160,7 +160,7 @@ export const ChatArea: React.FC = () => {
   };
 
   const handleResumeSession = async () => {
-    if (!currentSessionId || !currentSession) return;
+    if (!(currentSessionId && currentSession)) return;
 
     setIsResuming(true);
     try {
@@ -198,13 +198,13 @@ export const ChatArea: React.FC = () => {
     if (isSystem) {
       return (
         <div
-          key={msg.messageId || index}
           className={cn(
             "mx-auto flex max-w-[90%] items-start gap-2 rounded-md px-3 py-2 text-xs",
             isError
               ? "border border-destructive/20 bg-destructive/10 text-destructive"
               : "bg-muted/50 text-muted-foreground"
           )}
+          key={msg.messageId || index}
         >
           {isError ? (
             <XCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -218,8 +218,8 @@ export const ChatArea: React.FC = () => {
 
     return (
       <Message
-        key={msg.messageId || index}
         from={isUser ? "user" : "assistant"}
+        key={msg.messageId || index}
       >
         <MessageContent>
           {isUser ? content : <MessageResponse>{content}</MessageResponse>}
@@ -229,15 +229,15 @@ export const ChatArea: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex h-full flex-col bg-background">
       {/* Messages */}
       <Conversation className="flex-1">
         <ConversationContent>
           {messages.length === 0 && !isStreaming && !isThinking ? (
             <ConversationEmptyState
-              title="No messages in this session"
               description="View conversation history from your Claude Code sessions"
-              icon={<ChatCircle className="w-16 h-16 opacity-20" />}
+              icon={<ChatCircle className="h-16 w-16 opacity-20" />}
+              title="No messages in this session"
             />
           ) : (
             <>
@@ -281,19 +281,19 @@ export const ChatArea: React.FC = () => {
       )}
 
       {/* Input */}
-      <div className="border-t p-4 bg-background">
+      <div className="border-t bg-background p-4">
         {sendError && (
-          <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-md flex items-start gap-2 text-sm">
-            <WarningCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
+          <div className="mb-4 flex items-start gap-2 rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm">
+            <WarningCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-destructive" />
             <div className="flex-1">
               <div className="font-medium text-destructive">
                 Failed to send message
               </div>
-              <div className="text-destructive/80 mt-1">{sendError}</div>
+              <div className="mt-1 text-destructive/80">{sendError}</div>
             </div>
             <button
-              onClick={() => setSendError(null)}
               className="text-destructive/60 hover:text-destructive"
+              onClick={() => setSendError(null)}
             >
               ×
             </button>
@@ -302,15 +302,15 @@ export const ChatArea: React.FC = () => {
 
         {/* Permission Mode Selector - always visible at top of input area */}
         <div className="mb-3 flex items-center gap-3">
-          <label className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+          <label className="whitespace-nowrap font-medium text-muted-foreground text-xs">
             Permission Mode
           </label>
           <Select
-            value={permissionMode}
+            disabled={!!activeProcessId || isResuming}
             onValueChange={(value) =>
               setPermissionMode(value as PermissionMode)
             }
-            disabled={!!activeProcessId || isResuming}
+            value={permissionMode}
           >
             <SelectTrigger className="h-8 text-sm">
               <SelectValue placeholder="Select mode">
@@ -328,7 +328,7 @@ export const ChatArea: React.FC = () => {
                   <span>🔐</span>
                   <div>
                     <div className="font-medium">Default</div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-muted-foreground text-xs">
                       Ask for tool permissions
                     </div>
                   </div>
@@ -339,7 +339,7 @@ export const ChatArea: React.FC = () => {
                   <span>📋</span>
                   <div>
                     <div className="font-medium">Plan</div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-muted-foreground text-xs">
                       Read-only planning mode
                     </div>
                   </div>
@@ -350,7 +350,7 @@ export const ChatArea: React.FC = () => {
                   <span>⚡</span>
                   <div>
                     <div className="font-medium">Auto-accept</div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-muted-foreground text-xs">
                       Auto-accept edit permissions
                     </div>
                   </div>
@@ -361,7 +361,7 @@ export const ChatArea: React.FC = () => {
                   <span>⚠️</span>
                   <div>
                     <div className="font-medium">Bypass</div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-muted-foreground text-xs">
                       Skip all permission checks
                     </div>
                   </div>
@@ -372,7 +372,7 @@ export const ChatArea: React.FC = () => {
                   <span>🤝</span>
                   <div>
                     <div className="font-medium">Delegate</div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-muted-foreground text-xs">
                       Delegate mode for subagents
                     </div>
                   </div>
@@ -383,7 +383,7 @@ export const ChatArea: React.FC = () => {
                   <span>🚫</span>
                   <div>
                     <div className="font-medium">Don't Ask</div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-muted-foreground text-xs">
                       Don't ask for permissions
                     </div>
                   </div>
@@ -396,16 +396,16 @@ export const ChatArea: React.FC = () => {
         {isSessionActiveElsewhere ? (
           // Session is active elsewhere - show resume button with disabled input
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 bg-muted/50 rounded-md border">
+            <div className="flex items-center gap-2 rounded-md border bg-muted/50 p-3 text-muted-foreground text-sm">
               <Lock className="h-4 w-4" />
               <span>
                 This session is running elsewhere. Resume to take control.
               </span>
             </div>
             <Button
-              onClick={handleResumeSession}
-              disabled={isResuming}
               className="w-full gap-2"
+              disabled={isResuming}
+              onClick={handleResumeSession}
               size="lg"
             >
               {isResuming ? (
@@ -424,11 +424,11 @@ export const ChatArea: React.FC = () => {
         ) : currentSessionId || activeProcessId ? (
           // Session selected or active - show chat interface
           <PromptInput onSubmit={handleSubmit}>
-            <div className="absolute -top-6 left-0 flex items-center gap-2 px-1 select-none pointer-events-none">
+            <div className="pointer-events-none absolute -top-6 left-0 flex select-none items-center gap-2 px-1">
               {activeProcessId && (isStreaming || isThinking) ? (
                 <div className="flex items-center gap-2">
                   <Spinner className="h-3 w-3 animate-spin text-primary" />
-                  <span className="text-[10px] font-medium text-muted-foreground animate-pulse uppercase tracking-wider">
+                  <span className="animate-pulse font-medium text-[10px] text-muted-foreground uppercase tracking-wider">
                     Claude is {isThinking ? "thinking" : "responding"}...
                   </span>
                 </div>
@@ -438,7 +438,7 @@ export const ChatArea: React.FC = () => {
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
                   </div>
-                  <span className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider">
+                  <span className="font-medium text-[10px] text-muted-foreground/60 uppercase tracking-wider">
                     Claude Code active
                   </span>
                 </div>
@@ -446,13 +446,14 @@ export const ChatArea: React.FC = () => {
             </div>
             {lastQueryCost !== null && !isStreaming && !isThinking && (
               <Badge
+                className="absolute top-2 right-2 z-10 bg-background/80 opacity-0 backdrop-blur-sm transition-opacity group-hover/input-group:opacity-100"
                 variant="outline"
-                className="absolute top-2 right-2 opacity-0 group-hover/input-group:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm z-10"
               >
                 Last query cost: ${lastQueryCost.toFixed(4)}
               </Badge>
             )}
             <PromptInputTextarea
+              disabled={isStreaming || isThinking || isSending}
               placeholder={
                 isStreaming || isThinking
                   ? "Waiting for response..."
@@ -460,15 +461,14 @@ export const ChatArea: React.FC = () => {
                     ? "Send a message... (Enter to send, Shift+Enter for new line)"
                     : "Start a new session... (Enter to send, Shift+Enter for new line)"
               }
-              disabled={isStreaming || isThinking || isSending}
             />
-            <div className="flex items-center gap-2 p-2 justify-end">
+            <div className="flex items-center justify-end gap-2 p-2">
               {isStreaming || isThinking ? (
                 <Button
+                  className="gap-2"
+                  onClick={handleStop}
                   size="sm"
                   variant="destructive"
-                  onClick={handleStop}
-                  className="gap-2"
                 >
                   <StopCircle className="h-4 w-4" />
                   Stop
@@ -476,7 +476,7 @@ export const ChatArea: React.FC = () => {
               ) : (
                 <PromptInputSubmit disabled={isSending}>
                   {isSending && (
-                    <Spinner className="h-4 w-4 animate-spin mr-2" />
+                    <Spinner className="mr-2 h-4 w-4 animate-spin" />
                   )}
                 </PromptInputSubmit>
               )}
@@ -484,8 +484,8 @@ export const ChatArea: React.FC = () => {
           </PromptInput>
         ) : (
           // No session selected
-          <div className="text-center text-sm text-muted-foreground py-8">
-            <ChatCircle className="w-12 h-12 mx-auto mb-2 opacity-20" />
+          <div className="py-8 text-center text-muted-foreground text-sm">
+            <ChatCircle className="mx-auto mb-2 h-12 w-12 opacity-20" />
             Select a session from the sidebar to view or start a new session
           </div>
         )}

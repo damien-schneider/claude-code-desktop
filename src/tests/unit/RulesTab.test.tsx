@@ -1,15 +1,14 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { Provider } from 'jotai';
-import { RulesTab } from '@/renderer/components/Rules/RulesTab';
-import { selectedProjectIdAtom, isGlobalSettingsSelectedAtom, homePathAtom } from '@/renderer/stores/atoms';
+import { fireEvent, render, screen } from "@testing-library/react";
+import { Provider } from "jotai";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { RulesTab } from "@/renderer/components/Rules/RulesTab";
 
 // Mock IPC
-vi.mock('@/ipc/manager', () => ({
+vi.mock("@/ipc/manager", () => ({
   ipc: {
     client: {
       app: {
-        getHomePath: vi.fn().mockResolvedValue('/Users/test/home'),
+        getHomePath: vi.fn().mockResolvedValue("/Users/test/home"),
       },
       claude: {
         readClaudeDirectory: vi.fn().mockResolvedValue({
@@ -20,7 +19,7 @@ vi.mock('@/ipc/manager', () => ({
   },
 }));
 
-describe('RulesTab - Add Rule button', () => {
+describe("RulesTab - Add Rule button", () => {
   const Wrapper = ({ children }: { children: React.ReactNode }) => (
     <Provider>{children}</Provider>
   );
@@ -30,7 +29,7 @@ describe('RulesTab - Add Rule button', () => {
     vi.clearAllMocks();
   });
 
-  it('should enable Add Rule button when project is selected', async () => {
+  it("should enable Add Rule button when project is selected", async () => {
     const { container } = render(
       <Wrapper>
         <RulesTab />
@@ -38,7 +37,7 @@ describe('RulesTab - Add Rule button', () => {
     );
 
     // Initially, without project selected, button should be present
-    const addButton = screen.getByText('Add Rule');
+    const addButton = screen.getByText("Add Rule");
     expect(addButton).toBeInTheDocument();
 
     // The button click should do nothing without activePath

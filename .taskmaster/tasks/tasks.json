@@ -26,9 +26,7 @@
             "id": 2,
             "title": "Configure TypeScript and Build Pipeline",
             "description": "Set up TypeScript configurations and the build tool (Webpack or Vite) to handle the Electron main and renderer processes.",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Configure tsconfig.json for both the main process (Node.js types) and renderer process (DOM types). Set up Vite or Webpack to bundle the React frontend. Configure build scripts to compile the main process and bundle the renderer. Ensure path aliases are set up for clean imports.\n<info added on 2025-12-26T14:02:35.975Z>\nTypeScript and Vite build pipeline configured using the project template. tsconfig.json includes proper path aliases (@/*). Vite configurations for main, preload, and renderer processes are established. Fixed case sensitivity issue in src/renderer.ts (app -> App). Linting passes successfully.\n</info added on 2025-12-26T14:02:35.975Z>",
             "status": "done",
             "testStrategy": "Run the build and dev scripts to ensure TypeScript compilation succeeds without errors and the bundler processes start correctly.",
@@ -39,9 +37,7 @@
             "id": 3,
             "title": "Setup React, Tailwind CSS, and shadcn/ui",
             "description": "Configure the React frontend environment, integrate Tailwind CSS for styling, and initialize the shadcn/ui component library.",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Install React, React DOM, and related types. Configure Tailwind CSS with the PostCSS plugin. Initialize shadcn/ui using the CLI to set up the components.json configuration file. Install a few basic components (e.g., Button, Card) to verify the setup. Wrap the application root with the necessary Theme providers.\n<info added on 2025-12-26T15:37:57.831Z>\nReact 19, Tailwind CSS 4, and shadcn/ui are pre-configured in the project template. The components.json file is set up with proper aliases. Tailwind CSS is configured via the Vite plugin. Available UI components include Button, Toggle, ToggleGroup, and NavigationMenu. No additional setup is required.\n</info added on 2025-12-26T15:37:57.831Z>",
             "status": "done",
             "testStrategy": "Start the application and render a test component from shadcn/ui to verify styling and functionality.",
@@ -52,9 +48,7 @@
             "id": 4,
             "title": "Implement IPC Bridge and Preload Scripts",
             "description": "Create a secure IPC communication layer using a preload script and contextBridge to interact between Main and Renderer processes.",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Create a preload.ts file that exposes specific APIs via contextBridge.api. Configure the Main process (main/index.ts) to load this preload script. Define IPC handlers in the Main process for basic operations. Create corresponding TypeScript types in src/shared to ensure type safety across the IPC boundary.\n<info added on 2025-12-26T15:40:21.217Z>\nThe project uses ORPC (MessageChannel-based RPC) for IPC communication instead of traditional contextBridge. The IPC bridge is already set up with src/ipc/handler.ts, src/ipc/router.ts, and src/ipc/context.ts. The preload script in src/preload.ts handles the ORPC server initialization. New IPC routes for the Claude Code Manager (scanner, git, config operations) will be added to src/ipc/ following the existing pattern in src/ipc/app/, src/ipc/theme/, etc.\n</info added on 2025-12-26T15:40:21.217Z>",
             "status": "done",
             "testStrategy": "Send a ping/pong message from the Renderer process to the Main process via the exposed API and verify the response is received correctly.",
@@ -65,9 +59,7 @@
             "id": 5,
             "title": "Initialize Zustand State Management",
             "description": "Install and configure Zustand to handle global application state within the Renderer process.",
-            "dependencies": [
-              3
-            ],
+            "dependencies": [3],
             "details": "Install the Zustand package. Create store files in src/renderer/stores. Define the initial store structure for core app data (e.g., UI state, project lists). Implement typed hooks for accessing and updating the store. Set up the provider or direct hook usage pattern as preferred.\n<info added on 2025-12-26T15:42:20.325Z>\nZustand v5.0.9 installed. Created three stores: 1) appStore.ts - manages projects list, selection, sidebar state, search query, and tab management (open, close, switch tabs). 2) configStore.ts - manages hooks, rules, skills, agents, and settings configurations with CRUD operations. 3) index.ts - exports all stores and types. Stores use devtools middleware for debugging support.\n</info added on 2025-12-26T15:42:20.325Z>",
             "status": "done",
             "testStrategy": "Create a test component that updates a Zustand store value and verify the UI re-renders to reflect the state change.",
@@ -78,9 +70,7 @@
             "id": 6,
             "title": "Integrate Monaco Editor or CodeMirror",
             "description": "Install and configure the code editor component (Monaco Editor or CodeMirror) for viewing and editing files.",
-            "dependencies": [
-              3
-            ],
+            "dependencies": [3],
             "details": "Select Monaco Editor or CodeMirror. Install the necessary packages and web workers (if using Monaco). Create a wrapper React component in src/renderer/components to manage the editor instance lifecycle. Configure basic settings such as theme, language support, and resizing behavior.\n<info added on 2025-12-26T15:43:25.232Z>\nInstalled @monaco-editor/react v4.7.0. Created CodeEditor.tsx component with configurable language (default: markdown), theme support (vs-dark, light, vs), read-only mode, height options, and Monaco editor options pass-through. Default editor settings configured: minimap disabled, 14px font, line numbers, auto-layout, 2-space tab size, and word wrap enabled.\n</info added on 2025-12-26T15:43:25.232Z>",
             "status": "done",
             "testStrategy": "Render the editor component in the app, load sample text into it, and verify that text editing and selection work smoothly.",
@@ -98,9 +88,7 @@
         "title": "Implement Project Scanner & Discovery",
         "description": "Create a file system scanner to discover all git repositories on the computer and identify those containing .claude/ directories.",
         "status": "done",
-        "dependencies": [
-          "1"
-        ],
+        "dependencies": ["1"],
         "priority": "high",
         "details": "Implement Main process scanner using Node.js fs/promises to traverse file system recursively. Detect .git directories to identify git repositories. Check for .claude/ subdirectories within git repos. Cache discovered projects to avoid repeated scanning. Handle permission errors and inaccessible directories gracefully. Implement search/filter functionality for projects. Add favorites persistence using local storage or config file.",
         "testStrategy": "Test scanner on local machine with multiple git repositories. Verify all git projects are discovered correctly. Confirm .claude/ detection works. Test search/filter functionality. Validate error handling for restricted directories. Check favorites persistence across app restarts.",
@@ -120,9 +108,7 @@
             "id": 2,
             "title": "Add logic to detect .git and .claude/ directories",
             "description": "Implement detection logic to identify git repositories by finding .git directories and check for .claude/ subdirectories within those repositories.",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "During traversal, check for .git directory presence to identify git repositories. When a git repo is found, check if it contains a .claude/ subdirectory. Build a data structure to store discovered projects with their paths and claude status.",
             "status": "done",
             "testStrategy": "Create test directories with .git folders and verify detection. Test with mixed scenarios: git repos with .claude/, git repos without .claude/, non-git directories. Ensure only valid git repos are flagged.",
@@ -133,9 +119,7 @@
             "id": 3,
             "title": "Handle permission errors and inaccessible directories gracefully",
             "description": "Add robust error handling for permission errors, inaccessible directories, and other file system exceptions during scanning.",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Wrap all file system operations in try-catch blocks. Handle EACCES, EPERM, and ENOENT errors specifically. Log skipped directories with reasons without crashing the scanner. Implement retry logic with exponential backoff for transient errors.",
             "status": "done",
             "testStrategy": "Test scanning directories with restricted permissions. Simulate permission errors to ensure graceful handling. Verify scanner continues after encountering errors and provides useful logging about skipped paths.",
@@ -146,9 +130,7 @@
             "id": 4,
             "title": "Implement caching mechanism to optimize performance",
             "description": "Create a caching layer to store discovered projects and avoid repeated expensive file system scans.",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Implement in-memory cache with TTL (time-to-live) for discovered projects. Persist cache to local file (JSON) for app restart recovery. Add cache invalidation strategy based on time or manual refresh. Compare file modification times to detect changes.",
             "status": "done",
             "testStrategy": "Verify cache stores discovered projects correctly. Test cache persistence across app restarts. Validate cache invalidation triggers re-scan. Measure performance improvement with caching enabled vs disabled.",
@@ -159,9 +141,7 @@
             "id": 5,
             "title": "Build search/filter and favorites persistence logic",
             "description": "Implement search and filter functionality for discovered projects, along with favorites persistence using local storage or config file.",
-            "dependencies": [
-              4
-            ],
+            "dependencies": [4],
             "details": "Create search by project name and path with fuzzy matching. Implement filters for projects with/without .claude/ directories. Build favorites system with add/remove functionality. Persist favorites to local config file. Create IPC handlers for Renderer process communication.",
             "status": "done",
             "testStrategy": "Test search with partial and exact matches. Verify filters correctly narrow results. Add/remove favorites and confirm persistence across app restarts. Test IPC communication between Main and Renderer processes.",
@@ -179,9 +159,7 @@
         "title": "Build Sidebar Navigation Component",
         "description": "Create the sidebar tree-view component for navigating projects, with search, favorites, and main config access.",
         "status": "done",
-        "dependencies": [
-          "2"
-        ],
+        "dependencies": ["2"],
         "priority": "high",
         "details": "Build React component using shadcn/ui tree-view. Display discovered projects in hierarchical structure. Add search input for filtering projects. Implement favorites marking with star icon. Include main config option (~/.claude/) at top of tree. Handle project selection events to open tabs. Implement virtualization for large project lists. Style with Tailwind CSS to match app theme.",
         "testStrategy": "Verify all discovered projects display in tree view. Test search filters projects correctly. Confirm favorites toggle persists. Check main config option is accessible. Validate project selection opens correct tab. Test performance with 100+ projects.",
@@ -190,9 +168,7 @@
             "id": 1,
             "title": "Build Tree View UI Foundation with shadcn/ui Components",
             "description": "Create the basic sidebar component structure with hierarchical tree view display for discovered projects using shadcn/ui components and Tailwind CSS styling.",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Create React Sidebar component using shadcn/ui TreeView as the foundation. Render project hierarchy from scanner results. Add main config option (~/.claude/) at the top of the tree with distinct styling. Apply Tailwind CSS classes to match app theme including hover states, selection highlighting, and consistent spacing. Set up component props to receive project data from scanner.",
             "status": "done",
             "testStrategy": "Verify tree view renders correctly with sample project data. Confirm main config option appears at top. Validate Tailwind styling matches app theme. Test component renders empty state when no projects available.",
@@ -203,9 +179,7 @@
             "id": 2,
             "title": "Implement Search and Filter Functionality",
             "description": "Add search input component and implement filter logic to dynamically filter the project tree based on user queries.",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Add shadcn/ui Input component at top of sidebar for search queries. Create filter state to store search term. Implement filter function that searches project names and paths recursively through the tree hierarchy. Update tree view to show only matching projects and their parent paths. Add debouncing to search input to optimize performance during typing. Clear search button to reset filter.",
             "status": "done",
             "testStrategy": "Test search filters projects by name correctly. Verify nested projects show when parent matches. Confirm clear search resets the tree. Test debouncing works during rapid typing. Validate empty results show appropriate message.",
@@ -216,9 +190,7 @@
             "id": 3,
             "title": "Implement Favorites, Selection Events, and Virtualization",
             "description": "Add favorites marking with star icons, handle project selection to open tabs, and implement virtualization for performance with large project lists.",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Add star icon button to each project node for favorites toggle. Implement favorites state and persistence using localStorage or Zustand store. Create click handler for project selection that emits event to open corresponding tab. Implement react-window or react-virtualized for tree virtualization handling 100+ projects efficiently. Add keyboard navigation support for accessibility. Ensure favorites persist across app restarts.",
             "status": "done",
             "testStrategy": "Verify favorites toggle persists across restarts. Confirm project selection opens correct tab. Test virtualization performance with 100+ projects. Validate keyboard navigation works. Check favorites state syncs across app.",
@@ -236,9 +208,7 @@
         "title": "Create Tab Management System",
         "description": "Implement the multi-tab interface that allows managing different configuration aspects for each selected project or main config.",
         "status": "done",
-        "dependencies": [
-          "3"
-        ],
+        "dependencies": ["3"],
         "priority": "high",
         "details": "Create TabContainer component managing multiple open tabs. Each tab represents a project with one of 5 active sub-tabs (Hooks, Rules, Skills, Agents, Settings). Implement tab open/close logic. Store tab state in Zustand for persistence. Support switching between tabs without losing unsaved changes. Display tab title with project name and config type. Add close button per tab. Prevent duplicate tabs for same project/config type.",
         "testStrategy": "Test opening multiple project tabs. Verify tab switching preserves state. Confirm close button works properly. Check duplicate prevention. Validate unsaved changes warning on tab close. Test tab persistence across app restarts.",
@@ -258,9 +228,7 @@
             "id": 2,
             "title": "Implement Zustand store for global tab state",
             "description": "Create and configure Zustand store to manage open tabs list, active tab, and prevent duplicate tabs",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Create Zustand store with tabs array (id, projectId, configType, projectName, isActive) and activeTabId state. Implement actions: openTab(projectId, configType), closeTab(tabId), setActiveTab(tabId). Add deduplication logic to prevent opening same project/config combination. Store should be accessed via useTabStore hook. Initialize with empty state. Ensure state updates trigger re-renders in TabContainer.",
             "status": "done",
             "testStrategy": "Test opening tabs updates state correctly. Verify duplicate prevention works for same project/config. Confirm closeTab removes correct entry. Validate setActiveTab switches active state.",
@@ -271,9 +239,7 @@
             "id": 3,
             "title": "Implement tab state persistence",
             "description": "Add persistence layer to save and restore tab state across application restarts",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Integrate Zustand persist middleware with localStorage. Configure what state to persist (tabs array, activeTabId). Add rehydration on app startup to restore previous tab layout. Handle corrupted or missing persisted data gracefully with fallback to empty state. Consider versioning for future schema changes. Ensure persistence doesn't interfere with initial app load performance.",
             "status": "done",
             "testStrategy": "Verify tab state saves to localStorage after changes. Confirm tabs restore correctly after app restart. Test handling of corrupted persisted data. Check performance impact on startup.",
@@ -284,10 +250,7 @@
             "id": 4,
             "title": "Implement unsaved changes warning system",
             "description": "Add logic to detect unsaved changes and warn users before closing or switching tabs",
-            "dependencies": [
-              1,
-              2
-            ],
+            "dependencies": [1, 2],
             "details": "Create unsavedChanges registry in Zustand store to track dirty state per tab. Add registerUnsaved(tabId, hasChanges) action. Modify closeTab action to check registry and show confirmation dialog if changes exist. Implement similar check for setActiveTab when switching away from dirty tab. Use shadcn/ui AlertDialog for confirmation UI. Add forceClose option to bypass warning if user confirms.",
             "status": "done",
             "testStrategy": "Test warning dialog appears when closing tab with unsaved changes. Verify switch warning triggers appropriately. Confirm cancel action keeps tab open. Test force close proceeds after confirmation.",
@@ -305,9 +268,7 @@
         "title": "Implement Hooks Management Tab",
         "description": "Build the Hooks management interface with list view, editor, enable/disable toggles, and import/export functionality.",
         "status": "done",
-        "dependencies": [
-          "4"
-        ],
+        "dependencies": ["4"],
         "priority": "medium",
         "details": "Create Hooks component reading .claude/hooks/*.json files. Display list of all hooks (SessionStart, PromptSubmit, ToolUse, etc.). Implement create/edit/delete operations for hooks. Use Monaco/CodeMirror for script editing with syntax highlighting. Add enable/disable toggle per hook. Implement import/export for individual hooks or bulk. Add test hook execution button. Validate hook JSON structure before saving.",
         "testStrategy": "Create, edit, and delete hooks successfully. Verify syntax highlighting works in editor. Test enable/disable toggle functionality. Confirm import/export preserves hook data. Validate hook execution test feature. Check JSON validation catches errors.",
@@ -327,9 +288,7 @@
             "id": 2,
             "title": "Create hooks list view with enable/disable toggles",
             "description": "Build the UI component that displays all hooks with enable/disable toggle functionality",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Implement a list view component that renders all hooks loaded from file system. Add toggle switch for each hook to enable/disable functionality. Support displaying hook types (SessionStart, PromptSubmit, ToolUse, etc.). Add create, edit, and delete action buttons for each hook entry.\n<info added on 2025-12-27T14:40:58.534Z>\nEach hook displays its name, hook type, and validation status. The list supports selection, toggle state persistence, and visual feedback for enabled/disabled states using Power/PowerOff icons.\n</info added on 2025-12-27T14:40:58.534Z>",
             "status": "done",
             "testStrategy": "Test that all hooks display correctly in list view. Verify enable/disable toggles persist state across sessions. Test create, edit, and delete actions launch appropriate modal or view.",
@@ -340,10 +299,7 @@
             "id": 3,
             "title": "Integrate Monaco editor for script editing",
             "description": "Add code editor component with syntax highlighting for editing hook scripts",
-            "dependencies": [
-              1,
-              2
-            ],
+            "dependencies": [1, 2],
             "details": "Integrate Monaco or CodeMirror as the code editor for hook script content editing. Configure syntax highlighting for JavaScript/TypeScript. Implement load/save functionality connecting to the file I/O layer. Add editor toolbar with format and validation options.\n<info added on 2025-12-27T14:41:20.325Z>\nIntegrated Monaco CodeEditor component with JSON syntax highlighting for hook script editing. The editor loads hook content on selection, supports real-time editing, and connects to the save functionality. The editor is configured for JSON language with full height support.\n</info added on 2025-12-27T14:41:20.325Z>",
             "status": "done",
             "testStrategy": "Verify syntax highlighting works correctly for hook scripts. Test loading hook content into editor on selection. Confirm saving updates the hook file correctly. Check editor formatting features and undo/redo work.",
@@ -354,10 +310,7 @@
             "id": 4,
             "title": "Implement JSON validation and import/export functionality",
             "description": "Add JSON structure validation and import/export capabilities for individual or bulk hooks",
-            "dependencies": [
-              1,
-              3
-            ],
+            "dependencies": [1, 3],
             "details": "Implement JSON schema validation for hook structure before saving changes. Create import functionality to load hooks from external JSON files. Add export capability for individual hooks or bulk export of all hooks. Add test hook execution button to validate hook logic works correctly.\n<info added on 2025-12-27T14:41:47.018Z>\nImplemented JSON validation using validateHookJSON function that checks hookType and required script/lifecycle methods. Added import/export functionality - export downloads all hooks as JSON array, import loads hooks from external JSON files. Added test hook execution with syntax validation using Function constructor.\n</info added on 2025-12-27T14:41:47.018Z>",
             "status": "done",
             "testStrategy": "Test validation catches invalid hook structures and displays helpful error messages. Verify import loads hooks correctly into system. Confirm export produces valid JSON preserving all hook data. Test bulk operations for multiple hooks.",
@@ -375,9 +328,7 @@
         "title": "Implement Rules Management Tab",
         "description": "Build the Rules management interface with markdown editor, preview, priority ordering, and enable/disable toggles.",
         "status": "done",
-        "dependencies": [
-          "4"
-        ],
+        "dependencies": ["4"],
         "priority": "medium",
         "details": "Create Rules component reading .claude/rules/*.md files. Display list of all rules. Implement create/edit/delete operations. Use markdown editor with Monaco/CodeMirror and markdown rendering preview. Add enable/disable toggle per rule. Implement drag-and-drop or buttons for priority ordering. Add import/export for rules. Validate markdown syntax. Support rule metadata in YAML frontmatter.",
         "testStrategy": "Create, edit, and delete rules correctly. Verify markdown preview matches editor content. Test priority ordering changes. Confirm enable/disable toggles work. Validate import/export preserves rules. Check YAML frontmatter parsing.",
@@ -396,9 +347,7 @@
             "id": 2,
             "title": "Parse YAML frontmatter for rule metadata",
             "description": "Extract and parse YAML metadata from markdown rule files including title, description, enabled status, and priority",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Implement YAML frontmatter parser to extract metadata from markdown files, define schema for rule properties, handle missing frontmatter with default values, validate YAML structure",
             "status": "pending",
             "testStrategy": "Verify YAML frontmatter is correctly extracted and parsed, test with various frontmatter formats, confirm default values used when frontmatter missing",
@@ -408,9 +357,7 @@
             "id": 3,
             "title": "Create markdown editor with live preview",
             "description": "Build split-pane markdown editor and live preview component using Monaco or CodeMirror with syntax highlighting",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Integrate Monaco or CodeMirror for markdown editing, implement split-pane layout with resizable divider, create live preview pane using markdown renderer library, add syntax highlighting and line numbers",
             "status": "pending",
             "testStrategy": "Verify editor displays content correctly, preview updates in real-time as user types, test syntax highlighting works, confirm split-pane resizing functions properly",
@@ -420,10 +367,7 @@
             "id": 4,
             "title": "Implement priority ordering for rules",
             "description": "Add drag-and-drop reordering or up/down buttons to manage rule priority sequence in the rules list",
-            "dependencies": [
-              1,
-              2
-            ],
+            "dependencies": [1, 2],
             "details": "Implement drag-and-drop UI for reordering rules list, add alternative up/down button controls, update rule order in file system or frontmatter metadata, persist priority changes immediately",
             "status": "pending",
             "testStrategy": "Test drag-and-drop reordering works smoothly, verify up/down buttons correctly move items, confirm priority changes persist after page refresh, validate order updates reflect in rule list",
@@ -433,10 +377,7 @@
             "id": 5,
             "title": "Manage enable/disable states and import/export",
             "description": "Add toggle switches for individual rules and implement import/export functionality for rule configurations",
-            "dependencies": [
-              1,
-              2
-            ],
+            "dependencies": [1, 2],
             "details": "Implement enable/disable toggle per rule that updates YAML frontmatter metadata, add import rules from uploaded file functionality, export all rules to downloadable zip or JSON format, validate imported rule data before applying",
             "status": "pending",
             "testStrategy": "Verify enable/disable toggles persist correctly after page reload, test import functionality with valid and invalid files, confirm export preserves all rule data and metadata including frontmatter",
@@ -453,9 +394,7 @@
         "title": "Implement Skills Management Tab",
         "description": "Build the Skills management interface with metadata editor, content editor, validation, and test execution.",
         "status": "done",
-        "dependencies": [
-          "4"
-        ],
+        "dependencies": ["4"],
         "priority": "medium",
         "details": "Create Skills component reading .claude/skills/*.json files. Display list of all custom skills. Implement create/edit/delete operations. Build metadata editor (name, description, parameters). Use Monaco/CodeMirror for skill content editing. Add skill validation against expected schema. Implement test skill execution. Add import/export for skills. Display skill validation status indicators.",
         "testStrategy": "Create, edit, and delete skills successfully. Verify metadata fields save correctly. Test skill validation catches invalid schemas. Confirm skill execution test works. Validate import/export preserves skill data. Check validation status indicators update correctly.",
@@ -474,9 +413,7 @@
             "id": 2,
             "title": "Build Metadata Editor Form",
             "description": "Create and implement the metadata editor form for managing skill name, description, and parameter definitions.",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Design form layout with input fields for skill name and description. Build parameters editor allowing users to add, edit, and remove parameter definitions with types (string, number, boolean, array, object). Implement form validation to ensure required fields are present. Save metadata changes to the corresponding JSON file.",
             "status": "pending",
             "testStrategy": "Test editing skill name and description. Verify parameters can be added, modified, and removed correctly. Confirm metadata saves to JSON file properly. Validate required field enforcement.",
@@ -486,9 +423,7 @@
             "id": 3,
             "title": "Integrate Code Editor for Skill Content",
             "description": "Integrate Monaco or CodeMirror editor for editing skill content with JSON syntax highlighting and formatting support.",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Set up Monaco or CodeMirror component configured for JSON editing. Enable syntax highlighting, auto-indentation, and bracket matching for JSON. Implement JSON formatting (prettify) and error highlighting features. Sync editor content with the skill's code section in the JSON structure. Handle editor resize and focus management.",
             "status": "pending",
             "testStrategy": "Verify JSON syntax highlighting displays correctly. Test auto-formatting functionality. Confirm editor content syncs with JSON file. Check error highlighting for invalid JSON syntax.",
@@ -498,9 +433,7 @@
             "id": 4,
             "title": "Implement Skills Validation System",
             "description": "Build the validation system to verify skills against the expected schema and display validation status indicators.",
-            "dependencies": [
-              3
-            ],
+            "dependencies": [3],
             "details": "Define the skill JSON schema structure including required fields (name, description, parameters, content). Implement schema validation using a JSON schema validator. Add real-time validation feedback in the editor. Create visual indicators (green/red/yellow) for validation status in the skills list. Display detailed validation errors to users when validation fails.",
             "status": "pending",
             "testStrategy": "Test validation with valid skill JSON. Verify invalid JSON structures are caught and errors displayed. Confirm status indicators update correctly. Check real-time validation feedback during editing.",
@@ -510,9 +443,7 @@
             "id": 5,
             "title": "Implement Test Execution and Import/Export Features",
             "description": "Add test execution functionality for skills and implement import/export capabilities for skill management.",
-            "dependencies": [
-              4
-            ],
+            "dependencies": [4],
             "details": "Create test execution interface that runs skills with sample inputs. Display test output and execution results. Build export functionality for individual skills or bulk export to a zip file. Implement import feature supporting individual JSON files and zip archives with validation of imported skills. Add progress indicators for bulk operations.",
             "status": "pending",
             "testStrategy": "Test skill execution with sample parameters. Verify test output displays correctly. Confirm export creates valid JSON/zip files. Test import of single and multiple skills. Validate imported skills pass schema validation.",
@@ -529,9 +460,7 @@
         "title": "Implement Agents/MCP Management Tab",
         "description": "Build the MCP server management interface with configuration editor, connection testing, and health monitoring.",
         "status": "done",
-        "dependencies": [
-          "4"
-        ],
+        "dependencies": ["4"],
         "priority": "medium",
         "details": "Create Agents component reading .claude/claude_desktop_config.json for MCP servers. Display list of configured MCP servers. Implement add/remove/edit MCP configurations. Use JSON editor with validation for server config. Add test connection button for each server. Display available tools per server. Implement health monitoring with status indicators. Add import/export for MCP configs. Handle connection errors gracefully.",
         "testStrategy": "Add, edit, and remove MCP servers correctly. Verify JSON validation catches config errors. Test connection button shows accurate results. Confirm available tools display after connection. Check health status indicators update. Validate import/export preserves configurations.",
@@ -550,9 +479,7 @@
             "id": 2,
             "title": "Build JSON editor with validation for MCP configs",
             "description": "Create a JSON editor component with validation for adding, editing, and removing MCP server configurations",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Implement Monaco or CodeMirror based JSON editor with real-time validation against MCP config schema. Add UI buttons for add/edit/delete operations. Validate JSON structure before saving. Display syntax errors clearly with line numbers. Support editing of command, args, and env properties.",
             "status": "pending",
             "testStrategy": "Verify JSON validation catches syntax errors, test add/edit/remove operations preserve config integrity",
@@ -562,9 +489,7 @@
             "id": 3,
             "title": "Implement async Test Connection via IPC",
             "description": "Build an asynchronous connection testing feature that communicates with the main process through IPC to verify MCP server connectivity",
-            "dependencies": [
-              2
-            ],
+            "dependencies": [2],
             "details": "Create IPC communication layer to send connection test requests to main process. Implement async/await pattern for test requests. Add loading state during connection attempts. Display success/error results with detailed error messages. Handle timeout scenarios and connection retries.",
             "status": "pending",
             "testStrategy": "Test with valid and invalid server configs, verify timeout handling, confirm error messages display properly",
@@ -574,9 +499,7 @@
             "id": 4,
             "title": "Implement health monitoring with polling",
             "description": "Create a health monitoring system that polls MCP servers at intervals and displays real-time status indicators",
-            "dependencies": [
-              3
-            ],
+            "dependencies": [3],
             "details": "Implement polling mechanism with configurable intervals to check server health status. Create visual status indicators (green/yellow/red) for each server. Handle health check failures gracefully. Allow users to pause/resume monitoring. Store last known status and update UI reactively.",
             "status": "pending",
             "testStrategy": "Verify status indicators update correctly on polling, test pause/resume functionality, confirm status persistence",
@@ -586,9 +509,7 @@
             "id": 5,
             "title": "Fetch and display available tools per server",
             "description": "Implement functionality to fetch available tools from each connected MCP server and display them in the UI",
-            "dependencies": [
-              3
-            ],
+            "dependencies": [3],
             "details": "Create IPC handlers to request available tools list from MCP servers. Parse and display tool names, descriptions, and parameters in a structured format. Handle large tool lists with proper scrolling or pagination. Update tool list when server configuration changes. Implement caching to reduce redundant requests.",
             "status": "pending",
             "testStrategy": "Verify tools display correctly after connection, test caching behavior, confirm tool list updates on config changes",
@@ -605,9 +526,7 @@
         "title": "Implement Settings Tab",
         "description": "Build the Settings editor with JSON validation for .claude/settings.json, model preferences, environment variables, and theme settings.",
         "status": "done",
-        "dependencies": [
-          "4"
-        ],
+        "dependencies": ["4"],
         "priority": "medium",
         "details": "Create Settings component reading .claude/settings.json. Use Monaco/CodeMirror with JSON schema validation for editing. Implement allowed tools configuration UI. Add model preferences selector. Build environment variables editor. Create theme/appearance settings UI. Validate all JSON changes before saving. Apply theme changes immediately. Handle missing settings.json with default values.",
         "testStrategy": "Edit settings.json with validation catching errors. Verify allowed tools UI saves correctly. Test model preferences selection. Confirm environment variables persist. Check theme changes apply immediately. Validate default values used for missing config.",
@@ -626,9 +545,7 @@
             "id": 2,
             "title": "Build model preferences and environment variables forms",
             "description": "Create form UI components for model selection and environment variable management",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Implement allowed tools configuration UI with checkboxes. Add model preferences selector with dropdown for choosing available models. Build environment variables editor with add/edit/delete key-value pairs. Validate all form inputs before saving to settings.json.",
             "status": "pending",
             "testStrategy": "Verify model selection saves correctly, environment variables persist after add/edit/delete operations, and form validation catches invalid inputs",
@@ -638,9 +555,7 @@
             "id": 3,
             "title": "Implement theme switcher and appearance settings",
             "description": "Create theme selection UI and logic to apply theme changes immediately",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Create theme/appearance settings UI with live preview options. Implement immediate theme application without page refresh using CSS variables. Add theme options including light, dark, and auto/system detection. Save theme preference to settings.json and apply on application load.",
             "status": "pending",
             "testStrategy": "Confirm theme changes apply immediately, theme selection persists across sessions, and auto/system theme follows OS preferences correctly",
@@ -657,12 +572,7 @@
         "title": "Implement Cross-Project Operations",
         "description": "Build bulk operations, templates, sync, and migration features for applying configurations across multiple projects.",
         "status": "done",
-        "dependencies": [
-          "5",
-          "6",
-          "7",
-          "8"
-        ],
+        "dependencies": ["5", "6", "7", "8"],
         "priority": "low",
         "details": "Implement bulk operations UI for selecting multiple projects. Create templates system to save configurations as reusable templates. Build sync functionality to copy configurations between projects. Add migration feature to move configurations. Implement automatic backups before any modification using git or file copies. Add activity log tracking all configuration changes. Create global search across all configurations. Validate operations before applying.",
         "testStrategy": "Apply hooks/rules/skills to multiple projects successfully. Create and apply templates correctly. Test sync between projects. Verify migrations work as expected. Confirm automatic backups created before changes. Validate activity log records all operations. Test global search finds configurations.",
@@ -681,9 +591,7 @@
             "id": 2,
             "title": "Create Template System for Configurations",
             "description": "Build a system to save and load configuration sets as reusable templates across projects.",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Define template structure (metadata + config data). Create template storage format (JSON). Implement save template dialog for capturing current project settings. Build load template functionality for applying templates to selected projects. Add template management UI (list, edit, delete). Support template export/import for sharing.",
             "status": "pending",
             "testStrategy": "Save a template from current project. Apply template to multiple projects and verify configurations match. Test template management operations. Validate export/import preserves template data. Confirm template metadata is preserved correctly.",
@@ -693,10 +601,7 @@
             "id": 3,
             "title": "Implement Sync Logic Between Projects",
             "description": "Build synchronization functionality to copy .claude configuration data between project repositories.",
-            "dependencies": [
-              1,
-              2
-            ],
+            "dependencies": [1, 2],
             "details": "Implement file copying logic for .claude directory contents. Handle conflicts (source vs target modifications). Provide diff preview before sync. Support selective sync (hooks, rules, skills individually). Add progress indication for sync operations. Validate target project structure before sync. Include dry-run mode for testing.",
             "status": "pending",
             "testStrategy": "Sync configurations between projects successfully. Test conflict detection and resolution. Verify selective sync works for individual components. Confirm diff preview shows accurate changes. Validate dry-run mode shows planned changes without modifying files.",
@@ -706,9 +611,7 @@
             "id": 4,
             "title": "Add Configuration Migration Feature",
             "description": "Create a migration tool to move configurations from one project structure to another with transformation support.",
-            "dependencies": [
-              3
-            ],
+            "dependencies": [3],
             "details": "Implement migration wizard with step-by-step guidance. Support source/destination project selection. Add transformation rules for path mappings. Provide preview of migration changes. Handle migration rollback capability. Validate migrated configurations apply correctly in new structure. Support partial migrations (specific config types).",
             "status": "pending",
             "testStrategy": "Migrate configurations between projects successfully. Test transformation rules handle path changes correctly. Verify preview shows accurate migration plan. Confirm rollback restores original state. Validate partial migrations work for selected config types.",
@@ -728,9 +631,7 @@
             "id": 6,
             "title": "Create Activity Log for Auditing",
             "description": "Build a comprehensive activity log that tracks all configuration changes across projects.",
-            "dependencies": [
-              5
-            ],
+            "dependencies": [5],
             "details": "Define activity log schema (timestamp, user, operation, project, changes). Implement logging for all configuration CRUD operations. Add filtering and search for log entries. Create activity log viewer UI with pagination. Support log export for compliance. Ensure thread-safe logging for concurrent operations. Include backup/restore events in log.",
             "status": "pending",
             "testStrategy": "Verify all operations are logged correctly. Test filtering and search functionality. Validate log export produces readable output. Confirm log viewer displays all necessary information. Test logging under concurrent operations for data integrity.",
@@ -740,9 +641,7 @@
             "id": 7,
             "title": "Build Global Search Index Across Projects",
             "description": "Create a global search capability that indexes and searches configuration files across all projects.",
-            "dependencies": [
-              1
-            ],
+            "dependencies": [1],
             "details": "Build indexer for hooks, rules, skills, and settings files. Support full-text search with highlighting. Implement filter by project and configuration type. Add real-time search with debouncing. Create search results UI with context preview. Support advanced search syntax (quotes, wildcards, exclusions). Re-index on configuration changes.",
             "status": "pending",
             "testStrategy": "Search across all projects and verify results accuracy. Test filtering by project and type. Confirm real-time search performs well. Validate advanced search syntax works correctly. Verify re-indexing triggers on configuration changes.",
@@ -760,9 +659,7 @@
       "lastModified": "2025-12-27T14:39:59.988Z",
       "taskCount": 10,
       "completedCount": 10,
-      "tags": [
-        "master"
-      ],
+      "tags": ["master"],
       "created": "2025-12-27T14:40:44.651Z",
       "description": "Tasks for master context"
     }

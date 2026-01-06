@@ -1,23 +1,23 @@
-import { os } from "@orpc/server";
-import { z } from "zod";
-import { EventEmitter } from "events";
-import { exec } from "child_process";
-import { promisify } from "util";
-import { homedir } from "os";
-import { existsSync } from "fs";
-import { join } from "path";
-import { readdir } from "fs/promises";
-import { ipcContext } from "@/ipc/context";
 import type {
-  SDKMessage,
+  Query,
   SDKAssistantMessage,
-  SDKUserMessage,
+  SDKMessage,
+  SDKPartialAssistantMessage,
   SDKResultMessage,
   SDKSystemMessage,
-  SDKPartialAssistantMessage,
-  Query,
+  SDKUserMessage,
 } from "@anthropic-ai/claude-agent-sdk";
 import { query as sdkQuery } from "@anthropic-ai/claude-agent-sdk";
+import { os } from "@orpc/server";
+import { exec } from "child_process";
+import { EventEmitter } from "events";
+import { existsSync } from "fs";
+import { readdir } from "fs/promises";
+import { homedir } from "os";
+import { join } from "path";
+import { promisify } from "util";
+import { z } from "zod";
+import { ipcContext } from "@/ipc/context";
 
 const execAsync = promisify(exec);
 
@@ -264,7 +264,7 @@ export const startClaudeSession = os
 
       const state: ProcessState = {
         processId,
-        sessionId: sessionId, // Use provided sessionId if available, otherwise undefined for new sessions
+        sessionId, // Use provided sessionId if available, otherwise undefined for new sessions
         projectPath, // Store the project path
         query: null,
         abortController,
@@ -279,7 +279,10 @@ export const startClaudeSession = os
         type: "session_created",
         sessionId: state.sessionId,
         projectPath,
-        projectName: projectPath.split("/").pop() || projectPath.split("\\").pop() || projectPath,
+        projectName:
+          projectPath.split("/").pop() ||
+          projectPath.split("\\").pop() ||
+          projectPath,
         createdAt: new Date().toISOString(),
       });
 
@@ -409,10 +412,10 @@ async function processMessage(
         const error =
           `Session file not found: ${sessionFile}\n\n` +
           `The session ${options.resume} doesn't exist at the expected location.\n` +
-          `This can happen if:\n` +
-          `1. The session was deleted\n` +
-          `2. The project path changed\n` +
-          `3. The session was never saved\n\n` +
+          "This can happen if:\n" +
+          "1. The session was deleted\n" +
+          "2. The project path changed\n" +
+          "3. The session was never saved\n\n" +
           `Expected path: ${sessionFile}`;
 
         console.error("[SDK:processMessage]", error);

@@ -15,66 +15,61 @@
  * - claude-md.schema.ts: CLAUDE.md file validation
  */
 
-// Base schemas (common types)
-export * from './base';
-
 // Agent schemas
-export * from './agent.schema';
-
-// Skill schemas
-export * from './skill.schema';
-
-// Rule schemas
-export * from './rule.schema';
+export * from "./agent.schema";
+// Base schemas (common types)
+export * from "./base";
+// CLAUDE.md schemas
+export * from "./claude-md.schema";
+// Command schemas
+export * from "./command.schema";
 
 // Hook schemas
-export * from './hook.schema';
-
-// Command schemas
-export * from './command.schema';
+export * from "./hook.schema";
+// Rule schemas
+export * from "./rule.schema";
 
 // Settings schemas
-export * from './settings.schema';
-
-// CLAUDE.md schemas
-export * from './claude-md.schema';
+export * from "./settings.schema";
+// Skill schemas
+export * from "./skill.schema";
 
 /**
  * Type unions for all Claude item types
  */
-export type ClaudeItemType = 'agent' | 'skill' | 'rule' | 'hook' | 'command';
+export type ClaudeItemType = "agent" | "skill" | "rule" | "hook" | "command";
 
 /**
  * File extensions for each Claude item type
  */
 export const CLAUDE_FILE_EXTENSIONS: Record<ClaudeItemType, string> = {
-  agent: '.agent.md',
-  skill: 'SKILL.md',
-  rule: '.rule.md',
-  hook: '.hook.json',
-  command: '.cmd.md',
+  agent: ".agent.md",
+  skill: "SKILL.md",
+  rule: ".rule.md",
+  hook: ".hook.json",
+  command: ".cmd.md",
 } as const;
 
 /**
  * Directory names for each Claude item type
  */
 export const CLAUDE_DIRECTORY_NAMES: Record<ClaudeItemType, string> = {
-  agent: 'agents',
-  skill: 'skills',
-  rule: 'rules',
-  hook: 'hooks',
-  command: 'commands',
+  agent: "agents",
+  skill: "skills",
+  rule: "rules",
+  hook: "hooks",
+  command: "commands",
 } as const;
 
 /**
  * All Claude feature types
  */
 export const CLAUDE_FEATURE_TYPES = [
-  'skills',
-  'commands',
-  'agents',
-  'rules',
-  'hooks',
+  "skills",
+  "commands",
+  "agents",
+  "rules",
+  "hooks",
 ] as const;
 
-export type ClaudeFeatureType = typeof CLAUDE_FEATURE_TYPES[number];
+export type ClaudeFeatureType = (typeof CLAUDE_FEATURE_TYPES)[number];

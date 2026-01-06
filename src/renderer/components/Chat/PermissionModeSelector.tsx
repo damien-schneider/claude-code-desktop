@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import type React from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/utils/tailwind";
 
@@ -144,17 +145,17 @@ export const PermissionModeSelector: React.FC<PermissionModeSelectorProps> = ({
   if (loading) {
     return (
       <div className={cn("flex flex-col gap-2", className)}>
-        <label className="text-xs font-medium text-muted-foreground">
+        <label className="font-medium text-muted-foreground text-xs">
           Permission Mode
         </label>
-        <div className="text-sm text-muted-foreground">Loading modes...</div>
+        <div className="text-muted-foreground text-sm">Loading modes...</div>
       </div>
     );
   }
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      <label className="text-xs font-medium text-muted-foreground">
+      <label className="font-medium text-muted-foreground text-xs">
         Permission Mode
       </label>
       <div className="flex flex-wrap gap-2">
@@ -167,28 +168,28 @@ export const PermissionModeSelector: React.FC<PermissionModeSelectorProps> = ({
 
           return (
             <Button
-              key={mode}
-              type="button"
-              size="sm"
-              variant={isSelected ? "default" : "outline"}
-              disabled={disabled}
-              onClick={() => onChange(mode)}
               className={cn(
-                "flex-1 min-w-[100px] justify-start gap-2 h-auto py-2 px-3",
+                "h-auto min-w-[100px] flex-1 justify-start gap-2 px-3 py-2",
                 isDangerous &&
                   isSelected &&
                   "bg-destructive text-destructive-foreground hover:bg-destructive/90",
                 !isSelected && "hover:bg-accent"
               )}
+              disabled={disabled}
+              key={mode}
+              onClick={() => onChange(mode)}
+              size="sm"
+              type="button"
+              variant={isSelected ? "default" : "outline"}
             >
               <span className="text-lg">{info.icon}</span>
               <div className="flex flex-col items-start">
-                <span className="text-sm font-medium">{info.label}</span>
+                <span className="font-medium text-sm">{info.label}</span>
                 <span className="text-[10px] text-muted-foreground">
                   {info.description}
                 </span>
                 {info.warning && (
-                  <span className="text-[9px] text-destructive font-bold">
+                  <span className="font-bold text-[9px] text-destructive">
                     {info.warning}
                   </span>
                 )}

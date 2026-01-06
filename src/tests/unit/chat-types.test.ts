@@ -1,15 +1,15 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  formatMessageContent,
-  SessionMessageSchema,
-  SessionMessageContentSchema,
-  SessionSummarySchema,
   type ContentBlock,
-  type TextContentBlock,
-  type ToolUseContentBlock,
-  type ToolResultContentBlock,
+  formatMessageContent,
   type SessionMessage,
+  SessionMessageContentSchema,
+  SessionMessageSchema,
   type SessionSummary,
+  SessionSummarySchema,
+  type TextContentBlock,
+  type ToolResultContentBlock,
+  type ToolUseContentBlock,
 } from "@/renderer/stores/chatAtoms";
 
 describe("Chat Atoms Type Safety", () => {

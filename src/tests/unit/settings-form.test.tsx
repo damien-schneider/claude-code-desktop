@@ -1,32 +1,32 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { SettingsForm } from '@/renderer/components/Settings/settings-form';
-import type { ClaudeSettings } from '@/renderer/components/Settings/settings-types';
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { SettingsForm } from "@/renderer/components/Settings/settings-form";
+import type { ClaudeSettings } from "@/renderer/components/Settings/settings-types";
 
-describe('SettingsForm', () => {
+describe("SettingsForm", () => {
   const mockSettings: ClaudeSettings = {
     permissions: {
-      allow: ['bash', 'read'],
+      allow: ["bash", "read"],
     },
     mcpServers: {
-      'test-server': {
-        command: 'node',
-        args: ['server.js'],
+      "test-server": {
+        command: "node",
+        args: ["server.js"],
       },
     },
     hooks: {
-      'user-prompt': [
+      "user-prompt": [
         {
-          type: 'user-prompt',
+          type: "user-prompt",
           command: 'echo "test"',
         },
       ],
     },
     env: {
-      ANTHROPIC_AUTH_TOKEN: 'test-token',
+      ANTHROPIC_AUTH_TOKEN: "test-token",
     },
     enabledPlugins: {
-      'test-plugin': true,
+      "test-plugin": true,
     },
     alwaysThinkingEnabled: true,
   };
@@ -34,38 +34,46 @@ describe('SettingsForm', () => {
   const mockOnChange = () => {};
   const mockOnSectionChange = () => {};
 
-  describe('tab configuration', () => {
-    it('should render all 6 tabs', () => {
+  describe("tab configuration", () => {
+    it("should render all 6 tabs", () => {
       render(
         <SettingsForm
-          settings={mockSettings}
-          onChange={mockOnChange}
           activeSection="permissions"
+          onChange={mockOnChange}
           onSectionChange={mockOnSectionChange}
+          settings={mockSettings}
         />
       );
 
       // Check for all 6 tab triggers
-      expect(screen.getByRole('tab', { name: /permissions/i })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: /mcp servers/i })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: /hooks/i })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: /env vars/i })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: /plugins/i })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: /advanced/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("tab", { name: /permissions/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("tab", { name: /mcp servers/i })
+      ).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /hooks/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("tab", { name: /env vars/i })
+      ).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /plugins/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("tab", { name: /advanced/i })
+      ).toBeInTheDocument();
     });
 
-    it('should render content for the active tab', () => {
+    it("should render content for the active tab", () => {
       render(
         <SettingsForm
-          settings={mockSettings}
-          onChange={mockOnChange}
           activeSection="permissions"
+          onChange={mockOnChange}
           onSectionChange={mockOnSectionChange}
+          settings={mockSettings}
         />
       );
 
       // Check that the active tabpanel exists
-      expect(screen.getByRole('tabpanel')).toBeInTheDocument();
+      expect(screen.getByRole("tabpanel")).toBeInTheDocument();
     });
   });
 });

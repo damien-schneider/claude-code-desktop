@@ -7,19 +7,26 @@
  * Reference: https://docs.anthropic.com/en/docs/build-with-claude/agents
  */
 
-import { z } from 'zod';
-import { claudeNameSchema, claudeModelSchema, colorSchema, stringArraySchema } from './base';
+import { z } from "zod";
+import {
+  claudeModelSchema,
+  claudeNameSchema,
+  colorSchema,
+  stringArraySchema,
+} from "./base";
 
 /**
  * Agent frontmatter schema
  */
 export const agentFrontmatterSchema = z.object({
   name: claudeNameSchema,
-  description: z.string()
-    .min(1, 'Description is required')
-    .max(500, 'Description must be 500 characters or less'),
-  instructions: z.string()
-    .max(500, 'Instructions must be 500 characters or less')
+  description: z
+    .string()
+    .min(1, "Description is required")
+    .max(500, "Description must be 500 characters or less"),
+  instructions: z
+    .string()
+    .max(500, "Instructions must be 500 characters or less")
     .optional(),
   tools: stringArraySchema,
   permissions: stringArraySchema,
@@ -40,11 +47,13 @@ export const agentContentSchema = z.object({
  */
 export const agentFormSchema = z.object({
   name: claudeNameSchema,
-  description: z.string()
-    .min(1, 'Description is required')
-    .max(500, 'Description must be 500 characters or less'),
-  instructions: z.string()
-    .max(500, 'Instructions must be 500 characters or less')
+  description: z
+    .string()
+    .min(1, "Description is required")
+    .max(500, "Description must be 500 characters or less"),
+  instructions: z
+    .string()
+    .max(500, "Instructions must be 500 characters or less")
     .optional(),
   tools: z.string().optional(),
   permissions: z.string().optional(),
@@ -63,8 +72,19 @@ export const agentCreateSchema = z.object({
 /**
  * Helper to build agent file content from form values
  */
-export function buildAgentContent(values: z.infer<typeof agentFormSchema>): string {
-  const { name, description, instructions, tools, permissions, model, color, content = '' } = values;
+export function buildAgentContent(
+  values: z.infer<typeof agentFormSchema>
+): string {
+  const {
+    name,
+    description,
+    instructions,
+    tools,
+    permissions,
+    model,
+    color,
+    content = "",
+  } = values;
 
   const frontmatterData: Record<string, string | string[]> = {
     name,
@@ -73,16 +93,22 @@ export function buildAgentContent(values: z.infer<typeof agentFormSchema>): stri
 
   if (instructions) frontmatterData.instructions = instructions;
   if (tools) {
-    frontmatterData.tools = tools.split(',').map(t => t.trim()).filter(Boolean);
+    frontmatterData.tools = tools
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
   }
   if (permissions) {
-    frontmatterData.permissions = permissions.split(',').map(p => p.trim()).filter(Boolean);
+    frontmatterData.permissions = permissions
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean);
   }
   if (model) frontmatterData.model = model;
   if (color) frontmatterData.color = color;
 
   // Build YAML frontmatter
-  let frontmatter = '---\n';
+  let frontmatter = "---\n";
   for (const [key, value] of Object.entries(frontmatterData)) {
     if (Array.isArray(value)) {
       if (value.length > 0) {
@@ -95,7 +121,7 @@ export function buildAgentContent(values: z.infer<typeof agentFormSchema>): stri
       frontmatter += `${key}: ${value}\n`;
     }
   }
-  frontmatter += '---\n';
+  frontmatter += "---\n";
 
   return `${frontmatter}\n# ${name}\n\nYou are a specialist agent for...\n\n## Instructions\n\n${content}`;
 }
@@ -114,22 +140,23 @@ export function parseAgentContent(content: string): {
   }
 
   const rawFrontmatter = yamlMatch[1];
-  const body = content.replace(/^---\n[\s\S]*?\n---\n?/, '');
+  const body = content.replace(/^---\n[\s\S]*?\n---\n?/, "");
 
   // Simple YAML parser for the frontmatter
   const frontmatter: Record<string, any> = {};
-  const lines = rawFrontmatter.split('\n');
+  const lines = rawFrontmatter.split("\n");
 
   for (const line of lines) {
     const match = line.match(/^([a-z]+):\s*(.+)$/i);
     if (match) {
       const [, key, value] = match;
-      const trimmedValue = value.trim().replace(/^["']|["']$/g, '');
+      const trimmedValue = value.trim().replace(/^["']|["']$/g, "");
 
       // Handle arrays
-      if (trimmedValue.startsWith('- ')) {
-        frontmatter[key] = trimmedValue.split('\n')
-          .map(l => l.replace(/^-\s*/, '').trim())
+      if (trimmedValue.startsWith("- ")) {
+        frontmatter[key] = trimmedValue
+          .split("\n")
+          .map((l) => l.replace(/^-\s*/, "").trim())
           .filter(Boolean);
       } else {
         frontmatter[key] = trimmedValue;

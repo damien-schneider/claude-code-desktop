@@ -1,6 +1,6 @@
-import { readdir, stat, access } from 'fs/promises';
-import { join, basename } from 'path';
-import { homedir } from 'os';
+import { access, readdir, stat } from "fs/promises";
+import { homedir } from "os";
+import { basename, join } from "path";
 
 export interface ClaudeProject {
   path: string;
@@ -39,7 +39,7 @@ async function directoryExists(dirPath: string): Promise<boolean> {
  * Check if a directory contains a .git subdirectory
  */
 async function isGitRepository(dirPath: string): Promise<boolean> {
-  const gitPath = join(dirPath, '.git');
+  const gitPath = join(dirPath, ".git");
   return directoryExists(gitPath);
 }
 
@@ -47,7 +47,7 @@ async function isGitRepository(dirPath: string): Promise<boolean> {
  * Check if a directory contains a .claude subdirectory
  */
 async function hasClaudeConfig(dirPath: string): Promise<boolean> {
-  const claudePath = join(dirPath, '.claude');
+  const claudePath = join(dirPath, ".claude");
   return directoryExists(claudePath);
 }
 
@@ -55,24 +55,24 @@ async function hasClaudeConfig(dirPath: string): Promise<boolean> {
  * Default paths to exclude from scanning
  */
 const DEFAULT_EXCLUDE_PATHS = [
-  'node_modules',
-  '.git',
-  '.npm',
-  '.cache',
-  '.local',
-  '.config',
-  'Library',
-  'Applications',
-  '.Trash',
-  '.DS_Store',
-  'vendor',
-  'build',
-  'dist',
-  '.next',
-  '.nuxt',
-  'target',
-  'bin',
-  'obj',
+  "node_modules",
+  ".git",
+  ".npm",
+  ".cache",
+  ".local",
+  ".config",
+  "Library",
+  "Applications",
+  ".Trash",
+  ".DS_Store",
+  "vendor",
+  "build",
+  "dist",
+  ".next",
+  ".nuxt",
+  "target",
+  "bin",
+  "obj",
 ];
 
 /**
@@ -80,8 +80,8 @@ const DEFAULT_EXCLUDE_PATHS = [
  */
 function shouldExclude(path: string, excludePaths: string[]): boolean {
   const baseName = basename(path);
-  return excludePaths.some((exclude) =>
-    path.includes(exclude) || baseName === exclude
+  return excludePaths.some(
+    (exclude) => path.includes(exclude) || baseName === exclude
   );
 }
 
@@ -111,7 +111,7 @@ async function scanDirectory(
   }
 
   // Skip hidden directories unless explicitly included
-  if (!includeHidden && basename(dirPath).startsWith('.')) {
+  if (!includeHidden && basename(dirPath).startsWith(".")) {
     return;
   }
 
@@ -195,19 +195,19 @@ export function getDefaultScanPaths(): string[] {
   const platform = process.platform;
   const home = homedir();
 
-  if (platform === 'darwin') {
+  if (platform === "darwin") {
     // macOS: Scan home directory, exclude system paths
     return [home];
-  } else if (platform === 'win32') {
+  }
+  if (platform === "win32") {
     // Windows: Scan user profile and common project locations
     return [
       home,
-      join(home, 'source'),
-      join(home, 'projects'),
-      join(home, 'code'),
+      join(home, "source"),
+      join(home, "projects"),
+      join(home, "code"),
     ];
-  } else {
-    // Linux: Scan home directory
-    return [home];
   }
+  // Linux: Scan home directory
+  return [home];
 }

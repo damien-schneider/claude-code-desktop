@@ -1,32 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
 import { useAtom, useSetAtom } from "jotai";
-import { Sidebar } from "@/renderer/components/Sidebar";
-import { NavigationSidebar } from "@/renderer/components/Navigation/NavigationSidebar";
-import { ContentView } from "@/renderer/components/Content/ContentView";
-import { BreadcrumbBar } from "@/renderer/components/Breadcrumb";
-import { QuickOpenDialog } from "@/renderer/components/QuickOpen";
+import { useEffect, useState } from "react";
+import { Toaster } from "sonner";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
+import { ipc } from "@/ipc/manager";
+import { BreadcrumbBar } from "@/renderer/components/Breadcrumb";
+import { ContentView } from "@/renderer/components/Content/ContentView";
+import { NavigationSidebar } from "@/renderer/components/Navigation/NavigationSidebar";
+import { QuickOpenDialog } from "@/renderer/components/QuickOpen";
+import { Sidebar } from "@/renderer/components/Sidebar";
 import {
-  setProjectsAtom,
-  selectProjectAtom,
+  type ClaudeProject,
   isScanningAtom,
   scanProjectsAtom,
-  type ClaudeProject,
+  selectProjectAtom,
+  setProjectsAtom,
 } from "@/renderer/stores";
 import { deduplicateProjects } from "@/renderer/stores/appStore";
-import { Toaster } from "sonner";
-import {
-  showError,
-  showSuccess,
-  showWarning,
-  withPromise,
-} from "@/renderer/lib/toast";
-import { ipc } from "@/ipc/manager";
 
 function ClaudeCodeManagerPage() {
   const setProjects = useSetAtom(setProjectsAtom);
@@ -103,19 +97,19 @@ function ClaudeCodeManagerPage() {
 
   return (
     <>
-      <div className="flex flex-col h-full">
+      <div className="flex h-full flex-col">
         {/* Top Breadcrumb Bar - full width */}
         <BreadcrumbBar onQuickOpen={handleQuickOpen} />
 
         {/* Main Content Area */}
-        <div className="flex flex-1 min-h-0">
+        <div className="flex min-h-0 flex-1">
           <ResizablePanelGroup direction="horizontal">
             {/* Projects Sidebar */}
-            <ResizablePanel defaultSize={20} minSize={15} maxSize={40}>
+            <ResizablePanel defaultSize={20} maxSize={40} minSize={15}>
               <Sidebar
+                className="!border-r-0 w-full"
                 onScan={() => scanProjects()}
                 scanning={isScanning}
-                className="w-full !border-r-0"
               />
             </ResizablePanel>
 
@@ -125,12 +119,12 @@ function ClaudeCodeManagerPage() {
             <ResizablePanel defaultSize={80}>
               <div className="flex h-full">
                 {/* Navigation Sidebar - fixed width */}
-                <div className="flex-shrink-0 w-12 h-full">
+                <div className="h-full w-12 flex-shrink-0">
                   <NavigationSidebar />
                 </div>
 
                 {/* Content View - takes remaining space */}
-                <div className="flex-1 min-w-0 h-full overflow-hidden">
+                <div className="h-full min-w-0 flex-1 overflow-hidden">
                   <ContentView />
                 </div>
               </div>
@@ -141,8 +135,8 @@ function ClaudeCodeManagerPage() {
 
       {/* Quick Open Dialog */}
       <QuickOpenDialog
-        open={isQuickOpenOpen}
         onOpenChange={setIsQuickOpenOpen}
+        open={isQuickOpenOpen}
       />
       <Toaster position="top-right" richColors />
     </>

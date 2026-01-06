@@ -1,9 +1,9 @@
-import React from 'react';
-import { Brain } from '@phosphor-icons/react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { JsonFieldRenderer } from './json-field-renderer';
+import { Brain } from "@phosphor-icons/react";
+import type React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { JsonFieldRenderer } from "./json-field-renderer";
 
 interface AdvancedSettingsEditorProps {
   settings: Record<string, unknown>;
@@ -41,30 +41,32 @@ export const AdvancedSettingsEditor: React.FC<AdvancedSettingsEditorProps> = ({
         {settings.alwaysThinkingEnabled !== undefined && (
           <div className="flex items-center justify-between space-y-2 py-2">
             <div className="space-y-0.5">
-              <Label htmlFor="alwaysThinkingEnabled" className="font-medium">
+              <Label className="font-medium" htmlFor="alwaysThinkingEnabled">
                 Always Thinking Enabled
               </Label>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Enable extended thinking mode for Claude responses
               </p>
             </div>
             <Switch
-              id="alwaysThinkingEnabled"
               checked={settings.alwaysThinkingEnabled as boolean}
-              onCheckedChange={checked => handleFieldChange('alwaysThinkingEnabled', checked)}
+              id="alwaysThinkingEnabled"
+              onCheckedChange={(checked) =>
+                handleFieldChange("alwaysThinkingEnabled", checked)
+              }
             />
           </div>
         )}
 
         {/* Render other advanced settings using JsonFieldRenderer */}
         {Object.entries(settings)
-          .filter(([key]) => key !== 'alwaysThinkingEnabled')
+          .filter(([key]) => key !== "alwaysThinkingEnabled")
           .map(([key, value]) => (
             <JsonFieldRenderer
-              key={key}
               fieldKey={key}
+              key={key}
+              onChange={(newValue) => handleFieldChange(key, newValue)}
               value={value}
-              onChange={newValue => handleFieldChange(key, newValue)}
             />
           ))}
       </CardContent>

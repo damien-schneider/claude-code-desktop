@@ -1,10 +1,10 @@
 import {
-  listSessionDirectories,
+  deleteSession,
+  getAllSessions,
   getProjectSessions,
   getSessionDetails,
-  deleteSession,
+  listSessionDirectories,
   searchSessions,
-  getAllSessions,
 } from "./handlers";
 
 export const sessions = {
@@ -16,4 +16,4 @@ export const sessions = {
   getAllSessions,
 };
 
-export type { SessionSummary, SessionMessage, SessionDetails } from "./schemas";
+export type { SessionDetails, SessionMessage, SessionSummary } from "./schemas";

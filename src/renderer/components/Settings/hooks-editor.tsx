@@ -1,10 +1,9 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
-import { Trash, Plus } from '@phosphor-icons/react';
-import type { HooksEditorProps } from './settings-types';
-import type { ClaudeHook } from './settings-types';
+import { Plus, Trash } from "@phosphor-icons/react";
+import type React from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import type { ClaudeHook, HooksEditorProps } from "./settings-types";
 
 /**
  * Individual hook configuration item component
@@ -17,24 +16,24 @@ const HookConfigItem: React.FC<{
 }> = ({ hook, onChange, onDelete, eventName }) => {
   return (
     <Card>
-      <CardContent className="p-3 space-y-2">
+      <CardContent className="space-y-2 p-3">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium">{eventName}</span>
-          <Button size="sm" variant="ghost" onClick={onDelete}>
+          <span className="font-medium text-sm">{eventName}</span>
+          <Button onClick={onDelete} size="sm" variant="ghost">
             <Trash className="h-3 w-3" weight="regular" />
           </Button>
         </div>
         <Input
-          value={hook.command || ''}
+          className="font-mono text-sm"
           onChange={(e) => onChange({ ...hook, command: e.target.value })}
           placeholder="Command to run"
-          className="font-mono text-sm"
+          value={hook.command || ""}
         />
         <Input
-          value={hook.description || ''}
+          className="text-sm"
           onChange={(e) => onChange({ ...hook, description: e.target.value })}
           placeholder="Description (optional)"
-          className="text-sm"
+          value={hook.description || ""}
         />
       </CardContent>
     </Card>
@@ -44,14 +43,17 @@ const HookConfigItem: React.FC<{
 /**
  * Editor for Claude hooks configuration
  */
-export const HooksEditor: React.FC<HooksEditorProps> = ({ hooks, onChange }) => {
+export const HooksEditor: React.FC<HooksEditorProps> = ({
+  hooks,
+  onChange,
+}) => {
   const hookEvents = Object.keys(hooks || {});
 
   const addHook = (eventName: string) => {
     const currentHooks = hooks[eventName] || [];
     const newHook: ClaudeHook = {
-      type: 'user-prompt',
-      command: '',
+      type: "user-prompt",
+      command: "",
     };
     onChange({
       ...hooks,
@@ -59,7 +61,11 @@ export const HooksEditor: React.FC<HooksEditorProps> = ({ hooks, onChange }) => 
     });
   };
 
-  const updateHook = (eventName: string, index: number, updatedHook: ClaudeHook) => {
+  const updateHook = (
+    eventName: string,
+    index: number,
+    updatedHook: ClaudeHook
+  ) => {
     const currentHooks = [...(hooks[eventName] || [])];
     currentHooks[index] = updatedHook;
     onChange({
@@ -80,11 +86,11 @@ export const HooksEditor: React.FC<HooksEditorProps> = ({ hooks, onChange }) => 
   };
 
   const availableHookEvents = [
-    'user-prompt-submit',
-    'ai-response-start',
-    'ai-response-complete',
-    'tool-use-start',
-    'tool-use-complete',
+    "user-prompt-submit",
+    "ai-response-start",
+    "ai-response-complete",
+    "tool-use-start",
+    "tool-use-complete",
   ];
 
   return (
@@ -93,22 +99,28 @@ export const HooksEditor: React.FC<HooksEditorProps> = ({ hooks, onChange }) => 
         const eventHooks = hooks[eventName] || [];
         return (
           <div key={eventName}>
-            <div className="flex items-center justify-between mb-2">
+            <div className="mb-2 flex items-center justify-between">
               <h3 className="font-medium">{eventName}</h3>
-              <Button size="sm" variant="outline" onClick={() => addHook(eventName)}>
-                <Plus className="h-3 w-3 mr-1" weight="regular" />
+              <Button
+                onClick={() => addHook(eventName)}
+                size="sm"
+                variant="outline"
+              >
+                <Plus className="mr-1 h-3 w-3" weight="regular" />
                 Add Hook
               </Button>
             </div>
             {eventHooks.length === 0 ? (
-              <p className="text-sm text-muted-foreground italic">No hooks configured</p>
+              <p className="text-muted-foreground text-sm italic">
+                No hooks configured
+              </p>
             ) : (
               <div className="space-y-2">
                 {eventHooks.map((hook, i) => (
                   <HookConfigItem
-                    key={i}
-                    hook={hook}
                     eventName={eventName}
+                    hook={hook}
+                    key={i}
                     onChange={(updated) => updateHook(eventName, i, updated)}
                     onDelete={() => deleteHook(eventName, i)}
                   />

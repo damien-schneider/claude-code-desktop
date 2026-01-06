@@ -5,20 +5,20 @@
  * (commands, skills, agents, rules, hooks) with proper handling of subdirectories.
  */
 
-import { readdir, readFile, stat } from 'node:fs/promises';
-import { join } from 'node:path';
+import { readdir, readFile, stat } from "node:fs/promises";
+import { join } from "node:path";
 
 export interface ClaudeFile {
   name: string;
   path: string;
-  type: 'file' | 'directory';
+  type: "file" | "directory";
   content?: string;
   category?: string; // For grouping (e.g., 'git', 'testing')
 }
 
 export interface ClaudeDirectoryResult {
   path: string;
-  type: 'skills' | 'commands' | 'agents' | 'rules' | 'hooks';
+  type: "skills" | "commands" | "agents" | "rules" | "hooks";
   files: ClaudeFile[];
 }
 
@@ -42,11 +42,14 @@ interface DirectoryConfig {
 /**
  * Directory configurations for each Claude type
  */
-const DIRECTORY_CONFIGS: Record<'skills' | 'commands' | 'agents' | 'rules' | 'hooks', DirectoryConfig> = {
+const DIRECTORY_CONFIGS: Record<
+  "skills" | "commands" | "agents" | "rules" | "hooks",
+  DirectoryConfig
+> = {
   // Commands: recurse into subfolders, each .md file is a command
   commands: {
     recursive: true,
-    fileExtensions: ['.md'],
+    fileExtensions: [".md"],
     directoryAsItem: false,
   },
 
@@ -54,27 +57,27 @@ const DIRECTORY_CONFIGS: Record<'skills' | 'commands' | 'agents' | 'rules' | 'ho
   skills: {
     recursive: false,
     directoryAsItem: true,
-    defaultFileName: 'SKILL.md',
+    defaultFileName: "SKILL.md",
   },
 
   // Agents: flat directory of .md files
   agents: {
     recursive: false,
-    fileExtensions: ['.md'],
+    fileExtensions: [".md"],
     directoryAsItem: false,
   },
 
   // Rules: flat directory of .md files
   rules: {
     recursive: false,
-    fileExtensions: ['.md'],
+    fileExtensions: [".md"],
     directoryAsItem: false,
   },
 
   // Hooks: flat directory of .json files
   hooks: {
     recursive: false,
-    fileExtensions: ['.json'],
+    fileExtensions: [".json"],
     directoryAsItem: false,
   },
 };
@@ -82,7 +85,10 @@ const DIRECTORY_CONFIGS: Record<'skills' | 'commands' | 'agents' | 'rules' | 'ho
 /**
  * Check if a file has a valid extension for the directory type
  */
-function hasValidExtension(fileName: string, extensions: string[] | undefined): boolean {
+function hasValidExtension(
+  fileName: string,
+  extensions: string[] | undefined
+): boolean {
   if (!extensions) return true;
   return extensions.some((ext) => fileName.endsWith(ext));
 }
@@ -91,11 +97,16 @@ function hasValidExtension(fileName: string, extensions: string[] | undefined): 
  * Read a directory recursively for commands
  * Commands are organized as: commands/category/name.md
  */
-async function readCommandsDirectory(claudePath: string): Promise<ClaudeFile[]> {
-  console.log('[directory-reader] readCommandsDirectory called with:', claudePath);
+async function readCommandsDirectory(
+  claudePath: string
+): Promise<ClaudeFile[]> {
+  console.log(
+    "[directory-reader] readCommandsDirectory called with:",
+    claudePath
+  );
   const files: ClaudeFile[] = [];
   const entries = await readdir(claudePath, { withFileTypes: true });
-  console.log('[directory-reader] Found entries:', entries.length);
+  console.log("[directory-reader] Found entries:", entries.length);
 
   for (const entry of entries) {
     const fullPath = join(claudePath, entry.name);
@@ -105,16 +116,16 @@ async function readCommandsDirectory(claudePath: string): Promise<ClaudeFile[]> 
       try {
         const subEntries = await readdir(fullPath, { withFileTypes: true });
         for (const subEntry of subEntries) {
-          if (subEntry.isFile() && subEntry.name.endsWith('.md')) {
+          if (subEntry.isFile() && subEntry.name.endsWith(".md")) {
             const subFilePath = join(fullPath, subEntry.name);
             try {
-              const content = await readFile(subFilePath, 'utf-8');
+              const content = await readFile(subFilePath, "utf-8");
               // Command name: "category/command-name"
-              const commandName = `${entry.name}/${subEntry.name.replace('.md', '')}`;
+              const commandName = `${entry.name}/${subEntry.name.replace(".md", "")}`;
               files.push({
                 name: commandName,
                 path: subFilePath,
-                type: 'file',
+                type: "file",
                 content,
                 category: entry.name,
               });
@@ -126,14 +137,14 @@ async function readCommandsDirectory(claudePath: string): Promise<ClaudeFile[]> 
       } catch {
         // Skip subdirectories that can't be read
       }
-    } else if (entry.isFile() && entry.name.endsWith('.md')) {
+    } else if (entry.isFile() && entry.name.endsWith(".md")) {
       // Root-level command files (without subfolder)
       try {
-        const content = await readFile(fullPath, 'utf-8');
+        const content = await readFile(fullPath, "utf-8");
         files.push({
-          name: entry.name.replace('.md', ''),
+          name: entry.name.replace(".md", ""),
           path: fullPath,
-          type: 'file',
+          type: "file",
           content,
           category: undefined, // No category for root-level commands
         });
@@ -143,9 +154,15 @@ async function readCommandsDirectory(claudePath: string): Promise<ClaudeFile[]> 
     }
   }
 
-  console.log('[directory-reader] Returning', files.length, 'command files');
+  console.log("[directory-reader] Returning", files.length, "command files");
   for (const f of files) {
-    console.log('[directory-reader]   -', f.name, '(category:', f.category || 'none', ')');
+    console.log(
+      "[directory-reader]   -",
+      f.name,
+      "(category:",
+      f.category || "none",
+      ")"
+    );
   }
   return files;
 }
@@ -155,7 +172,7 @@ async function readCommandsDirectory(claudePath: string): Promise<ClaudeFile[]> 
  */
 async function readItemBasedDirectory(
   claudePath: string,
-  defaultFileName: string,
+  defaultFileName: string
 ): Promise<ClaudeFile[]> {
   const files: ClaudeFile[] = [];
   const entries = await readdir(claudePath, { withFileTypes: true });
@@ -167,11 +184,11 @@ async function readItemBasedDirectory(
       // Look for the main file in the subdirectory
       const mainFilePath = join(fullPath, defaultFileName);
       try {
-        const content = await readFile(mainFilePath, 'utf-8');
+        const content = await readFile(mainFilePath, "utf-8");
         files.push({
           name: entry.name,
           path: fullPath,
-          type: 'directory',
+          type: "directory",
           content,
         });
       } catch {
@@ -179,17 +196,17 @@ async function readItemBasedDirectory(
         files.push({
           name: entry.name,
           path: fullPath,
-          type: 'directory',
+          type: "directory",
         });
       }
-    } else if (hasValidExtension(entry.name, ['.md', '.json'])) {
+    } else if (hasValidExtension(entry.name, [".md", ".json"])) {
       // Direct files in the root (less common for skills/agents)
       try {
-        const content = await readFile(fullPath, 'utf-8');
+        const content = await readFile(fullPath, "utf-8");
         files.push({
           name: entry.name,
           path: fullPath,
-          type: 'file',
+          type: "file",
           content,
         });
       } catch {
@@ -206,7 +223,7 @@ async function readItemBasedDirectory(
  */
 async function readFlatDirectory(
   claudePath: string,
-  extensions: string[] = ['.md', '.json'],
+  extensions: string[] = [".md", ".json"]
 ): Promise<ClaudeFile[]> {
   const files: ClaudeFile[] = [];
   const entries = await readdir(claudePath, { withFileTypes: true });
@@ -215,11 +232,11 @@ async function readFlatDirectory(
     if (entry.isFile() && hasValidExtension(entry.name, extensions)) {
       const fullPath = join(claudePath, entry.name);
       try {
-        const content = await readFile(fullPath, 'utf-8');
+        const content = await readFile(fullPath, "utf-8");
         files.push({
           name: entry.name,
           path: fullPath,
-          type: 'file',
+          type: "file",
           content,
         });
       } catch {
@@ -237,9 +254,9 @@ async function readFlatDirectory(
  */
 export async function readClaudeDirectory(
   projectPath: string,
-  type: 'skills' | 'commands' | 'agents' | 'rules' | 'hooks',
+  type: "skills" | "commands" | "agents" | "rules" | "hooks"
 ): Promise<ClaudeDirectoryResult> {
-  const claudePath = join(projectPath, '.claude', type);
+  const claudePath = join(projectPath, ".claude", type);
 
   // Check if directory exists
   try {
@@ -253,7 +270,7 @@ export async function readClaudeDirectory(
   let files: ClaudeFile[] = [];
 
   // Use the appropriate reading strategy
-  if (type === 'commands') {
+  if (type === "commands") {
     files = await readCommandsDirectory(claudePath);
   } else if (config.directoryAsItem) {
     // Skills and Agents
@@ -270,18 +287,18 @@ export async function readClaudeDirectory(
  * Get the display name for a file (removes extension, etc.)
  */
 export function getDisplayName(file: ClaudeFile, type: string): string {
-  if (file.type === 'directory') {
+  if (file.type === "directory") {
     return file.name;
   }
 
   // For files, remove the extension
   const name = file.name;
-  const lastDot = name.lastIndexOf('.');
+  const lastDot = name.lastIndexOf(".");
 
-  if (type === 'commands' && file.category) {
+  if (type === "commands" && file.category) {
     // For commands in subfolders, name already includes category
     // Just need to remove .md if present
-    return name.endsWith('.md') ? name.replace('.md', '') : name;
+    return name.endsWith(".md") ? name.replace(".md", "") : name;
   }
 
   if (lastDot > 0) {

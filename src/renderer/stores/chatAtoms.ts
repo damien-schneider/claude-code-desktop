@@ -332,7 +332,9 @@ export const allSessionsAtom = atom<SessionSummary[]>((get) => {
   const activeSessions = get(activeSessionsAtom);
 
   // Convert active sessions to SessionSummary format
-  const activeSessionSummaries: SessionSummary[] = Array.from(activeSessions.values())
+  const activeSessionSummaries: SessionSummary[] = Array.from(
+    activeSessions.values()
+  )
     .filter((active) => active.sessionId !== null) // Only include sessions with IDs
     .map((active) => ({
       sessionId: active.sessionId!,
@@ -345,7 +347,9 @@ export const allSessionsAtom = atom<SessionSummary[]>((get) => {
     }));
 
   // Merge: use persisted data when available, otherwise use active session data
-  const persistedSessionIds = new Set(persistedSessions.map((s) => s.sessionId));
+  const persistedSessionIds = new Set(
+    persistedSessions.map((s) => s.sessionId)
+  );
   const newActiveSessions = activeSessionSummaries.filter(
     (s) => !persistedSessionIds.has(s.sessionId)
   );
@@ -356,14 +360,12 @@ export const allSessionsAtom = atom<SessionSummary[]>((get) => {
 /**
  * Helper atom to check if a session is currently streaming
  */
-export const isSessionStreamingAtom = atom(
-  (get) => (sessionId: string) => {
-    const activeSessions = get(activeSessionsAtom);
-    return Array.from(activeSessions.values()).some(
-      (s) => s.sessionId === sessionId && s.isStreaming
-    );
-  }
-);
+export const isSessionStreamingAtom = atom((get) => (sessionId: string) => {
+  const activeSessions = get(activeSessionsAtom);
+  return Array.from(activeSessions.values()).some(
+    (s) => s.sessionId === sessionId && s.isStreaming
+  );
+});
 
 // =============================================================================
 // Session Filtering
@@ -504,7 +506,9 @@ export const filteredSessionsAtom = atom<SessionSummary[]>((get) => {
     if (aStreaming && !bStreaming) return -1;
     if (!aStreaming && bStreaming) return 1;
 
-    return new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime();
+    return (
+      new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
+    );
   });
 });
 

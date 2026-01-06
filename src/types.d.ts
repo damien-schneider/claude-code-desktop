@@ -7,7 +7,10 @@ declare const MAIN_WINDOW_VITE_NAME: string;
 // Electron IPC API exposed via preload script
 export interface ElectronAPI {
   on: (channel: string, callback: (...args: unknown[]) => void) => void;
-  removeListener: (channel: string, callback: (...args: unknown[]) => void) => void;
+  removeListener: (
+    channel: string,
+    callback: (...args: unknown[]) => void
+  ) => void;
 }
 
 declare global {
@@ -15,4 +18,3 @@ declare global {
     electron?: ElectronAPI;
   }
 }
-

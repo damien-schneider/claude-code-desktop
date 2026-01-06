@@ -1,11 +1,11 @@
 import { app } from "./app";
+import { claude } from "./claude";
+import { claudeProcess } from "./claude-process";
+import { scanner } from "./scanner";
+import { sessions } from "./sessions";
 import { shell } from "./shell";
 import { theme } from "./theme";
 import { window } from "./window";
-import { scanner } from "./scanner";
-import { claude } from "./claude";
-import { sessions } from "./sessions";
-import { claudeProcess } from "./claude-process";
 
 export const router = {
   theme,

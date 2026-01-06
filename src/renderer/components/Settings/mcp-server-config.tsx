@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import { Plus, Trash } from "@phosphor-icons/react";
+import type React from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trash, Plus } from "@phosphor-icons/react";
+import { Input } from "@/components/ui/input";
 import type { McpServerConfigProps } from "./settings-types";
 
 /**
@@ -15,7 +16,7 @@ export const McpServerConfig: React.FC<McpServerConfigProps> = ({
   onDelete,
 }) => {
   const [envEntries, setEnvEntries] = useState<Record<string, string>>(
-    config.env || {},
+    config.env || {}
   );
 
   const handleCommandChange = (value: string) => {
@@ -53,53 +54,53 @@ export const McpServerConfig: React.FC<McpServerConfigProps> = ({
       <CardContent className="space-y-3">
         <div className="flex items-center justify-between">
           <h4 className="font-medium">{name}</h4>
-          <Button size="sm" variant="destructive" onClick={onDelete}>
-            <Trash className="h-3 w-3 mr-1" weight="regular" />
+          <Button onClick={onDelete} size="sm" variant="destructive">
+            <Trash className="mr-1 h-3 w-3" weight="regular" />
             Remove
           </Button>
         </div>
 
         <div>
-          <label className="text-sm font-medium">Command</label>
+          <label className="font-medium text-sm">Command</label>
           <Input
-            value={config.command}
+            className="mt-1 font-mono text-sm"
             onChange={(e) => handleCommandChange(e.target.value)}
             placeholder="npx"
-            className="mt-1 font-mono text-sm"
+            value={config.command}
           />
         </div>
 
         <div>
-          <label className="text-sm font-medium">Arguments</label>
+          <label className="font-medium text-sm">Arguments</label>
           <Input
-            value={(config.args ?? []).join(" ")}
+            className="mt-1 font-mono text-sm"
             onChange={(e) => handleArgsChange(e.target.value)}
             placeholder="-y package-name"
-            className="mt-1 font-mono text-sm"
+            value={(config.args ?? []).join(" ")}
           />
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="mt-1 text-muted-foreground text-xs">
             Space-separated arguments
           </p>
         </div>
 
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium">Environment Variables</label>
-            <Button size="sm" variant="outline" onClick={handleAddEnvVar}>
-              <Plus className="h-3 w-3 mr-1" weight="regular" />
+          <div className="mb-2 flex items-center justify-between">
+            <label className="font-medium text-sm">Environment Variables</label>
+            <Button onClick={handleAddEnvVar} size="sm" variant="outline">
+              <Plus className="mr-1 h-3 w-3" weight="regular" />
               Add Variable
             </Button>
           </div>
           {Object.keys(envEntries).length === 0 ? (
-            <p className="text-sm text-muted-foreground italic">
+            <p className="text-muted-foreground text-sm italic">
               No environment variables
             </p>
           ) : (
             <div className="space-y-2">
               {Object.entries(envEntries).map(([key, value]) => (
-                <div key={key} className="flex gap-2 items-center">
+                <div className="flex items-center gap-2" key={key}>
                   <Input
-                    value={key}
+                    className="flex-1 font-mono text-sm"
                     onChange={(e) => {
                       const newEnv = { ...envEntries };
                       delete newEnv[key];
@@ -108,19 +109,19 @@ export const McpServerConfig: React.FC<McpServerConfigProps> = ({
                       onChange({ ...config, env: newEnv });
                     }}
                     placeholder="KEY"
-                    className="font-mono text-sm flex-1"
+                    value={key}
                   />
                   <span className="text-muted-foreground">=</span>
                   <Input
-                    value={value}
+                    className="flex-1 font-mono text-sm"
                     onChange={(e) => handleEnvChange(key, e.target.value)}
                     placeholder="value"
-                    className="font-mono text-sm flex-1"
+                    value={value}
                   />
                   <Button
+                    onClick={() => handleRemoveEnvVar(key)}
                     size="sm"
                     variant="ghost"
-                    onClick={() => handleRemoveEnvVar(key)}
                   >
                     <Trash className="h-3 w-3" weight="regular" />
                   </Button>

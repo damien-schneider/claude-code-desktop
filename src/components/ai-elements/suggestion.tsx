@@ -1,12 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import {
-  ScrollArea,
-  ScrollBar,
-} from "@/components/ui/scroll-area";
-import { cn } from "@/utils/tailwind";
 import type { ComponentProps } from "react";
+import { Button } from "@/components/ui/button";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { cn } from "@/utils/tailwind";
 
 export type SuggestionsProps = ComponentProps<typeof ScrollArea>;
 

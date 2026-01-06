@@ -1,4 +1,4 @@
-import { ipcRenderer, contextBridge } from "electron";
+import { contextBridge, ipcRenderer } from "electron";
 import { IPC_CHANNELS } from "./constants";
 
 // Expose IPC methods to renderer process

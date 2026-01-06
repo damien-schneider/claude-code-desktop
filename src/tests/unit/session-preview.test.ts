@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
 import { readdir, readFile } from "fs/promises";
-import { join } from "path";
 import { homedir } from "os";
+import { join } from "path";
+import { describe, expect, it } from "vitest";
 
 /**
  * Test suite for session preview message filtering
@@ -55,7 +55,8 @@ describe("Session Preview Message Filtering", () => {
     return (
       lowerContent.includes('"issidechain":true') ||
       lowerContent.includes('"agentid"') ||
-      (lowerContent.includes("warmup") && lowerContent.includes('"issidechain"'))
+      (lowerContent.includes("warmup") &&
+        lowerContent.includes('"issidechain"'))
     );
   }
 
@@ -89,10 +90,7 @@ describe("Session Preview Message Filtering", () => {
         expect(
           failures,
           `Found ${failures.length} session(s) with sub-agent content in preview:\n${failures
-            .map(
-              (f) =>
-                `  - ${f.sessionId}: "${f.preview.slice(0, 50)}..."`
-            )
+            .map((f) => `  - ${f.sessionId}: "${f.preview.slice(0, 50)}..."`)
             .join("\n")}`
         ).toHaveLength(0);
       } catch (error) {
@@ -192,7 +190,9 @@ describe("Session Preview Message Filtering", () => {
 
         // The preview should be a meaningful user message
         expect(preview.length).toBeGreaterThan(0);
-        expect(preview).toMatch(/Est-ce qu'il y aurait|pourquoi|please|help|can you/i);
+        expect(preview).toMatch(
+          /Est-ce qu'il y aurait|pourquoi|please|help|can you/i
+        );
       } catch (error) {
         console.warn("Could not read current session:", error);
       }

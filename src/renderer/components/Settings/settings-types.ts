@@ -34,7 +34,7 @@ export interface ClaudePermissions {
 }
 
 export interface McpServerConfig {
-  type?: 'stdio' | 'sse';
+  type?: "stdio" | "sse";
   command?: string;
   args?: string[];
   env?: Record<string, string>;
@@ -42,7 +42,7 @@ export interface McpServerConfig {
 }
 
 export interface ClaudeHook {
-  type?: 'user-prompt' | 'ai-response';
+  type?: "user-prompt" | "ai-response";
   command?: string;
   description?: string;
 }
@@ -83,8 +83,16 @@ export interface HooksEditorProps {
 export interface SettingsFormProps {
   settings: ClaudeSettings;
   onChange: (settings: ClaudeSettings) => void;
-  activeSection: 'permissions' | 'mcp' | 'hooks' | 'env' | 'plugins' | 'advanced';
-  onSectionChange: (section: 'permissions' | 'mcp' | 'hooks' | 'env' | 'plugins' | 'advanced') => void;
+  activeSection:
+    | "permissions"
+    | "mcp"
+    | "hooks"
+    | "env"
+    | "plugins"
+    | "advanced";
+  onSectionChange: (
+    section: "permissions" | "mcp" | "hooks" | "env" | "plugins" | "advanced"
+  ) => void;
 }
 
 export interface SettingsJSONEditorProps {
@@ -92,4 +100,4 @@ export interface SettingsJSONEditorProps {
   onChange: (settings: ClaudeSettings) => void;
 }
 
-export type EditorMode = 'form' | 'json';
+export type EditorMode = "form" | "json";

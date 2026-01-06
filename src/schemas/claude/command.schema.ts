@@ -7,24 +7,29 @@
  * Reference: https://docs.anthropic.com/en/docs/build-with-claude/commands
  */
 
-import { z } from 'zod';
-import { claudeNameSchema } from './base';
+import { z } from "zod";
+import { claudeNameSchema } from "./base";
 
 /**
  * Command frontmatter schema
  */
 export const commandFrontmatterSchema = z.object({
-  description: z.string()
-    .min(1, 'Description is required')
-    .max(500, 'Description must be 500 characters or less'),
+  description: z
+    .string()
+    .min(1, "Description is required")
+    .max(500, "Description must be 500 characters or less"),
   category: z.string().optional(),
   enabled: z.boolean().optional(),
-  arguments: z.array(z.object({
-    name: z.string(),
-    description: z.string().optional(),
-    required: z.boolean().optional(),
-    type: z.enum(['string', 'number', 'boolean', 'array']).optional(),
-  })).optional(),
+  arguments: z
+    .array(
+      z.object({
+        name: z.string(),
+        description: z.string().optional(),
+        required: z.boolean().optional(),
+        type: z.enum(["string", "number", "boolean", "array"]).optional(),
+      })
+    )
+    .optional(),
 });
 
 /**
@@ -32,10 +37,9 @@ export const commandFrontmatterSchema = z.object({
  */
 export const commandContentSchema = z.object({
   frontmatter: commandFrontmatterSchema,
-  body: z.string()
-    .refine(val => val.includes('$ARGUMENTS'), {
-      message: 'Command body must include $ARGUMENTS placeholder',
-    }),
+  body: z.string().refine((val) => val.includes("$ARGUMENTS"), {
+    message: "Command body must include $ARGUMENTS placeholder",
+  }),
 });
 
 /**
@@ -55,8 +59,11 @@ export const commandCreateSchema = z.object({
 /**
  * Helper to build command file content
  */
-export function buildCommandContent(name: string, description?: string): string {
-  const desc = description || 'My custom command';
+export function buildCommandContent(
+  name: string,
+  description?: string
+): string {
+  const desc = description || "My custom command";
 
   return `---
 description: ${desc}
@@ -97,7 +104,7 @@ export function parseCommandContent(content: string): {
 
     const descMatch = rawFrontmatter.match(/^description:\s*(.+)$/m);
     if (descMatch) {
-      frontmatter.description = descMatch[1].trim().replace(/^["']|["']$/g, '');
+      frontmatter.description = descMatch[1].trim().replace(/^["']|["']$/g, "");
     }
 
     const categoryMatch = rawFrontmatter.match(/^category:\s*(.+)$/m);
@@ -107,7 +114,7 @@ export function parseCommandContent(content: string): {
 
     const enabledMatch = rawFrontmatter.match(/^enabled:\s*(true|false)$/m);
     if (enabledMatch) {
-      frontmatter.enabled = enabledMatch[1] === 'true';
+      frontmatter.enabled = enabledMatch[1] === "true";
     }
 
     return {
@@ -129,16 +136,22 @@ export function validateCommandStructure(content: string): {
   error?: string;
 } {
   if (!content.trim()) {
-    return { valid: false, error: 'Command content cannot be empty' };
+    return { valid: false, error: "Command content cannot be empty" };
   }
 
   const hasFrontmatter = content.match(/^---\n[\s\S]*?\n---/);
   if (!hasFrontmatter) {
-    return { valid: false, error: 'Command must have YAML frontmatter (---) with description' };
+    return {
+      valid: false,
+      error: "Command must have YAML frontmatter (---) with description",
+    };
   }
 
-  if (!content.includes('$ARGUMENTS')) {
-    return { valid: false, error: 'Command should include $ARGUMENTS placeholder for user arguments' };
+  if (!content.includes("$ARGUMENTS")) {
+    return {
+      valid: false,
+      error: "Command should include $ARGUMENTS placeholder for user arguments",
+    };
   }
 
   return { valid: true };

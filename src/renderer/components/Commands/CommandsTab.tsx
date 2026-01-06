@@ -1,39 +1,40 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Plus,
-  Trash,
-  FloppyDisk,
-  DownloadSimple,
-  UploadSimple,
-  FileText,
-  WarningCircle,
-  CheckCircle,
-  Spinner,
-  Code,
-  Folder,
-  CaretRight,
   CaretDown,
-} from '@phosphor-icons/react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+  CaretRight,
+  CheckCircle,
+  Code,
+  DownloadSimple,
+  FileText,
+  FloppyDisk,
+  Folder,
+  Plus,
+  Spinner,
+  Trash,
+  UploadSimple,
+  WarningCircle,
+} from "@phosphor-icons/react";
+import type React from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormMessage,
-} from '@/components/ui/form';
-import { CodeEditor } from '@/renderer/components/CodeEditor';
-import { TipTapEditor } from '@/renderer/components/TipTapEditor';
-import { useAppStore } from '@/renderer/stores';
-import { ipc } from '@/ipc/manager';
-import { showError, showSuccess } from '@/renderer/lib/toast';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { ipc } from "@/ipc/manager";
+import { CodeEditor } from "@/renderer/components/CodeEditor";
+import { TipTapEditor } from "@/renderer/components/TipTapEditor";
+import { showError, showSuccess } from "@/renderer/lib/toast";
+import { useAppStore } from "@/renderer/stores";
 import {
-  commandCreateSchema,
   type CommandCreateValues,
-} from '@/schemas/claude';
+  commandCreateSchema,
+} from "@/schemas/claude";
 
 interface CommandFile {
   name: string;
@@ -56,22 +57,27 @@ interface CommandGroup {
 }
 
 export const CommandsTab: React.FC = () => {
-  const { selectedProjectId, isMainConfigSelected, currentView } = useAppStore();
-  const [homePath, setHomePath] = useState<string>('');
+  const { selectedProjectId, isMainConfigSelected, currentView } =
+    useAppStore();
+  const [homePath, setHomePath] = useState<string>("");
   const [commands, setCommands] = useState<CommandFile[]>([]);
   const [selectedCommand, setSelectedCommand] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['all']));
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string>
+  >({});
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+    new Set(["all"])
+  );
   const [isAdding, setIsAdding] = useState(false);
 
   // Form for creating new command
   const createForm = useForm<CommandCreateValues>({
     resolver: zodResolver(commandCreateSchema),
     defaultValues: {
-      name: 'my-command',
+      name: "my-command",
     },
   });
 
@@ -82,15 +88,13 @@ export const CommandsTab: React.FC = () => {
         const home = await ipc.client.app.getHomePath();
         setHomePath(home);
       } catch (error) {
-        console.error('Failed to get home path:', error);
+        console.error("Failed to get home path:", error);
       }
     };
     getHome();
   }, []);
 
-  const currentPath = isMainConfigSelected
-    ? homePath
-    : selectedProjectId || '';
+  const currentPath = isMainConfigSelected ? homePath : selectedProjectId || "";
 
   // Toggle group expansion
   const toggleGroup = (category: string) => {
@@ -126,7 +130,7 @@ export const CommandsTab: React.FC = () => {
       .sort((a, b) => a.category.localeCompare(b.category));
 
     if (rootCommands.length > 0) {
-      result.unshift({ category: 'root', commands: rootCommands });
+      result.unshift({ category: "root", commands: rootCommands });
     }
 
     return result;
@@ -135,26 +139,26 @@ export const CommandsTab: React.FC = () => {
   // Load commands from the selected project
   const loadCommands = useCallback(async () => {
     if (!currentPath) {
-      console.log('No current path, skipping commands load');
+      console.log("No current path, skipping commands load");
       return;
     }
 
-    console.log('Loading commands from:', currentPath);
+    console.log("Loading commands from:", currentPath);
     setLoading(true);
     setError(null);
     try {
       const result = await ipc.client.claude.readClaudeDirectory({
         projectPath: currentPath,
-        type: 'commands',
+        type: "commands",
       });
 
-      console.log('Commands result:', result);
+      console.log("Commands result:", result);
 
       const loadedCommands: CommandFile[] = result.files.map((file) => {
-        let commandData: CommandFile = {
+        const commandData: CommandFile = {
           name: file.name,
           path: file.path,
-          content: file.content || '',
+          content: file.content || "",
         };
 
         if (file.category) {
@@ -167,9 +171,12 @@ export const CommandsTab: React.FC = () => {
           const frontmatterMatch = file.content.match(/^---\n([\s\S]*?)\n---/);
           if (frontmatterMatch) {
             try {
-              const descMatch = frontmatterMatch[1].match(/description:\s*(.+)$/m);
+              const descMatch =
+                frontmatterMatch[1].match(/description:\s*(.+)$/m);
               if (descMatch) {
-                commandData.description = descMatch[1].trim().replace(/^["']|["']$/g, '');
+                commandData.description = descMatch[1]
+                  .trim()
+                  .replace(/^["']|["']$/g, "");
               }
               commandData.isValid = true;
             } catch {
@@ -184,10 +191,17 @@ export const CommandsTab: React.FC = () => {
       });
 
       setCommands(loadedCommands);
-      setExpandedGroups(new Set(['all', ...loadedCommands.map((c) => c.category || 'root').filter(Boolean)]));
+      setExpandedGroups(
+        new Set([
+          "all",
+          ...loadedCommands.map((c) => c.category || "root").filter(Boolean),
+        ])
+      );
     } catch (error) {
-      console.error('Failed to load commands:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load commands');
+      console.error("Failed to load commands:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to load commands"
+      );
     } finally {
       setLoading(false);
     }
@@ -195,7 +209,7 @@ export const CommandsTab: React.FC = () => {
 
   // Reload when switching to this tab or when path changes
   useEffect(() => {
-    if (currentView === 'commands') {
+    if (currentView === "commands") {
       loadCommands();
     }
   }, [currentView, loadCommands]);
@@ -203,31 +217,46 @@ export const CommandsTab: React.FC = () => {
   const selectedCommandData = commands.find((c) => c.name === selectedCommand);
 
   // Parse command content into frontmatter and body
-  const parseCommand = (content: string): { frontmatter: string | null; body: string; hasFrontmatter: boolean } => {
+  const parseCommand = (
+    content: string
+  ): { frontmatter: string | null; body: string; hasFrontmatter: boolean } => {
     const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
     if (frontmatterMatch) {
-      return { frontmatter: frontmatterMatch[1], body: frontmatterMatch[2], hasFrontmatter: true };
+      return {
+        frontmatter: frontmatterMatch[1],
+        body: frontmatterMatch[2],
+        hasFrontmatter: true,
+      };
     }
     return { frontmatter: null, body: content, hasFrontmatter: false };
   };
 
   const { frontmatter, body, hasFrontmatter } = selectedCommandData?.content
     ? parseCommand(selectedCommandData.content)
-    : { frontmatter: null, body: '', hasFrontmatter: false };
+    : { frontmatter: null, body: "", hasFrontmatter: false };
 
   // Validate command structure
-  const validateCommand = (content: string): { valid: boolean; error?: string } => {
+  const validateCommand = (
+    content: string
+  ): { valid: boolean; error?: string } => {
     if (!content.trim()) {
-      return { valid: false, error: 'Command content cannot be empty' };
+      return { valid: false, error: "Command content cannot be empty" };
     }
 
     const hasFrontmatter = content.match(/^---\n[\s\S]*?\n---/);
     if (!hasFrontmatter) {
-      return { valid: false, error: 'Command must have YAML frontmatter (---) with description' };
+      return {
+        valid: false,
+        error: "Command must have YAML frontmatter (---) with description",
+      };
     }
 
-    if (!content.includes('$ARGUMENTS')) {
-      return { valid: false, error: 'Command should include $ARGUMENTS placeholder for user arguments' };
+    if (!content.includes("$ARGUMENTS")) {
+      return {
+        valid: false,
+        error:
+          "Command should include $ARGUMENTS placeholder for user arguments",
+      };
     }
 
     return { valid: true };
@@ -242,7 +271,9 @@ export const CommandsTab: React.FC = () => {
 
     const validation = validateCommand(fullContent);
     if (!validation.valid) {
-      setValidationErrors({ [selectedCommandData.name]: validation.error || 'Invalid command' });
+      setValidationErrors({
+        [selectedCommandData.name]: validation.error || "Invalid command",
+      });
       return;
     }
 
@@ -258,11 +289,13 @@ export const CommandsTab: React.FC = () => {
         delete next[selectedCommandData.name];
         return next;
       });
-      showSuccess('Command saved successfully');
+      showSuccess("Command saved successfully");
       await loadCommands();
     } catch (error) {
-      showError('Failed to save command', error);
-      setError(error instanceof Error ? error.message : 'Failed to save command');
+      showError("Failed to save command", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to save command"
+      );
     } finally {
       setSaving(false);
     }
@@ -271,25 +304,33 @@ export const CommandsTab: React.FC = () => {
   const handleDelete = async () => {
     if (!selectedCommandData) return;
 
-    if (!confirm(`Are you sure you want to delete command "${selectedCommandData.name}"?`)) {
+    if (
+      !confirm(
+        `Are you sure you want to delete command "${selectedCommandData.name}"?`
+      )
+    ) {
       return;
     }
 
     try {
-      await ipc.client.claude.deleteClaudeItem({ itemPath: selectedCommandData.path });
+      await ipc.client.claude.deleteClaudeItem({
+        itemPath: selectedCommandData.path,
+      });
       setSelectedCommand(null);
       await loadCommands();
-      showSuccess('Command deleted successfully');
+      showSuccess("Command deleted successfully");
     } catch (error) {
-      showError('Failed to delete command', error);
-      setError(error instanceof Error ? error.message : 'Failed to delete command');
+      showError("Failed to delete command", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to delete command"
+      );
     }
   };
 
   const handleAdd = () => {
     if (!currentPath) return;
     setIsAdding(true);
-    createForm.setValue('name', `my-command-${commands.length + 1}`);
+    createForm.setValue("name", `my-command-${commands.length + 1}`);
   };
 
   const handleConfirmAdd = async (values: CommandCreateValues) => {
@@ -329,10 +370,12 @@ Add your command instructions here.
       setSelectedCommand(name);
       setIsAdding(false);
       createForm.reset();
-      showSuccess('Command created successfully');
+      showSuccess("Command created successfully");
     } catch (error) {
-      showError('Failed to create command', error);
-      setError(error instanceof Error ? error.message : 'Failed to create command');
+      showError("Failed to create command", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to create command"
+      );
     }
   };
 
@@ -349,23 +392,25 @@ Add your command instructions here.
         name: c.name,
         content: c.content,
       }));
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+        type: "application/json",
+      });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = `commands-export-${Date.now()}.json`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Failed to export commands:', error);
-      setError('Failed to export commands');
+      console.error("Failed to export commands:", error);
+      setError("Failed to export commands");
     }
   };
 
   const handleImport = async () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
@@ -375,7 +420,9 @@ Add your command instructions here.
         const importData = JSON.parse(content);
 
         if (!Array.isArray(importData)) {
-          throw new Error('Invalid import format: expected an array of commands');
+          throw new Error(
+            "Invalid import format: expected an array of commands"
+          );
         }
 
         const commandsDir = `${currentPath}/.claude/commands`;
@@ -391,37 +438,53 @@ Add your command instructions here.
 
         await loadCommands();
       } catch (error) {
-        console.error('Failed to import commands:', error);
-        setError(error instanceof Error ? error.message : 'Failed to import commands');
+        console.error("Failed to import commands:", error);
+        setError(
+          error instanceof Error ? error.message : "Failed to import commands"
+        );
       }
     };
     input.click();
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="p-4 border-b bg-background flex items-center justify-between">
+      <div className="flex items-center justify-between border-b bg-background p-4">
         <div className="flex items-center gap-2">
           <div>
             <h3 className="font-semibold">Commands Management</h3>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={handleImport} disabled={loading || commands.length === 0}>
-            <UploadSimple className="h-4 w-4 mr-1" weight="regular" />
+          <Button
+            disabled={loading || commands.length === 0}
+            onClick={handleImport}
+            size="sm"
+            variant="outline"
+          >
+            <UploadSimple className="mr-1 h-4 w-4" weight="regular" />
             Import
           </Button>
-          <Button size="sm" variant="outline" onClick={handleExport} disabled={loading || commands.length === 0}>
-            <DownloadSimple className="h-4 w-4 mr-1" weight="regular" />
+          <Button
+            disabled={loading || commands.length === 0}
+            onClick={handleExport}
+            size="sm"
+            variant="outline"
+          >
+            <DownloadSimple className="mr-1 h-4 w-4" weight="regular" />
             Export
           </Button>
           <Button
-            size="sm"
-            onClick={handleAdd}
             disabled={loading || !currentPath}
-            title={!currentPath ? "Select a project or global settings first" : "Add Command"}
-            variant={!currentPath ? "outline" : "default"}
+            onClick={handleAdd}
+            size="sm"
+            title={
+              currentPath
+                ? "Add Command"
+                : "Select a project or global settings first"
+            }
+            variant={currentPath ? "default" : "outline"}
           >
             <Plus className="h-4 w-4" weight="regular" />
           </Button>
@@ -430,16 +493,21 @@ Add your command instructions here.
 
       {/* Error display */}
       {error && (
-        <div className="mx-4 mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-md flex items-start gap-3">
-          <WarningCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" weight="regular" />
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="mx-4 mt-4 flex items-start gap-3 rounded-md border border-red-500/20 bg-red-500/10 p-3">
+          <WarningCircle
+            className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600"
+            weight="regular"
+          />
+          <p className="text-red-700 text-sm">{error}</p>
         </div>
       )}
 
       {/* No project selected */}
-      {!currentPath && !loading && (
-        <div className="flex items-center justify-center h-full">
-          <p className="text-sm text-muted-foreground">Select a project to manage commands</p>
+      {!(currentPath || loading) && (
+        <div className="flex h-full items-center justify-center">
+          <p className="text-muted-foreground text-sm">
+            Select a project to manage commands
+          </p>
         </div>
       )}
 
@@ -447,44 +515,65 @@ Add your command instructions here.
       {currentPath && (
         <div className="flex-1 overflow-hidden">
           {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <Spinner className="h-6 w-6 animate-spin text-muted-foreground" weight="regular" />
+            <div className="flex h-full items-center justify-center">
+              <Spinner
+                className="h-6 w-6 animate-spin text-muted-foreground"
+                weight="regular"
+              />
             </div>
           ) : commands.length === 0 && !isAdding ? (
-            <div className="flex flex-col items-center justify-center h-full">
-              <FileText className="h-12 w-12 text-muted-foreground mb-4" weight="regular" />
-              <p className="text-sm text-muted-foreground mb-4">No commands configured</p>
-              <Button size="sm" onClick={handleAdd}>
-                <Plus className="h-4 w-4 mr-1" weight="regular" />
+            <div className="flex h-full flex-col items-center justify-center">
+              <FileText
+                className="mb-4 h-12 w-12 text-muted-foreground"
+                weight="regular"
+              />
+              <p className="mb-4 text-muted-foreground text-sm">
+                No commands configured
+              </p>
+              <Button onClick={handleAdd} size="sm">
+                <Plus className="mr-1 h-4 w-4" weight="regular" />
                 Create Your First Command
               </Button>
             </div>
           ) : (
             <div className="flex h-full">
               {/* Commands list - Grouped by category */}
-              <div className="w-80 border-r overflow-y-auto">
+              <div className="w-80 overflow-y-auto border-r">
                 <div className="p-2">
                   {isAdding && (
-                    <div className="p-2 rounded-md bg-primary/10 border border-primary/20 mb-2">
+                    <div className="mb-2 rounded-md border border-primary/20 bg-primary/10 p-2">
                       <Form {...createForm}>
-                        <form onSubmit={createForm.handleSubmit(handleConfirmAdd)} className="space-y-2">
+                        <form
+                          className="space-y-2"
+                          onSubmit={createForm.handleSubmit(handleConfirmAdd)}
+                        >
                           <FormField
                             control={createForm.control}
                             name="name"
                             render={({ field }) => (
                               <FormItem>
                                 <FormControl>
-                                  <Input {...field} className="font-mono text-sm" autoFocus />
+                                  <Input
+                                    {...field}
+                                    autoFocus
+                                    className="font-mono text-sm"
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
                             )}
                           />
                           <div className="flex gap-2">
-                            <Button type="submit" size="sm" className="flex-1">
+                            <Button className="flex-1" size="sm" type="submit">
                               Create
                             </Button>
-                            <Button type="button" size="sm" variant="outline" onClick={handleCancelAdd} className="flex-1">
+                            <Button
+                              className="flex-1"
+                              onClick={handleCancelAdd}
+                              size="sm"
+                              type="button"
+                              variant="outline"
+                            >
                               Cancel
                             </Button>
                           </div>
@@ -495,59 +584,82 @@ Add your command instructions here.
                   {groupedCommands.map((group) => {
                     const isExpanded = expandedGroups.has(group.category);
                     return (
-                      <div key={group.category} className="mb-2">
+                      <div className="mb-2" key={group.category}>
                         <button
+                          className="flex w-full items-center gap-2 rounded-md p-2 text-left transition-colors hover:bg-muted/50"
                           onClick={() => toggleGroup(group.category)}
-                          className="w-full flex items-center gap-2 p-2 rounded-md hover:bg-muted/50 transition-colors text-left"
                         >
                           {isExpanded ? (
                             <CaretDown className="h-4 w-4" weight="regular" />
                           ) : (
                             <CaretRight className="h-4 w-4" weight="regular" />
                           )}
-                          <Folder className="h-4 w-4 text-muted-foreground" weight="regular" />
-                          <span className="text-sm font-medium capitalize">
-                            {group.category === 'root' ? 'Commands' : group.category}
+                          <Folder
+                            className="h-4 w-4 text-muted-foreground"
+                            weight="regular"
+                          />
+                          <span className="font-medium text-sm capitalize">
+                            {group.category === "root"
+                              ? "Commands"
+                              : group.category}
                           </span>
-                          <span className="text-xs text-muted-foreground ml-auto">
+                          <span className="ml-auto text-muted-foreground text-xs">
                             {group.commands.length}
                           </span>
                         </button>
 
                         {isExpanded && (
-                          <div className="ml-4 mt-1 space-y-1">
+                          <div className="mt-1 ml-4 space-y-1">
                             {group.commands.map((command) => {
-                              const validationError = validationErrors[command.name];
-                              const isValid = command.isValid !== false && !validationError;
+                              const validationError =
+                                validationErrors[command.name];
+                              const isValid =
+                                command.isValid !== false && !validationError;
 
                               return (
                                 <div
-                                  key={command.name}
-                                  className={`p-2 rounded-md cursor-pointer transition-colors ${
+                                  className={`cursor-pointer rounded-md p-2 transition-colors ${
                                     selectedCommand === command.name
-                                      ? 'bg-primary text-primary-foreground'
-                                      : 'hover:bg-muted'
+                                      ? "bg-primary text-primary-foreground"
+                                      : "hover:bg-muted"
                                   }`}
-                                  onClick={() => setSelectedCommand(command.name)}
+                                  key={command.name}
+                                  onClick={() =>
+                                    setSelectedCommand(command.name)
+                                  }
                                 >
                                   <div className="flex items-start justify-between gap-2">
-                                    <div className="flex-1 min-w-0">
+                                    <div className="min-w-0 flex-1">
                                       <div className="flex items-center gap-2">
-                                        <Code className="h-3 w-3 flex-shrink-0" weight="regular" />
-                                        <span className="text-sm font-medium truncate">{command.name}</span>
+                                        <Code
+                                          className="h-3 w-3 flex-shrink-0"
+                                          weight="regular"
+                                        />
+                                        <span className="truncate font-medium text-sm">
+                                          {command.name}
+                                        </span>
                                         {isValid ? (
-                                          <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" weight="regular" />
+                                          <CheckCircle
+                                            className="h-3 w-3 flex-shrink-0 text-green-500"
+                                            weight="regular"
+                                          />
                                         ) : (
-                                          <WarningCircle className="h-3 w-3 text-red-500 flex-shrink-0" weight="regular" />
+                                          <WarningCircle
+                                            className="h-3 w-3 flex-shrink-0 text-red-500"
+                                            weight="regular"
+                                          />
                                         )}
                                       </div>
-                                      <p className="text-xs opacity-70 mt-1 truncate">
-                                        {command.description || 'No description'}
+                                      <p className="mt-1 truncate text-xs opacity-70">
+                                        {command.description ||
+                                          "No description"}
                                       </p>
                                     </div>
                                   </div>
                                   {validationError && (
-                                    <p className="text-xs text-red-500 mt-1">{validationError}</p>
+                                    <p className="mt-1 text-red-500 text-xs">
+                                      {validationError}
+                                    </p>
                                   )}
                                 </div>
                               );
@@ -561,51 +673,70 @@ Add your command instructions here.
               </div>
 
               {/* Command editor */}
-              <div className="flex-1 flex flex-col overflow-hidden">
+              <div className="flex flex-1 flex-col overflow-hidden">
                 {selectedCommandData ? (
                   <>
                     {/* Editor header */}
-                    <div className="p-4 border-b flex items-center justify-between">
+                    <div className="flex items-center justify-between border-b p-4">
                       <div>
-                        <h4 className="font-medium">{selectedCommandData.name}</h4>
-                        <p className="text-xs text-muted-foreground">
-                          {selectedCommandData.path.split('/').pop()}
+                        <h4 className="font-medium">
+                          {selectedCommandData.name}
+                        </h4>
+                        <p className="text-muted-foreground text-xs">
+                          {selectedCommandData.path.split("/").pop()}
                         </p>
                       </div>
                       <div className="flex gap-2">
                         <Button
+                          disabled={saving}
+                          onClick={handleSave}
                           size="sm"
                           variant="outline"
-                          onClick={handleSave}
-                          disabled={saving}
                         >
-                          <FloppyDisk className="h-4 w-4 mr-1" weight="regular" />
-                          {saving ? 'Saving...' : 'Save'}
+                          <FloppyDisk
+                            className="mr-1 h-4 w-4"
+                            weight="regular"
+                          />
+                          {saving ? "Saving..." : "Save"}
                         </Button>
                         <Button
+                          onClick={handleDelete}
                           size="sm"
                           variant="destructive"
-                          onClick={handleDelete}
                         >
-                          <Trash className="h-4 w-4 mr-1" weight="regular" />
+                          <Trash className="mr-1 h-4 w-4" weight="regular" />
                           Delete
                         </Button>
                       </div>
                     </div>
 
                     {/* Editor - Split view with frontmatter and body */}
-                    <div className="flex-1 flex flex-col overflow-hidden">
+                    <div className="flex flex-1 flex-col overflow-hidden">
                       {hasFrontmatter ? (
-                        <div className="border-b overflow-hidden" style={{ height: '50%' }}>
-                          <div className="px-4 py-2 bg-muted/50 border-b text-xs font-medium text-muted-foreground">
+                        <div
+                          className="overflow-hidden border-b"
+                          style={{ height: "50%" }}
+                        >
+                          <div className="border-b bg-muted/50 px-4 py-2 font-medium text-muted-foreground text-xs">
                             Frontmatter (YAML)
                           </div>
                           <CodeEditor
-                            value={frontmatter || ''}
+                            height="100%"
+                            language="yaml"
                             onChange={(value) => {
-                              if (value !== null && value !== undefined && selectedCommand) {
+                              if (
+                                value !== null &&
+                                value !== undefined &&
+                                selectedCommand
+                              ) {
                                 const newContent = `---\n${value}\n---\n${body}`;
-                                setCommands(commands.map((c) => (c.name === selectedCommand ? { ...c, content: newContent } : c)));
+                                setCommands(
+                                  commands.map((c) =>
+                                    c.name === selectedCommand
+                                      ? { ...c, content: newContent }
+                                      : c
+                                  )
+                                );
                                 setValidationErrors((prev) => {
                                   const next = { ...prev };
                                   delete next[selectedCommandData.name];
@@ -613,28 +744,38 @@ Add your command instructions here.
                                 });
                               }
                             }}
-                            language="yaml"
-                            height="100%"
+                            value={frontmatter || ""}
                           />
                         </div>
                       ) : (
-                        <div className="border-b px-4 py-3 bg-muted/30 text-sm text-muted-foreground flex items-center justify-center" style={{ height: '50px' }}>
+                        <div
+                          className="flex items-center justify-center border-b bg-muted/30 px-4 py-3 text-muted-foreground text-sm"
+                          style={{ height: "50px" }}
+                        >
                           No frontmatter
                         </div>
                       )}
 
                       <div className="flex-1 overflow-hidden">
-                        <div className="px-4 py-2 bg-muted/50 border-b text-xs font-medium text-muted-foreground">
+                        <div className="border-b bg-muted/50 px-4 py-2 font-medium text-muted-foreground text-xs">
                           Command Body (Markdown)
                         </div>
                         <TipTapEditor
+                          className="h-full"
                           content={body}
                           onChange={(value) => {
                             if (selectedCommand) {
-                              const newContent = hasFrontmatter && frontmatter
-                                ? `---\n${frontmatter}\n---\n${value}`
-                                : value;
-                              setCommands(commands.map((c) => (c.name === selectedCommand ? { ...c, content: newContent } : c)));
+                              const newContent =
+                                hasFrontmatter && frontmatter
+                                  ? `---\n${frontmatter}\n---\n${value}`
+                                  : value;
+                              setCommands(
+                                commands.map((c) =>
+                                  c.name === selectedCommand
+                                    ? { ...c, content: newContent }
+                                    : c
+                                )
+                              );
                               setValidationErrors((prev) => {
                                 const next = { ...prev };
                                 delete next[selectedCommandData.name];
@@ -650,14 +791,13 @@ $ARGUMENTS
 
 Add your command instructions here.
 "
-                          className="h-full"
                         />
                       </div>
                     </div>
 
                     {validationErrors[selectedCommandData.name] && (
-                      <div className="p-3 bg-red-500/10 border-t border-red-500/20">
-                        <p className="text-sm text-red-700 flex items-center gap-2">
+                      <div className="border-red-500/20 border-t bg-red-500/10 p-3">
+                        <p className="flex items-center gap-2 text-red-700 text-sm">
                           <WarningCircle className="h-4 w-4" weight="regular" />
                           {validationErrors[selectedCommandData.name]}
                         </p>
@@ -665,7 +805,7 @@ Add your command instructions here.
                     )}
                   </>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                  <div className="flex h-full items-center justify-center text-muted-foreground">
                     Select a command to edit
                   </div>
                 )}

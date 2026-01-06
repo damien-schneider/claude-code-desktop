@@ -1,6 +1,6 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { EditorMode } from './settings-types';
+import type React from "react";
+import { Button } from "@/components/ui/button";
+import type { EditorMode } from "./settings-types";
 
 interface ModeToggleProps {
   mode: EditorMode;
@@ -12,20 +12,20 @@ interface ModeToggleProps {
  */
 export const ModeToggle: React.FC<ModeToggleProps> = ({ mode, onChange }) => {
   return (
-    <div className="flex items-center gap-2 p-1 bg-muted rounded-md inline-flex">
+    <div className="flex inline-flex items-center gap-2 rounded-md bg-muted p-1">
       <Button
-        size="sm"
-        variant={mode === 'form' ? 'default' : 'ghost'}
-        onClick={() => onChange('form')}
         className="flex-1"
+        onClick={() => onChange("form")}
+        size="sm"
+        variant={mode === "form" ? "default" : "ghost"}
       >
         Form
       </Button>
       <Button
-        size="sm"
-        variant={mode === 'json' ? 'default' : 'ghost'}
-        onClick={() => onChange('json')}
         className="flex-1"
+        onClick={() => onChange("json")}
+        size="sm"
+        variant={mode === "json" ? "default" : "ghost"}
       >
         JSON
       </Button>

@@ -1,5 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import type { SDKAssistantMessage, SDKResultMessage, SDKSystemMessage } from "@anthropic-ai/claude-agent-sdk";
+import type {
+  SDKAssistantMessage,
+  SDKResultMessage,
+  SDKSystemMessage,
+} from "@anthropic-ai/claude-agent-sdk";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("Claude Process SDK Handlers", () => {
   beforeEach(() => {
@@ -13,7 +17,7 @@ describe("Claude Process SDK Handlers", () => {
   describe("checkClaudeAvailability Logic", () => {
     it("should parse version string correctly when claude is found", () => {
       const stdout = "claude 2.0.76\n";
-      
+
       // Test the parsing logic
       const trimmed = stdout.trim();
       const hasVersion = trimmed.includes("claude");
@@ -28,7 +32,7 @@ describe("Claude Process SDK Handlers", () => {
 
     it("should detect when claude is not found", () => {
       const stdout = "NOT_FOUND\n";
-      
+
       // Test the parsing logic
       const trimmed = stdout.trim();
       const hasVersion = trimmed.includes("claude");
@@ -44,7 +48,7 @@ describe("Claude Process SDK Handlers", () => {
 
     it("should handle empty output", () => {
       const stdout = "";
-      
+
       const trimmed = stdout.trim();
       const hasVersion = trimmed.includes("claude");
       const result = {
@@ -126,7 +130,7 @@ describe("Claude Process SDK Handlers", () => {
   describe("Process State Management", () => {
     it("should generate unique process IDs", async () => {
       const ids = new Set<string>();
-      
+
       // Generate multiple IDs
       for (let i = 0; i < 100; i++) {
         const id = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -190,7 +194,7 @@ describe("useClaudeStream Hook Integration", () => {
   it("should handle legacy chunk events", () => {
     const chunks: string[] = [];
     let streamingContent = "";
-    
+
     // Simulate chunk handling
     const handleChunk = (content: string) => {
       streamingContent += content;
@@ -207,11 +211,11 @@ describe("useClaudeStream Hook Integration", () => {
 
   it("should handle SDK assistant messages", () => {
     const messages: Array<{ type: string; content: string }> = [];
-    
+
     const handleAssistantMessage = (message: SDKAssistantMessage) => {
       let content = "";
       const msgContent = message.message.content;
-      
+
       if (typeof msgContent === "string") {
         content = msgContent;
       } else if (Array.isArray(msgContent)) {
@@ -224,7 +228,7 @@ describe("useClaudeStream Hook Integration", () => {
           })
           .join("");
       }
-      
+
       messages.push({ type: "assistant", content });
     };
 
@@ -254,14 +258,14 @@ describe("useClaudeStream Hook Integration", () => {
         messages.push({ type: "assistant", content: streamingContent });
         streamingContent = "";
       }
-      
+
       isStreaming = false;
-      
+
       // Add result info
       if (result.subtype === "success" && "result" in result) {
-        messages.push({ 
-          type: "system", 
-          content: `Cost: $${result.total_cost_usd?.toFixed(4)}` 
+        messages.push({
+          type: "system",
+          content: `Cost: $${result.total_cost_usd?.toFixed(4)}`,
         });
       }
     };

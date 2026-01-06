@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { SettingsJSONEditorProps } from './settings-types';
+import type React from "react";
+import { useState } from "react";
+import type { SettingsJSONEditorProps } from "./settings-types";
 
 /**
  * Monaco-based JSON editor for settings
@@ -19,22 +20,22 @@ export const SettingsJSONEditor: React.FC<SettingsJSONEditorProps> = ({
       setError(null);
       onChange(parsed);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Invalid JSON');
+      setError(e instanceof Error ? e.message : "Invalid JSON");
     }
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex-1 min-h-[400px]">
+    <div className="flex h-full flex-col">
+      <div className="min-h-[400px] flex-1">
         <textarea
-          value={json}
+          className="h-full w-full resize-none rounded-md border bg-muted p-4 font-mono text-sm"
           onChange={(e) => handleChange(e.target.value)}
-          className="w-full h-full font-mono text-sm p-4 border rounded-md bg-muted resize-none"
           spellCheck={false}
+          value={json}
         />
       </div>
       {error && (
-        <div className="mt-2 p-3 bg-destructive/10 text-destructive text-sm rounded-md">
+        <div className="mt-2 rounded-md bg-destructive/10 p-3 text-destructive text-sm">
           {error}
         </div>
       )}

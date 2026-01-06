@@ -1,4 +1,4 @@
-import { toast } from 'sonner';
+import { toast } from "sonner";
 
 // Success toast with consistent styling
 export const showSuccess = (message: string) => {
@@ -9,7 +9,7 @@ export const showSuccess = (message: string) => {
 export const showError = (message: string, error?: unknown) => {
   console.error(message, error);
   const errorMessage = error instanceof Error ? error.message : String(error);
-  toast.error(`${message}${errorMessage ? ': ' + errorMessage : ''}`);
+  toast.error(`${message}${errorMessage ? ": " + errorMessage : ""}`);
 };
 
 // Info toast

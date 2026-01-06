@@ -1,11 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, FloppyDisk, Trash, Lightning, FolderOpen, Pencil, FileText, PlusCircle } from '@phosphor-icons/react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  FileText,
+  FloppyDisk,
+  FolderOpen,
+  Lightning,
+  Pencil,
+  PlusCircle,
+  Trash,
+} from "@phosphor-icons/react";
+import type React from "react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -14,28 +20,30 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { TipTapEditor } from '@/renderer/components/TipTapEditor';
-import { useClaudeItems } from '../Hooks/useClaudeItems';
-import { cn } from '@/utils/tailwind';
-import { showError } from '@/renderer/lib/toast';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
-  skillFormSchema,
-  skillCreateSchema,
-  type SkillFormValues,
-  type SkillCreateValues,
-} from '@/schemas/claude';
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
   ResizableHandle,
-} from '@/components/ui/resizable';
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
+import { Textarea } from "@/components/ui/textarea";
+import { TipTapEditor } from "@/renderer/components/TipTapEditor";
+import { showError } from "@/renderer/lib/toast";
+import {
+  type SkillCreateValues,
+  type SkillFormValues,
+  skillCreateSchema,
+  skillFormSchema,
+} from "@/schemas/claude";
+import { cn } from "@/utils/tailwind";
+import { useClaudeItems } from "../Hooks/useClaudeItems";
 
 interface Skill {
   name: string;
   path: string;
   content: string;
-  type: 'file' | 'directory';
+  type: "file" | "directory";
   hasMetadata: boolean;
   // Parsed from frontmatter
   displayName?: string;
@@ -53,13 +61,15 @@ interface SkillFrontmatter {
   metadata?: Record<string, string>;
 }
 
-const parseSkillFrontmatter = (content: string): { frontmatter?: SkillFrontmatter; body?: string } => {
+const parseSkillFrontmatter = (
+  content: string
+): { frontmatter?: SkillFrontmatter; body?: string } => {
   const yamlMatch = content.match(/^---\n([\s\S]*?)\n---/);
   if (!yamlMatch) return { body: content };
 
   try {
     const yaml = yamlMatch[1];
-    const frontmatter: SkillFrontmatter = { name: '', description: '' };
+    const frontmatter: SkillFrontmatter = { name: "", description: "" };
 
     const nameMatch = yaml.match(/^name:\s*(.+)$/m);
     const descMatch = yaml.match(/^description:\s*(.+)$/m);
@@ -72,11 +82,11 @@ const parseSkillFrontmatter = (content: string): { frontmatter?: SkillFrontmatte
     if (compatMatch) frontmatter.compatibility = compatMatch[1].trim();
 
     // Parse metadata field if present
-    const metadataMatch = yaml.match(/^metadata:\s*\n((?:  .+\n?)+)/m);
+    const metadataMatch = yaml.match(/^metadata:\s*\n((?: {2}.+\n?)+)/m);
     if (metadataMatch) {
       frontmatter.metadata = {};
-      metadataMatch[1].split('\n').forEach(line => {
-        const match = line.match(/^  (\w+):\s*(.+)$/);
+      metadataMatch[1].split("\n").forEach((line) => {
+        const match = line.match(/^ {2}(\w+):\s*(.+)$/);
         if (match) {
           frontmatter.metadata![match[1]] = match[2].trim();
         }
@@ -85,7 +95,7 @@ const parseSkillFrontmatter = (content: string): { frontmatter?: SkillFrontmatte
 
     return {
       frontmatter,
-      body: content.replace(/^---\n[\s\S]*?\n---\n?/, '')
+      body: content.replace(/^---\n[\s\S]*?\n---\n?/, ""),
     };
   } catch {
     return { body: content };
@@ -93,14 +103,14 @@ const parseSkillFrontmatter = (content: string): { frontmatter?: SkillFrontmatte
 };
 
 const buildSkillContent = (values: SkillFormValues): string => {
-  const { name, description, license, compatibility, content = '' } = values;
+  const { name, description, license, compatibility, content = "" } = values;
 
   // Normalize the name
   const normalizedName = name
     .toLowerCase()
-    .replace(/[^a-z0-9-]/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .replace(/-+/g, '-');
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-+/g, "-");
 
   let frontmatter = `---
 name: ${normalizedName}
@@ -115,7 +125,7 @@ description: ${description}
     frontmatter += `compatibility: ${compatibility}\n`;
   }
 
-  frontmatter += `---\n`;
+  frontmatter += "---\n";
 
   return `${frontmatter}\n${content}`;
 };
@@ -129,7 +139,7 @@ export const SkillsTab: React.FC = () => {
     deleteItem,
     saveItem,
     loadItems,
-  } = useClaudeItems({ type: 'skills', currentView: 'skills' });
+  } = useClaudeItems({ type: "skills", currentView: "skills" });
 
   // Parse skills to extract frontmatter
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -156,18 +166,18 @@ export const SkillsTab: React.FC = () => {
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [isRawMode, setIsRawMode] = useState(false);
-  const [rawContent, setRawContent] = useState('');
+  const [rawContent, setRawContent] = useState("");
   const [isAdding, setIsAdding] = useState(false);
 
   // Form for skill editing
   const form = useForm<SkillFormValues>({
     resolver: zodResolver(skillFormSchema),
     defaultValues: {
-      name: '',
-      description: '',
-      license: '',
-      compatibility: '',
-      content: '',
+      name: "",
+      description: "",
+      license: "",
+      compatibility: "",
+      content: "",
     },
   });
 
@@ -175,7 +185,7 @@ export const SkillsTab: React.FC = () => {
   const createForm = useForm<SkillCreateValues>({
     resolver: zodResolver(skillCreateSchema),
     defaultValues: {
-      name: '',
+      name: "",
     },
   });
 
@@ -183,7 +193,7 @@ export const SkillsTab: React.FC = () => {
   useEffect(() => {
     if (!selectedSkill) {
       form.reset();
-      setRawContent('');
+      setRawContent("");
       return;
     }
 
@@ -192,10 +202,10 @@ export const SkillsTab: React.FC = () => {
       const parsed = parseSkillFrontmatter(skill.content);
       form.reset({
         name: parsed.frontmatter?.name || skill.name,
-        description: parsed.frontmatter?.description || '',
-        license: parsed.frontmatter?.license || '',
-        compatibility: parsed.frontmatter?.compatibility || '',
-        content: parsed.body || '',
+        description: parsed.frontmatter?.description || "",
+        license: parsed.frontmatter?.license || "",
+        compatibility: parsed.frontmatter?.compatibility || "",
+        content: parsed.body || "",
       });
       setRawContent(skill.content);
     }
@@ -208,14 +218,12 @@ export const SkillsTab: React.FC = () => {
 
     setSaving(true);
     try {
-      const skillContent = isRawMode
-        ? rawContent
-        : buildSkillContent(values);
+      const skillContent = isRawMode ? rawContent : buildSkillContent(values);
 
       await saveItem(selectedSkill, skillContent);
       await loadItems();
     } catch (error) {
-      console.error('Failed to save skill:', error);
+      console.error("Failed to save skill:", error);
     } finally {
       setSaving(false);
     }
@@ -224,7 +232,7 @@ export const SkillsTab: React.FC = () => {
   const handleDelete = async () => {
     if (!selectedSkill) return;
 
-    if (confirm('Are you sure you want to delete this skill?')) {
+    if (confirm("Are you sure you want to delete this skill?")) {
       const success = await deleteItem(selectedSkill);
       if (success) {
         setSelectedSkill(null);
@@ -234,7 +242,10 @@ export const SkillsTab: React.FC = () => {
 
   const handleAdd = () => {
     if (!activePath) {
-      showError('Cannot add skill', 'Please select a project or global settings first');
+      showError(
+        "Cannot add skill",
+        "Please select a project or global settings first"
+      );
       return;
     }
     setIsAdding(true);
@@ -257,22 +268,33 @@ export const SkillsTab: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       {/* Main Content */}
-      <ResizablePanelGroup direction="horizontal" className="flex-1 overflow-hidden">
+      <ResizablePanelGroup
+        className="flex-1 overflow-hidden"
+        direction="horizontal"
+      >
         {/* Skills List */}
-        <ResizablePanel defaultSize={25} minSize={15} maxSize={40} className="border-r bg-muted/30">
+        <ResizablePanel
+          className="border-r bg-muted/30"
+          defaultSize={25}
+          maxSize={40}
+          minSize={15}
+        >
           {loading ? (
-            <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+            <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
               Loading...
             </div>
           ) : (
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+            <div className="flex-1 space-y-1 overflow-y-auto p-2">
               {/* Add Skill Button / Form */}
               {isAdding ? (
-                <div className="p-2 rounded-md bg-primary/10 border border-primary/20">
+                <div className="rounded-md border border-primary/20 bg-primary/10 p-2">
                   <Form {...createForm}>
-                    <form onSubmit={createForm.handleSubmit(handleConfirmAdd)} className="space-y-2">
+                    <form
+                      className="space-y-2"
+                      onSubmit={createForm.handleSubmit(handleConfirmAdd)}
+                    >
                       <FormField
                         control={createForm.control}
                         name="name"
@@ -281,12 +303,12 @@ export const SkillsTab: React.FC = () => {
                             <FormControl>
                               <Input
                                 {...field}
-                                placeholder="my-skill-name (optional, leave empty for auto-name)"
-                                className="font-mono text-sm"
                                 autoFocus
+                                className="font-mono text-sm"
                                 onKeyDown={(e) => {
-                                  if (e.key === 'Escape') handleCancelAdd();
+                                  if (e.key === "Escape") handleCancelAdd();
                                 }}
+                                placeholder="my-skill-name (optional, leave empty for auto-name)"
                               />
                             </FormControl>
                             <FormMessage />
@@ -294,10 +316,16 @@ export const SkillsTab: React.FC = () => {
                         )}
                       />
                       <div className="flex gap-2">
-                        <Button type="submit" size="sm" className="flex-1">
+                        <Button className="flex-1" size="sm" type="submit">
                           Create
                         </Button>
-                        <Button type="button" size="sm" variant="outline" onClick={handleCancelAdd} className="flex-1">
+                        <Button
+                          className="flex-1"
+                          onClick={handleCancelAdd}
+                          size="sm"
+                          type="button"
+                          variant="outline"
+                        >
                           Cancel
                         </Button>
                       </div>
@@ -306,47 +334,60 @@ export const SkillsTab: React.FC = () => {
                 </div>
               ) : (
                 <button
-                  onClick={handleAdd}
-                  disabled={!activePath}
                   className={cn(
-                    'w-full p-3 rounded-md border-2 border-dashed transition-colors flex items-center justify-center gap-2',
+                    "flex w-full items-center justify-center gap-2 rounded-md border-2 border-dashed p-3 transition-colors",
                     activePath
-                      ? 'border-primary/50 hover:border-primary hover:bg-primary/5 cursor-pointer'
-                      : 'border-muted opacity-50 cursor-not-allowed'
+                      ? "cursor-pointer border-primary/50 hover:border-primary hover:bg-primary/5"
+                      : "cursor-not-allowed border-muted opacity-50"
                   )}
-                  title={!activePath ? "Select a project or global settings first" : "Add new skill"}
+                  disabled={!activePath}
+                  onClick={handleAdd}
+                  title={
+                    activePath
+                      ? "Add new skill"
+                      : "Select a project or global settings first"
+                  }
                 >
                   <PlusCircle className="h-5 w-5" weight="regular" />
-                  <span className="text-sm font-medium">Add Skill</span>
+                  <span className="font-medium text-sm">Add Skill</span>
                 </button>
               )}
 
               {/* Skills List */}
               {skills.length === 0 && !isAdding ? (
-                <div className="flex items-center justify-center h-[calc(100%-60px)] text-muted-foreground">
+                <div className="flex h-[calc(100%-60px)] items-center justify-center text-muted-foreground">
                   <div className="text-center">
-                    <Lightning className="h-8 w-8 mx-auto mb-2 opacity-50" weight="regular" />
+                    <Lightning
+                      className="mx-auto mb-2 h-8 w-8 opacity-50"
+                      weight="regular"
+                    />
                     <p className="text-sm">No skills found</p>
-                    <p className="text-xs mt-1">Create skills to extend Claude</p>
+                    <p className="mt-1 text-xs">
+                      Create skills to extend Claude
+                    </p>
                   </div>
                 </div>
               ) : (
                 skills.map((skill) => (
                   <div
-                    key={skill.path}
                     className={cn(
-                      'p-2 rounded-md cursor-pointer transition-colors',
+                      "cursor-pointer rounded-md p-2 transition-colors",
                       selectedSkill === skill.path
-                        ? 'bg-primary text-primary-foreground'
-                        : 'hover:bg-muted/50'
+                        ? "bg-primary text-primary-foreground"
+                        : "hover:bg-muted/50"
                     )}
+                    key={skill.path}
                     onClick={() => setSelectedSkill(skill.path)}
                   >
                     <div className="flex items-start gap-2">
-                      <FolderOpen className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">{skill.displayName || skill.name}</div>
-                        <div className="text-xs opacity-70 truncate">{skill.description || 'No description'}</div>
+                      <FolderOpen className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate font-medium text-sm">
+                          {skill.displayName || skill.name}
+                        </div>
+                        <div className="truncate text-xs opacity-70">
+                          {skill.description || "No description"}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -360,132 +401,166 @@ export const SkillsTab: React.FC = () => {
 
         {/* Skill Editor */}
         <ResizablePanel defaultSize={75} minSize={60}>
-          <div className="flex-1 flex flex-col overflow-hidden h-full">
-          {selectedSkillData ? (
-            <>
-              {/* Toolbar */}
-              <div className="p-3 border-b bg-background flex items-center justify-between">
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant={isRawMode ? 'outline' : 'default'}
-                    onClick={() => setIsRawMode(false)}
-                  >
-                    <Pencil className="h-4 w-4 mr-1" weight="regular" />
-                    Form
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={isRawMode ? 'default' : 'outline'}
-                    onClick={() => setIsRawMode(true)}
-                  >
-                    <FileText className="h-4 w-4 mr-1" />
-                    Raw
-                  </Button>
+          <div className="flex h-full flex-1 flex-col overflow-hidden">
+            {selectedSkillData ? (
+              <>
+                {/* Toolbar */}
+                <div className="flex items-center justify-between border-b bg-background p-3">
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => setIsRawMode(false)}
+                      size="sm"
+                      variant={isRawMode ? "outline" : "default"}
+                    >
+                      <Pencil className="mr-1 h-4 w-4" weight="regular" />
+                      Form
+                    </Button>
+                    <Button
+                      onClick={() => setIsRawMode(true)}
+                      size="sm"
+                      variant={isRawMode ? "default" : "outline"}
+                    >
+                      <FileText className="mr-1 h-4 w-4" />
+                      Raw
+                    </Button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      disabled={saving}
+                      onClick={form.handleSubmit(handleSave)}
+                      size="sm"
+                      variant="outline"
+                    >
+                      <FloppyDisk className="mr-1 h-4 w-4" weight="regular" />
+                      {saving ? "Saving..." : "Save"}
+                    </Button>
+                    <Button
+                      onClick={handleDelete}
+                      size="sm"
+                      variant="destructive"
+                    >
+                      <Trash className="mr-1 h-4 w-4" weight="regular" />
+                      Delete
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={form.handleSubmit(handleSave)} disabled={saving}>
-                    <FloppyDisk className="h-4 w-4 mr-1" weight="regular" />
-                    {saving ? 'Saving...' : 'Save'}
-                  </Button>
-                  <Button size="sm" variant="destructive" onClick={handleDelete}>
-                    <Trash className="h-4 w-4 mr-1" weight="regular" />
-                    Delete
-                  </Button>
-                </div>
-              </div>
 
-              {/* Editor Content */}
-              <div className="flex-1 overflow-auto">
-                {isRawMode ? (
-                  <TipTapEditor
-                    content={rawContent}
-                    onChange={setRawContent}
-                    placeholder="---\nname: skill-name\ndescription: Description of when to use this skill\n---\n\n# Skill Name\n\nAdd your skill instructions here..."
-                    className="min-h-full"
-                  />
-                ) : (
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleSave)} className="p-4 space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Name (internal ID)</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="my-skill-name" className="font-mono text-sm" />
-                            </FormControl>
-                            <FormDescription>
-                              Lowercase letters, numbers, and hyphens only. Max 64 characters. Must match directory name.
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                {/* Editor Content */}
+                <div className="flex-1 overflow-auto">
+                  {isRawMode ? (
+                    <TipTapEditor
+                      className="min-h-full"
+                      content={rawContent}
+                      onChange={setRawContent}
+                      placeholder="---\nname: skill-name\ndescription: Description of when to use this skill\n---\n\n# Skill Name\n\nAdd your skill instructions here..."
+                    />
+                  ) : (
+                    <Form {...form}>
+                      <form
+                        className="space-y-4 p-4"
+                        onSubmit={form.handleSubmit(handleSave)}
+                      >
+                        <FormField
+                          control={form.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Name (internal ID)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  className="font-mono text-sm"
+                                  placeholder="my-skill-name"
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Lowercase letters, numbers, and hyphens only.
+                                Max 64 characters. Must match directory name.
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-                      <FormField
-                        control={form.control}
-                        name="description"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Description *</FormLabel>
-                            <FormControl>
-                              <Textarea {...field} placeholder="Describe what this skill does and when Claude should use it..." rows={3} className="text-sm" />
-                            </FormControl>
-                            <FormDescription>
-                              Include both what the skill does AND when to trigger it. Max 1024 characters.
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                        <FormField
+                          control={form.control}
+                          name="description"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Description *</FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  {...field}
+                                  className="text-sm"
+                                  placeholder="Describe what this skill does and when Claude should use it..."
+                                  rows={3}
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Include both what the skill does AND when to
+                                trigger it. Max 1024 characters.
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-                      <FormField
-                        control={form.control}
-                        name="license"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>License (optional)</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="MIT, Apache-2.0, or see LICENSE.txt" className="text-sm" />
-                            </FormControl>
-                            <FormDescription>
-                              License name or reference to a bundled license file.
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                        <FormField
+                          control={form.control}
+                          name="license"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>License (optional)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  className="text-sm"
+                                  placeholder="MIT, Apache-2.0, or see LICENSE.txt"
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                License name or reference to a bundled license
+                                file.
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-                      <FormField
-                        control={form.control}
-                        name="compatibility"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Compatibility (optional)</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="e.g., Designed for Claude Code, Requires git and docker" className="text-sm" />
-                            </FormControl>
-                            <FormDescription>
-                              Environment requirements or intended product. Max 500 characters.
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                        <FormField
+                          control={form.control}
+                          name="compatibility"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Compatibility (optional)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  className="text-sm"
+                                  placeholder="e.g., Designed for Claude Code, Requires git and docker"
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Environment requirements or intended product.
+                                Max 500 characters.
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-                      <FormField
-                        control={form.control}
-                        name="content"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Instructions</FormLabel>
-                            <FormControl>
-                              <TipTapEditor
-                                content={field.value || ''}
-                                onChange={field.onChange}
-                                placeholder={`# Skill Name
+                        <FormField
+                          control={form.control}
+                          name="content"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Instructions</FormLabel>
+                              <FormControl>
+                                <TipTapEditor
+                                  className="min-h-[400px]"
+                                  content={field.value || ""}
+                                  onChange={field.onChange}
+                                  placeholder={`# Skill Name
 
 Add detailed instructions for Claude here.
 
@@ -507,35 +582,41 @@ You can add files to this skill directory:
 
 Reference files using relative paths: See [reference](references/REFERENCE.md)
 `}
-                                className="min-h-[400px]"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-                      <div className="p-3 bg-muted/30 rounded-md border">
-                        <p className="text-xs text-muted-foreground">
-                          <strong>Progressive Disclosure:</strong> Keep SKILL.md under 500 lines.
-                          Move detailed reference material to separate files in scripts/, references/, or assets/.
-                        </p>
-                      </div>
-                    </form>
-                  </Form>
-                )}
+                        <div className="rounded-md border bg-muted/30 p-3">
+                          <p className="text-muted-foreground text-xs">
+                            <strong>Progressive Disclosure:</strong> Keep
+                            SKILL.md under 500 lines. Move detailed reference
+                            material to separate files in scripts/, references/,
+                            or assets/.
+                          </p>
+                        </div>
+                      </form>
+                    </Form>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="flex h-full items-center justify-center text-muted-foreground">
+                <div className="text-center">
+                  <Lightning
+                    className="mx-auto mb-3 h-12 w-12 opacity-50"
+                    weight="regular"
+                  />
+                  <p>Select a skill to edit</p>
+                  <p className="mt-1 text-sm">
+                    Or create a new skill to get started
+                  </p>
+                </div>
               </div>
-            </>
-          ) : (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              <div className="text-center">
-                <Lightning className="h-12 w-12 mx-auto mb-3 opacity-50" weight="regular" />
-                <p>Select a skill to edit</p>
-                <p className="text-sm mt-1">Or create a new skill to get started</p>
-              </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>

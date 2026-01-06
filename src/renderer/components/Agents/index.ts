@@ -1,1 +1,1 @@
-export { AgentsTab } from './AgentsTab';
+export { AgentsTab } from "./AgentsTab";

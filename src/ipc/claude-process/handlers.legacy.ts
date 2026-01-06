@@ -1,9 +1,9 @@
 import { os } from "@orpc/server";
-import { z } from "zod";
-import { spawn, exec } from "child_process";
+import { exec, spawn } from "child_process";
 import { EventEmitter } from "events";
-import { promisify } from "util";
 import { homedir } from "os";
+import { promisify } from "util";
+import { z } from "zod";
 import { ipcContext } from "@/ipc/context";
 
 const execAsync = promisify(exec);
@@ -30,12 +30,17 @@ async function findClaudePath(): Promise<string> {
 
   try {
     // Use shell -l to get a login shell with complete environment
-    const { stdout } = await execAsync(`"${shell}" -l -c 'which claude 2>/dev/null || echo NOT_FOUND'`, {
-      env: {
-        // Ensure we have a minimal PATH for the shell
-        PATH: process.env.PATH || `/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin`,
-      },
-    });
+    const { stdout } = await execAsync(
+      `"${shell}" -l -c 'which claude 2>/dev/null || echo NOT_FOUND'`,
+      {
+        env: {
+          // Ensure we have a minimal PATH for the shell
+          PATH:
+            process.env.PATH ||
+            "/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin",
+        },
+      }
+    );
 
     const claudePath = stdout.trim();
     if (claudePath && claudePath !== "NOT_FOUND") {
@@ -50,7 +55,7 @@ async function findClaudePath(): Promise<string> {
   const possiblePaths = [
     `${homedir()}/.local/bin/claude`,
     `${homedir()}/.npm-global/bin/claude`,
-    `/usr/local/bin/claude`,
+    "/usr/local/bin/claude",
   ];
 
   for (const path of possiblePaths) {
@@ -63,7 +68,9 @@ async function findClaudePath(): Promise<string> {
     }
   }
 
-  console.warn("[getClaudePath] Could not find claude binary, falling back to 'claude'");
+  console.warn(
+    "[getClaudePath] Could not find claude binary, falling back to 'claude'"
+  );
   return "claude";
 }
 
@@ -167,7 +174,11 @@ export const processEvents = new EventEmitter();
  * Permission modes for Claude Code sessions
  * Reference: https://github.com/anthropics/claude-code/issues/6227
  */
-export type PermissionMode = "default" | "plan" | "acceptEdits" | "bypassPermissions";
+export type PermissionMode =
+  | "default"
+  | "plan"
+  | "acceptEdits"
+  | "bypassPermissions";
 
 /**
  * Start a new Claude CLI session
@@ -185,7 +196,13 @@ export const startClaudeSession = os
   )
   .handler(
     async ({
-      input: { projectPath, sessionId, continueLast, permissionMode, agentName },
+      input: {
+        projectPath,
+        sessionId,
+        continueLast,
+        permissionMode,
+        agentName,
+      },
     }) => {
       const args: string[] = [];
 
@@ -209,75 +226,78 @@ export const startClaudeSession = os
         projectPath
       );
 
-    try {
-      const claudePath = await getClaudePath();
-      const env = {
-        ...process.env,
-        // Ensure PATH includes common locations
-        PATH: `${process.env.PATH}:/usr/local/bin:/usr/bin:/bin`,
-        CLAUDE_DONT_PRINT_STARTUP: "1",
-      };
-
-      console.log("[startClaudeSession] Using claude path:", claudePath);
-      console.log("[startClaudeSession] Shell mode enabled for proper environment");
-
-      // Use shell: true to ensure proper PATH and environment resolution
-      const claude = spawn(claudePath, args, {
-        cwd: projectPath,
-        env,
-        stdio: ["pipe", "pipe", "pipe"],
-        shell: true, // This is critical for proper PATH resolution on macOS
-      });
-
-      const processId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-      activeProcesses.set(processId, claude);
-
-      // Handle stdout (streaming responses)
-      claude.stdout.on("data", (data) => {
-        const content = data.toString();
-        console.log("[claude stdout]:", content.slice(0, 100));
-        const eventData = { processId, type: "chunk", content };
-        processEvents.emit("message", eventData);
-        sendToRenderer("message", eventData);
-      });
-
-      // Handle stderr
-      claude.stderr.on("data", (data) => {
-        const content = data.toString();
-        console.log("[claude stderr]:", content.slice(0, 100));
-        const eventData = { processId, type: "error", content };
-        processEvents.emit("message", eventData);
-        sendToRenderer("message", eventData);
-      });
-
-      // Handle exit
-      claude.on("close", (code) => {
-        console.log("[claude] Process closed with code:", code);
-        const eventData = { processId, type: "complete", code };
-        processEvents.emit("message", eventData);
-        sendToRenderer("message", eventData);
-        activeProcesses.delete(processId);
-      });
-
-      // Handle errors
-      claude.on("error", (error) => {
-        console.error("[claude] Process error:", error);
-        const eventData = {
-          processId,
-          type: "error",
-          content: error.message,
+      try {
+        const claudePath = await getClaudePath();
+        const env = {
+          ...process.env,
+          // Ensure PATH includes common locations
+          PATH: `${process.env.PATH}:/usr/local/bin:/usr/bin:/bin`,
+          CLAUDE_DONT_PRINT_STARTUP: "1",
         };
-        processEvents.emit("message", eventData);
-        sendToRenderer("message", eventData);
-        activeProcesses.delete(processId);
-      });
 
-      return { processId, sessionId };
-    } catch (error) {
-      console.error("[startClaudeSession] Failed to spawn:", error);
-      throw error;
+        console.log("[startClaudeSession] Using claude path:", claudePath);
+        console.log(
+          "[startClaudeSession] Shell mode enabled for proper environment"
+        );
+
+        // Use shell: true to ensure proper PATH and environment resolution
+        const claude = spawn(claudePath, args, {
+          cwd: projectPath,
+          env,
+          stdio: ["pipe", "pipe", "pipe"],
+          shell: true, // This is critical for proper PATH resolution on macOS
+        });
+
+        const processId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        activeProcesses.set(processId, claude);
+
+        // Handle stdout (streaming responses)
+        claude.stdout.on("data", (data) => {
+          const content = data.toString();
+          console.log("[claude stdout]:", content.slice(0, 100));
+          const eventData = { processId, type: "chunk", content };
+          processEvents.emit("message", eventData);
+          sendToRenderer("message", eventData);
+        });
+
+        // Handle stderr
+        claude.stderr.on("data", (data) => {
+          const content = data.toString();
+          console.log("[claude stderr]:", content.slice(0, 100));
+          const eventData = { processId, type: "error", content };
+          processEvents.emit("message", eventData);
+          sendToRenderer("message", eventData);
+        });
+
+        // Handle exit
+        claude.on("close", (code) => {
+          console.log("[claude] Process closed with code:", code);
+          const eventData = { processId, type: "complete", code };
+          processEvents.emit("message", eventData);
+          sendToRenderer("message", eventData);
+          activeProcesses.delete(processId);
+        });
+
+        // Handle errors
+        claude.on("error", (error) => {
+          console.error("[claude] Process error:", error);
+          const eventData = {
+            processId,
+            type: "error",
+            content: error.message,
+          };
+          processEvents.emit("message", eventData);
+          sendToRenderer("message", eventData);
+          activeProcesses.delete(processId);
+        });
+
+        return { processId, sessionId };
+      } catch (error) {
+        console.error("[startClaudeSession] Failed to spawn:", error);
+        throw error;
+      }
     }
-  });
+  );
 
 /**
  * Send a message to the active claude session
@@ -413,7 +433,9 @@ export const resumeSession = os
         };
 
         console.log("[resumeSession] Using claude path:", claudePath);
-        console.log("[resumeSession] Shell mode enabled for proper environment");
+        console.log(
+          "[resumeSession] Shell mode enabled for proper environment"
+        );
 
         const claude = spawn(claudePath, args, {
           cwd: projectPath,

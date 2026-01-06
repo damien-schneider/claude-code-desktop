@@ -1,25 +1,26 @@
-import React, { useCallback } from "react";
 import {
+  ChatCircleText,
+  Code,
+  Database,
   FileText,
   Folder,
+  Gear,
   GitBranch,
-  Wrench,
   Sparkle,
   Users,
-  Code,
-  Gear,
-  Database,
-  ChatCircleText,
+  Wrench,
 } from "@phosphor-icons/react";
 import { useAtom } from "jotai";
-import { currentViewAtom, type NavigationView } from "@/renderer/stores";
-import { cn } from "@/utils/tailwind";
+import type React from "react";
+import { useCallback } from "react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { currentViewAtom, type NavigationView } from "@/renderer/stores";
+import { cn } from "@/utils/tailwind";
 
 interface NavigationItem {
   id: NavigationView;
@@ -57,15 +58,15 @@ export const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
     (viewId: NavigationView) => {
       setCurrentView(viewId);
     },
-    [setCurrentView],
+    [setCurrentView]
   );
 
   return (
     <TooltipProvider delayDuration={0}>
       <nav
         className={cn(
-          "w-12 border-r bg-muted/30 flex flex-col h-full",
-          className,
+          "flex h-full w-12 flex-col border-r bg-muted/30",
+          className
         )}
       >
         {/* Navigation Menu */}
@@ -78,13 +79,13 @@ export const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
             <Tooltip key={item.id}>
               <TooltipTrigger asChild>
                 <button
-                  onClick={() => handleNavClick(item.id)}
                   className={cn(
-                    "w-full flex items-center justify-center py-2.5 transition-colors",
+                    "flex w-full items-center justify-center py-2.5 transition-colors",
                     isActive
                       ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted/50",
+                      : "hover:bg-muted/50"
                   )}
+                  onClick={() => handleNavClick(item.id)}
                 >
                   <Icon className="h-5 w-5 flex-shrink-0" weight="regular" />
                 </button>

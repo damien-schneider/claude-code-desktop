@@ -1,9 +1,8 @@
-import { z } from "zod";
 import {
-  SessionMessageSchema,
-  SessionSummarySchema,
   type SessionMessage,
+  SessionMessageSchema,
   type SessionSummary,
+  SessionSummarySchema,
 } from "./chatAtoms";
 
 /**
@@ -56,7 +55,9 @@ export function validateSessionMessages(data: unknown[]): SessionMessage[] {
  * Safely parses an array of session messages, filtering out invalid ones
  */
 export function safeParseSessionMessages(data: unknown[]): SessionMessage[] {
-  return data.map(safeParseSessionMessage).filter((m): m is SessionMessage => m !== null);
+  return data
+    .map(safeParseSessionMessage)
+    .filter((m): m is SessionMessage => m !== null);
 }
 
 /**

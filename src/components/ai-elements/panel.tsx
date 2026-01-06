@@ -1,6 +1,6 @@
-import { cn } from "@/utils/tailwind";
 import { Panel as PanelPrimitive } from "@xyflow/react";
 import type { ComponentProps } from "react";
+import { cn } from "@/utils/tailwind";
 
 type PanelProps = ComponentProps<typeof PanelPrimitive>;
 

@@ -1,9 +1,9 @@
 import {
-  test,
-  expect,
+  type ElectronApplication,
   _electron as electron,
-  ElectronApplication,
-  Page,
+  expect,
+  type Page,
+  test,
 } from "@playwright/test";
 import { findLatestBuild, parseElectronApp } from "electron-playwright-helpers";
 
@@ -45,12 +45,16 @@ test.describe("Add Rule Button", () => {
     console.log("=== TEST: Checking initial state ===");
 
     // Check if projects are visible
-    const projects = await page.locator('[class*="group flex items-center gap-2"]').count();
+    const projects = await page
+      .locator('[class*="group flex items-center gap-2"]')
+      .count();
     console.log("Number of projects found:", projects);
 
     // Click on the first project (if available)
     if (projects > 0) {
-      const firstProject = page.locator('[class*="group flex items-center gap-2"]').first();
+      const firstProject = page
+        .locator('[class*="group flex items-center gap-2"]')
+        .first();
       const projectPath = await firstProject.textContent();
       console.log("Clicking on project:", projectPath);
       await firstProject.click();
@@ -88,8 +92,12 @@ test.describe("Add Rule Button", () => {
 
     // Check if input field appeared (the expected behavior)
     console.log("=== TEST: Checking for input field ===");
-    const inputField = page.locator('input[placeholder*="my-rule"], input[placeholder*="rule"]').first();
-    const inputVisible = await inputField.isVisible({ timeout: 2000 }).catch(() => false);
+    const inputField = page
+      .locator('input[placeholder*="my-rule"], input[placeholder*="rule"]')
+      .first();
+    const inputVisible = await inputField
+      .isVisible({ timeout: 2000 })
+      .catch(() => false);
     console.log("Input field visible after click:", inputVisible);
 
     // This test should fail until we fix the issue
@@ -98,12 +106,14 @@ test.describe("Add Rule Button", () => {
 
       // Debug: Get current activePath from console logs
       const consoleLogs: string[] = [];
-      page.on("console", msg => {
+      page.on("console", (msg) => {
         consoleLogs.push(msg.text());
       });
 
       // Check if activePath is logged
-      const activePathLogs = consoleLogs.filter(log => log.includes("activePath"));
+      const activePathLogs = consoleLogs.filter((log) =>
+        log.includes("activePath")
+      );
       console.log("Active path logs found:", activePathLogs);
     }
 
@@ -117,14 +127,19 @@ test.describe("Add Rule Button", () => {
 
     // Collect console logs
     const logs: string[] = [];
-    page.on("console", msg => {
+    page.on("console", (msg) => {
       logs.push(msg.text());
     });
 
     // Click on first project if available
-    const projects = await page.locator('[class*="group flex items-center gap-2"]').count();
+    const projects = await page
+      .locator('[class*="group flex items-center gap-2"]')
+      .count();
     if (projects > 0) {
-      await page.locator('[class*="group flex items-center gap-2"]').first().click();
+      await page
+        .locator('[class*="group flex items-center gap-2"]')
+        .first()
+        .click();
       await page.waitForTimeout(500);
     }
 
@@ -133,9 +148,9 @@ test.describe("Add Rule Button", () => {
     await page.waitForTimeout(1000);
 
     // Check for activePath logs
-    const activePathLogs = logs.filter(log => log.includes("activePath"));
+    const activePathLogs = logs.filter((log) => log.includes("activePath"));
     console.log("=== Console logs containing 'activePath': ===");
-    activePathLogs.forEach(log => console.log(log));
+    activePathLogs.forEach((log) => console.log(log));
 
     expect(activePathLogs.length).toBeGreaterThan(0);
   });

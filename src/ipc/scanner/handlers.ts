@@ -1,15 +1,15 @@
-import { os } from '@orpc/server';
+import { os } from "@orpc/server";
 import {
-  scanForProjects,
-  scanMultipleDirectories,
   getDefaultScanPaths,
   type ScanOptions,
-} from '../../main/scanner';
+  scanForProjects,
+  scanMultipleDirectories,
+} from "../../main/scanner";
 import {
+  isCacheValid,
   loadCachedProjects,
   saveProjectsToCache,
-  isCacheValid,
-} from '../../main/scanner/cache';
+} from "../../main/scanner/cache";
 
 /**
  * Scan for Claude projects
@@ -27,13 +27,11 @@ export const scanProjects = os.handler(async () => {
 /**
  * Scan a specific directory
  */
-export const scanDirectory = os.handler(
-  async (opt) => {
-    const { input } = opt as { input: { path: string; options?: ScanOptions } };
-    const result = await scanForProjects(input.path, input.options);
-    return result;
-  }
-);
+export const scanDirectory = os.handler(async (opt) => {
+  const { input } = opt as { input: { path: string; options?: ScanOptions } };
+  const result = await scanForProjects(input.path, input.options);
+  return result;
+});
 
 /**
  * Get cached projects if available
@@ -63,7 +61,7 @@ export const getDefaultPaths = os.handler(() => {
  * Clear the project cache
  */
 export const clearCache = os.handler(async () => {
-  const { clearProjectCache } = await import('../../main/scanner/cache');
+  const { clearProjectCache } = await import("../../main/scanner/cache");
   await clearProjectCache();
   return { success: true };
 });

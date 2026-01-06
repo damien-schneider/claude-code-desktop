@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
-import { Plus, Trash } from '@phosphor-icons/react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { JsonFieldRenderer } from './json-field-renderer';
-import type { EnvVars } from './settings-types';
+import { Plus, Trash } from "@phosphor-icons/react";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { JsonFieldRenderer } from "./json-field-renderer";
+import type { EnvVars } from "./settings-types";
 
 /**
  * Standard environment variables with descriptions
@@ -14,50 +14,50 @@ const STANDARD_ENV_VARS: Array<{
   label: string;
   description: string;
   placeholder: string;
-  type?: 'text' | 'password';
+  type?: "text" | "password";
 }> = [
   {
-    key: 'ANTHROPIC_AUTH_TOKEN',
-    label: 'Anthropic Auth Token',
-    description: 'Authentication token for Anthropic API',
-    placeholder: 'sk-ant-...',
-    type: 'password',
+    key: "ANTHROPIC_AUTH_TOKEN",
+    label: "Anthropic Auth Token",
+    description: "Authentication token for Anthropic API",
+    placeholder: "sk-ant-...",
+    type: "password",
   },
   {
-    key: 'ANTHROPIC_BASE_URL',
-    label: 'Anthropic Base URL',
-    description: 'Base URL for Anthropic API (for proxy/custom endpoint)',
-    placeholder: 'https://api.anthropic.com',
+    key: "ANTHROPIC_BASE_URL",
+    label: "Anthropic Base URL",
+    description: "Base URL for Anthropic API (for proxy/custom endpoint)",
+    placeholder: "https://api.anthropic.com",
   },
   {
-    key: 'API_TIMEOUT_MS',
-    label: 'Api Timeout Ms',
-    description: 'Timeout for API requests in milliseconds',
-    placeholder: '60000',
+    key: "API_TIMEOUT_MS",
+    label: "Api Timeout Ms",
+    description: "Timeout for API requests in milliseconds",
+    placeholder: "60000",
   },
   {
-    key: 'CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC',
-    label: 'Disable Nonessential Traffic',
-    description: 'Disable telemetry and nonessential API calls',
-    placeholder: 'true',
+    key: "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+    label: "Disable Nonessential Traffic",
+    description: "Disable telemetry and nonessential API calls",
+    placeholder: "true",
   },
   {
-    key: 'ANTHROPIC_DEFAULT_HAIKU_MODEL',
-    label: 'Default Haiku Model',
-    description: 'Default model for Haiku',
-    placeholder: 'claude-3-5-haiku-20241022',
+    key: "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+    label: "Default Haiku Model",
+    description: "Default model for Haiku",
+    placeholder: "claude-3-5-haiku-20241022",
   },
   {
-    key: 'ANTHROPIC_DEFAULT_SONNET_MODEL',
-    label: 'Default Sonnet Model',
-    description: 'Default model for Sonnet',
-    placeholder: 'claude-3-5-sonnet-20241022',
+    key: "ANTHROPIC_DEFAULT_SONNET_MODEL",
+    label: "Default Sonnet Model",
+    description: "Default model for Sonnet",
+    placeholder: "claude-3-5-sonnet-20241022",
   },
   {
-    key: 'ANTHROPIC_DEFAULT_OPUS_MODEL',
-    label: 'Default Opus Model',
-    description: 'Default model for Opus',
-    placeholder: 'claude-3-5-opus-20241022',
+    key: "ANTHROPIC_DEFAULT_OPUS_MODEL",
+    label: "Default Opus Model",
+    description: "Default model for Opus",
+    placeholder: "claude-3-5-opus-20241022",
   },
 ];
 
@@ -83,7 +83,7 @@ export function EnvVarsEditor({ env, onChange }: EnvVarsEditorProps) {
   const [customVars, setCustomVars] = useState<CustomVar[]>(
     Object.entries(env)
       .filter(([key]) => !STANDARD_ENV_VARS.some((std) => std.key === key))
-      .map(([name, value]) => ({ name, value: value || '' }))
+      .map(([name, value]) => ({ name, value: value || "" }))
   );
 
   // Sync customVars state when env prop changes
@@ -91,7 +91,7 @@ export function EnvVarsEditor({ env, onChange }: EnvVarsEditorProps) {
     setCustomVars(
       Object.entries(env)
         .filter(([key]) => !STANDARD_ENV_VARS.some((std) => std.key === key))
-        .map(([name, value]) => ({ name, value: value || '' }))
+        .map(([name, value]) => ({ name, value: value || "" }))
     );
   }, [env]);
 
@@ -145,7 +145,7 @@ export function EnvVarsEditor({ env, onChange }: EnvVarsEditorProps) {
    * Add a new custom variable
    */
   const handleAddCustom = () => {
-    const newVar: CustomVar = { name: '', value: '' };
+    const newVar: CustomVar = { name: "", value: "" };
     setCustomVars([...customVars, newVar]);
   };
 
@@ -167,17 +167,19 @@ export function EnvVarsEditor({ env, onChange }: EnvVarsEditorProps) {
     <div className="space-y-6">
       {/* Standard Environment Variables */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Standard Variables</h3>
+        <h3 className="font-semibold text-lg">Standard Variables</h3>
         {STANDARD_ENV_VARS.map((varDef) => (
           <JsonFieldRenderer
-            key={String(varDef.key)}
-            fieldKey={String(varDef.key)}
-            label={varDef.label}
             description={varDef.description}
-            value={env[varDef.key] || ''}
-            onChange={(value) => handleStandardChange(varDef.key, value as string)}
+            fieldKey={String(varDef.key)}
+            key={String(varDef.key)}
+            label={varDef.label}
+            onChange={(value) =>
+              handleStandardChange(varDef.key, value as string)
+            }
             placeholder={varDef.placeholder}
-            type={varDef.type || 'text'}
+            type={varDef.type || "text"}
+            value={env[varDef.key] || ""}
           />
         ))}
       </div>
@@ -185,8 +187,8 @@ export function EnvVarsEditor({ env, onChange }: EnvVarsEditorProps) {
       {/* Custom Environment Variables */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Custom Variables</h3>
-          <Button onClick={handleAddCustom} variant="outline" size="sm">
+          <h3 className="font-semibold text-lg">Custom Variables</h3>
+          <Button onClick={handleAddCustom} size="sm" variant="outline">
             <Plus className="mr-2 h-4 w-4" weight="regular" />
             Add Variable
           </Button>
@@ -199,43 +201,46 @@ export function EnvVarsEditor({ env, onChange }: EnvVarsEditorProps) {
         ) : (
           <div className="space-y-3">
             {customVars.map((customVar, index) => (
-              <Card key={customVar.name || `custom-${index}`} className="p-4">
+              <Card className="p-4" key={customVar.name || `custom-${index}`}>
                 <div className="flex items-start gap-3">
                   <div className="flex-1 space-y-3">
                     <div>
-                      <label className="text-sm font-medium text-foreground">
-                        {customVar.name || 'New Variable Name'}
+                      <label className="font-medium text-foreground text-sm">
+                        {customVar.name || "New Variable Name"}
                       </label>
                       <Input
-                        value={customVar.name}
+                        className="mt-1"
                         onChange={(e) =>
                           handleCustomNameChange(index, e.target.value)
                         }
                         placeholder="VARIABLE_NAME"
-                        className="mt-1"
+                        value={customVar.name}
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">
+                      <label className="font-medium text-muted-foreground text-sm">
                         Value
                       </label>
                       <Input
-                        value={customVar.value}
+                        className="mt-1"
                         onChange={(e) =>
                           handleCustomValueChange(index, e.target.value)
                         }
                         placeholder="variable value"
-                        className="mt-1"
+                        value={customVar.value}
                       />
                     </div>
                   </div>
                   <Button
-                    onClick={() => handleRemoveCustom(index)}
-                    variant="ghost"
-                    size="icon"
                     className="mt-6"
+                    onClick={() => handleRemoveCustom(index)}
+                    size="icon"
+                    variant="ghost"
                   >
-                    <Trash className="h-4 w-4 text-destructive" weight="regular" />
+                    <Trash
+                      className="h-4 w-4 text-destructive"
+                      weight="regular"
+                    />
                   </Button>
                 </div>
               </Card>

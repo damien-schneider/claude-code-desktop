@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Plus, Trash, FloppyDisk, X } from '@phosphor-icons/react';
-import type { McpServerConfig } from '@/ipc/claude/handlers';
+import { FloppyDisk, Plus, Trash, X } from "@phosphor-icons/react";
+import type React from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import type { McpServerConfig } from "@/ipc/claude/handlers";
 
 interface McpServerFormProps {
   serverName?: string;
@@ -26,24 +27,33 @@ export const McpServerForm: React.FC<McpServerFormProps> = ({
   onCancel,
 }) => {
   const isEdit = !!serverName;
-  const [name, setName] = useState(serverName || '');
-  const [command, setCommand] = useState(initialConfig?.command || 'npx');
-  const [args, setArgs] = useState(initialConfig?.args?.join(' ') || '-y package-name');
+  const [name, setName] = useState(serverName || "");
+  const [command, setCommand] = useState(initialConfig?.command || "npx");
+  const [args, setArgs] = useState(
+    initialConfig?.args?.join(" ") || "-y package-name"
+  );
   const [envVars, setEnvVars] = useState<EnvVar[]>(
     initialConfig?.env
-      ? Object.entries(initialConfig.env).map(([key, value]) => ({ key, value }))
+      ? Object.entries(initialConfig.env).map(([key, value]) => ({
+          key,
+          value,
+        }))
       : []
   );
 
   const handleAddEnvVar = () => {
-    setEnvVars([...envVars, { key: '', value: '' }]);
+    setEnvVars([...envVars, { key: "", value: "" }]);
   };
 
   const handleRemoveEnvVar = (index: number) => {
     setEnvVars(envVars.filter((_, i) => i !== index));
   };
 
-  const handleEnvVarChange = (index: number, field: 'key' | 'value', value: string) => {
+  const handleEnvVarChange = (
+    index: number,
+    field: "key" | "value",
+    value: string
+  ) => {
     const newEnvVars = [...envVars];
     newEnvVars[index][field] = value;
     setEnvVars(newEnvVars);
@@ -51,94 +61,107 @@ export const McpServerForm: React.FC<McpServerFormProps> = ({
 
   const handleSave = () => {
     if (!name.trim()) {
-      alert('Please enter a server name');
+      alert("Please enter a server name");
       return;
     }
 
     const config: McpServerConfig = {
-      command: command.trim() || 'npx',
-      args: args.split(' ').filter(Boolean),
+      command: command.trim() || "npx",
+      args: args.split(" ").filter(Boolean),
     };
 
     // Only include env if there are non-empty entries
     const validEnv = envVars.filter((e) => e.key.trim());
     if (validEnv.length > 0) {
-      config.env = validEnv.reduce((acc, { key, value }) => {
-        acc[key] = value;
-        return acc;
-      }, {} as Record<string, string>);
+      config.env = validEnv.reduce(
+        (acc, { key, value }) => {
+          acc[key] = value;
+          return acc;
+        },
+        {} as Record<string, string>
+      );
     }
 
     onSave(name.trim(), config);
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <label className="text-sm font-medium">Server Name</label>
+        <label className="font-medium text-sm">Server Name</label>
         <Input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="my-server"
           className="mt-1"
           disabled={isEdit}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="my-server"
+          value={name}
         />
         {isEdit && (
-          <p className="text-xs text-muted-foreground mt-1">Server name cannot be changed</p>
+          <p className="mt-1 text-muted-foreground text-xs">
+            Server name cannot be changed
+          </p>
         )}
       </div>
 
       <div>
-        <label className="text-sm font-medium">Command</label>
+        <label className="font-medium text-sm">Command</label>
         <Input
-          value={command}
+          className="mt-1 font-mono text-sm"
           onChange={(e) => setCommand(e.target.value)}
           placeholder="npx"
-          className="mt-1 font-mono text-sm"
+          value={command}
         />
       </div>
 
       <div>
-        <label className="text-sm font-medium">Arguments</label>
+        <label className="font-medium text-sm">Arguments</label>
         <Input
-          value={args}
+          className="mt-1 font-mono text-sm"
           onChange={(e) => setArgs(e.target.value)}
           placeholder="-y package-name"
-          className="mt-1 font-mono text-sm"
+          value={args}
         />
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="mt-1 text-muted-foreground text-xs">
           Space-separated arguments
         </p>
       </div>
 
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-medium">Environment Variables</label>
-          <Button size="sm" variant="outline" onClick={handleAddEnvVar}>
-            <Plus className="h-3 w-3 mr-1" weight="regular" />
+        <div className="mb-2 flex items-center justify-between">
+          <label className="font-medium text-sm">Environment Variables</label>
+          <Button onClick={handleAddEnvVar} size="sm" variant="outline">
+            <Plus className="mr-1 h-3 w-3" weight="regular" />
             Add Variable
           </Button>
         </div>
         {envVars.length === 0 ? (
-          <p className="text-sm text-muted-foreground italic">No environment variables</p>
+          <p className="text-muted-foreground text-sm italic">
+            No environment variables
+          </p>
         ) : (
           <div className="space-y-2">
             {envVars.map((env, i) => (
-              <div key={i} className="flex gap-2 items-center">
+              <div className="flex items-center gap-2" key={i}>
                 <Input
-                  value={env.key}
-                  onChange={(e) => handleEnvVarChange(i, 'key', e.target.value)}
+                  className="flex-1 font-mono text-sm"
+                  onChange={(e) => handleEnvVarChange(i, "key", e.target.value)}
                   placeholder="KEY"
-                  className="font-mono text-sm flex-1"
+                  value={env.key}
                 />
                 <span className="text-muted-foreground">=</span>
                 <Input
-                  value={env.value}
-                  onChange={(e) => handleEnvVarChange(i, 'value', e.target.value)}
+                  className="flex-1 font-mono text-sm"
+                  onChange={(e) =>
+                    handleEnvVarChange(i, "value", e.target.value)
+                  }
                   placeholder="value"
-                  className="font-mono text-sm flex-1"
+                  value={env.value}
                 />
-                <Button size="sm" variant="ghost" onClick={() => handleRemoveEnvVar(i)}>
+                <Button
+                  onClick={() => handleRemoveEnvVar(i)}
+                  size="sm"
+                  variant="ghost"
+                >
                   <Trash className="h-3 w-3" weight="regular" />
                 </Button>
               </div>
@@ -147,14 +170,14 @@ export const McpServerForm: React.FC<McpServerFormProps> = ({
         )}
       </div>
 
-      <div className="flex gap-2 justify-end pt-4">
-        <Button variant="outline" onClick={onCancel}>
-          <X className="h-4 w-4 mr-1" weight="regular" />
+      <div className="flex justify-end gap-2 pt-4">
+        <Button onClick={onCancel} variant="outline">
+          <X className="mr-1 h-4 w-4" weight="regular" />
           Cancel
         </Button>
         <Button onClick={handleSave}>
-          <FloppyDisk className="h-4 w-4 mr-1" weight="regular" />
-          {isEdit ? 'Update Server' : 'Add Server'}
+          <FloppyDisk className="mr-1 h-4 w-4" weight="regular" />
+          {isEdit ? "Update Server" : "Add Server"}
         </Button>
       </div>
     </div>

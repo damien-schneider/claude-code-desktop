@@ -1,17 +1,16 @@
-import { useEffect, useCallback, useRef } from "react";
 import { useAtom, useSetAtom } from "jotai";
+import { useCallback, useEffect, useRef } from "react";
 import {
-  activeProcessIdAtom,
-  isStreamingAtom,
-  streamingMessageAtom,
-  currentSessionMessagesAtom,
-  currentSessionIdAtom,
-  streamingErrorAtom,
-  isThinkingAtom,
-  thinkingStartTimeAtom,
-  completionStatusAtom,
-  lastQueryCostAtom,
   activeSessionsAtom,
+  completionStatusAtom,
+  currentSessionIdAtom,
+  currentSessionMessagesAtom,
+  isStreamingAtom,
+  isThinkingAtom,
+  lastQueryCostAtom,
+  streamingErrorAtom,
+  streamingMessageAtom,
+  thinkingStartTimeAtom,
 } from "@/renderer/stores";
 
 // =============================================================================

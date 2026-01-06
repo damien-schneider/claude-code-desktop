@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * Zod schemas for validating Claude Code configuration files
@@ -21,13 +21,23 @@ import { z } from 'zod';
 /**
  * Skill name validation - must be 1-64 chars, lowercase/numbers/hyphens only
  */
-export const skillNameSchema = z.string()
-  .min(1, 'Skill name is required')
-  .max(64, 'Skill name must be 64 characters or less')
-  .regex(/^[a-z0-9-]+$/, 'Skill name must contain only lowercase letters, numbers, and hyphens')
-  .refine(name => !name.startsWith('-'), 'Skill name cannot start with a hyphen')
-  .refine(name => !name.endsWith('-'), 'Skill name cannot end with a hyphen')
-  .refine(name => !name.includes('--'), 'Skill name cannot contain consecutive hyphens');
+export const skillNameSchema = z
+  .string()
+  .min(1, "Skill name is required")
+  .max(64, "Skill name must be 64 characters or less")
+  .regex(
+    /^[a-z0-9-]+$/,
+    "Skill name must contain only lowercase letters, numbers, and hyphens"
+  )
+  .refine(
+    (name) => !name.startsWith("-"),
+    "Skill name cannot start with a hyphen"
+  )
+  .refine((name) => !name.endsWith("-"), "Skill name cannot end with a hyphen")
+  .refine(
+    (name) => !name.includes("--"),
+    "Skill name cannot contain consecutive hyphens"
+  );
 
 /**
  * Skill frontmatter schema
@@ -35,12 +45,14 @@ export const skillNameSchema = z.string()
  */
 export const skillFrontmatterSchema = z.object({
   name: skillNameSchema,
-  description: z.string()
-    .min(1, 'Skill description is required')
-    .max(1024, 'Skill description must be 1024 characters or less'),
+  description: z
+    .string()
+    .min(1, "Skill description is required")
+    .max(1024, "Skill description must be 1024 characters or less"),
   license: z.string().optional(),
-  compatibility: z.string()
-    .max(500, 'Compatibility string must be 500 characters or less')
+  compatibility: z
+    .string()
+    .max(500, "Compatibility string must be 500 characters or less")
     .optional(),
   metadata: z.record(z.string(), z.string()).optional(),
 });
@@ -56,7 +68,7 @@ export type SkillFrontmatter = z.infer<typeof skillFrontmatterSchema>;
  * Project-specific instructions for Claude Code
  */
 export const claudeMDSchema = z.object({
-  content: z.string().min(1, 'CLAUDE.md content is required'),
+  content: z.string().min(1, "CLAUDE.md content is required"),
 });
 
 export type ClaudeMD = z.infer<typeof claudeMDSchema>;
@@ -70,8 +82,8 @@ export type ClaudeMD = z.infer<typeof claudeMDSchema>;
  * Individual rules that guide Claude's behavior
  */
 export const ruleSchema = z.object({
-  name: z.string().min(1, 'Rule name is required'),
-  content: z.string().min(1, 'Rule content is required'),
+  name: z.string().min(1, "Rule name is required"),
+  content: z.string().min(1, "Rule content is required"),
   description: z.string().optional(),
 });
 
@@ -86,8 +98,8 @@ export type Rule = z.infer<typeof ruleSchema>;
  * Sub-agents that can be invoked by Claude
  */
 export const agentFrontmatterSchema = z.object({
-  name: z.string().min(1, 'Agent name is required'),
-  description: z.string().min(1, 'Agent description is required'),
+  name: z.string().min(1, "Agent name is required"),
+  description: z.string().min(1, "Agent description is required"),
   instructions: z.string().optional(),
   tools: z.array(z.string()).optional(),
   permissions: z.array(z.string()).optional(),
@@ -106,10 +118,10 @@ export type AgentFrontmatter = z.infer<typeof agentFrontmatterSchema>;
  * Custom slash commands for Claude Code
  */
 export const commandSchema = z.object({
-  name: z.string().min(1, 'Command name is required'),
-  description: z.string().min(1, 'Command description is required'),
+  name: z.string().min(1, "Command name is required"),
+  description: z.string().min(1, "Command description is required"),
   arguments: z.string().optional(),
-  content: z.string().min(1, 'Command content is required'),
+  content: z.string().min(1, "Command content is required"),
 });
 
 export type Command = z.infer<typeof commandSchema>;
@@ -123,24 +135,24 @@ export type Command = z.infer<typeof commandSchema>;
  * Based on: https://code.claude.com/docs/en/hooks
  */
 export const hookTypeSchema = z.enum([
-  'PrePrompt',
-  'PostPrompt',
-  'PreToolUse',
-  'PostToolUse',
-  'PreResponse',
-  'PostResponse',
+  "PrePrompt",
+  "PostPrompt",
+  "PreToolUse",
+  "PostToolUse",
+  "PreResponse",
+  "PostResponse",
 ]);
 
 /**
  * Hook schema (.claude/hooks/hooks.json)
  */
 export const hookSchema = z.object({
-  name: z.string().min(1, 'Hook name is required'),
+  name: z.string().min(1, "Hook name is required"),
   type: hookTypeSchema,
   description: z.string().optional(),
   enabled: z.boolean().default(true),
   priority: z.number().int().min(0).max(100).default(50),
-  handler: z.string().min(1, 'Hook handler is required'),
+  handler: z.string().min(1, "Hook handler is required"),
 });
 
 export const hooksConfigSchema = z.object({
@@ -158,13 +170,13 @@ export type HooksConfig = z.infer<typeof hooksConfigSchema>;
  * MCP transport type schema
  * Based on: https://modelcontextprotocol.io/
  */
-export const mcpTransportTypeSchema = z.enum(['stdio', 'sse', 'websocket']);
+export const mcpTransportTypeSchema = z.enum(["stdio", "sse", "websocket"]);
 
 /**
  * MCP server schema
  */
 export const mcpServerSchema = z.object({
-  name: z.string().min(1, 'MCP server name is required'),
+  name: z.string().min(1, "MCP server name is required"),
   command: z.string().optional(),
   args: z.array(z.string()).optional(),
   env: z.record(z.string(), z.string()).optional(),
@@ -199,14 +211,17 @@ export const parseFrontmatter = <T extends z.ZodType>(
     const frontmatter: Record<string, unknown> = {};
 
     // Simple YAML parser for key-value pairs
-    const lines = yaml.split('\n');
+    const lines = yaml.split("\n");
     for (const line of lines) {
       const match = line.match(/^(\w+):\s*(.+)$/);
       if (match) {
         const [, key, value] = match;
         // Handle arrays (basic support)
-        if (value.startsWith('[') && value.endsWith(']')) {
-          frontmatter[key] = value.slice(1, -1).split(',').map(v => v.trim());
+        if (value.startsWith("[") && value.endsWith("]")) {
+          frontmatter[key] = value
+            .slice(1, -1)
+            .split(",")
+            .map((v) => v.trim());
         } else {
           frontmatter[key] = value.trim();
         }
@@ -216,7 +231,7 @@ export const parseFrontmatter = <T extends z.ZodType>(
     const validated = schema.parse(frontmatter);
     return {
       frontmatter: validated,
-      body: content.replace(/^---\n[\s\S]*?\n---\n?/, ''),
+      body: content.replace(/^---\n[\s\S]*?\n---\n?/, ""),
     };
   } catch {
     return { body: content };
@@ -227,19 +242,19 @@ export const parseFrontmatter = <T extends z.ZodType>(
  * Build YAML frontmatter from an object
  */
 export const buildFrontmatter = (data: Record<string, unknown>): string => {
-  let frontmatter = '---\n';
+  let frontmatter = "---\n";
 
   for (const [key, value] of Object.entries(data)) {
     if (value === undefined || value === null) continue;
 
     if (Array.isArray(value)) {
-      frontmatter += `${key}: [${value.join(', ')}]\n`;
+      frontmatter += `${key}: [${value.join(", ")}]\n`;
     } else {
       frontmatter += `${key}: ${value}\n`;
     }
   }
 
-  frontmatter += '---\n';
+  frontmatter += "---\n";
   return frontmatter;
 };
 
@@ -256,9 +271,9 @@ export const buildSkillContent = (
   // Normalize the name
   const normalizedName = name
     .toLowerCase()
-    .replace(/[^a-z0-9-]/g, '-')
-    .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
-    .replace(/-+/g, '-'); // Replace consecutive hyphens with single hyphen
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/^-+|-+$/g, "") // Remove leading/trailing hyphens
+    .replace(/-+/g, "-"); // Replace consecutive hyphens with single hyphen
 
   const frontmatterData: Record<string, string> = {
     name: normalizedName,
@@ -274,7 +289,9 @@ export const buildSkillContent = (
 /**
  * Validate skill content
  */
-export const validateSkillContent = (content: string): {
+export const validateSkillContent = (
+  content: string
+): {
   valid: boolean;
   errors: string[];
   frontmatter?: SkillFrontmatter;
@@ -285,14 +302,18 @@ export const validateSkillContent = (content: string): {
   const parsed = parseFrontmatter(content, skillFrontmatterSchema);
 
   if (!parsed.frontmatter) {
-    errors.push('Missing or invalid frontmatter');
+    errors.push("Missing or invalid frontmatter");
     return { valid: false, errors };
   }
 
   // Validate frontmatter
   const result = skillFrontmatterSchema.safeParse(parsed.frontmatter);
   if (!result.success) {
-    errors.push(...result.error.issues.map((e: any) => `${e.path.join('.')}: ${e.message}`));
+    errors.push(
+      ...result.error.issues.map(
+        (e: any) => `${e.path.join(".")}: ${e.message}`
+      )
+    );
     return { valid: false, errors };
   }
 

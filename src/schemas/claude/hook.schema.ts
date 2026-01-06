@@ -6,19 +6,19 @@
  * Reference: https://docs.anthropic.com/en/docs/build-with-claude/hooks
  */
 
-import { z } from 'zod';
-import { claudeNameSchema } from './base';
+import { z } from "zod";
+import { claudeNameSchema } from "./base";
 
 /**
  * Hook types - lifecycle events where hooks can run
  */
 export const hookTypeSchema = z.enum([
-  'SessionStart',
-  'PromptSubmit',
-  'ToolUse',
-  'ToolOutput',
-  'Response',
-  'SessionEnd',
+  "SessionStart",
+  "PromptSubmit",
+  "ToolUse",
+  "ToolOutput",
+  "Response",
+  "SessionEnd",
 ]);
 
 /**
@@ -26,7 +26,10 @@ export const hookTypeSchema = z.enum([
  */
 export const hookJsonSchema = z.object({
   name: claudeNameSchema,
-  description: z.string().max(500, 'Description must be 500 characters or less').optional(),
+  description: z
+    .string()
+    .max(500, "Description must be 500 characters or less")
+    .optional(),
   hookType: hookTypeSchema,
   enabled: z.boolean().default(true),
   // Script content
@@ -45,10 +48,19 @@ export const hookJsonSchema = z.object({
  */
 export const hookJsonSchemaValidated = hookJsonSchema.refine(
   (data) => {
-    return !!(data.script || data.onStart || data.onSubmit || data.onToolUse || data.onToolOutput || data.onResponse || data.onEnd);
+    return !!(
+      data.script ||
+      data.onStart ||
+      data.onSubmit ||
+      data.onToolUse ||
+      data.onToolOutput ||
+      data.onResponse ||
+      data.onEnd
+    );
   },
   {
-    message: 'Hook must have a script or at least one lifecycle method (onStart, onSubmit, onToolUse, onToolOutput, onResponse, onEnd)',
+    message:
+      "Hook must have a script or at least one lifecycle method (onStart, onSubmit, onToolUse, onToolOutput, onResponse, onEnd)",
   }
 );
 
@@ -58,7 +70,10 @@ export const hookJsonSchemaValidated = hookJsonSchema.refine(
 export const hookFormSchema = z.object({
   name: claudeNameSchema,
   hookType: hookTypeSchema,
-  description: z.string().max(500, 'Description must be 500 characters or less').optional(),
+  description: z
+    .string()
+    .max(500, "Description must be 500 characters or less")
+    .optional(),
   enabled: z.boolean().default(true),
   script: z.string().optional(),
 });
@@ -74,7 +89,9 @@ export const hookCreateSchema = z.object({
 /**
  * Helper to build default hook JSON
  */
-export function buildHookJson(values: z.infer<typeof hookCreateSchema> & { description?: string }): string {
+export function buildHookJson(
+  values: z.infer<typeof hookCreateSchema> & { description?: string }
+): string {
   const { name, hookType, description } = values;
 
   const hookData = {
@@ -111,12 +128,12 @@ export function parseHookJson(content: string): {
 
     return {
       success: false,
-      error: result.error.issues.map((e) => e.message).join(', '),
+      error: result.error.issues.map((e) => e.message).join(", "),
     };
   } catch (e) {
     return {
       success: false,
-      error: e instanceof Error ? e.message : 'Invalid JSON',
+      error: e instanceof Error ? e.message : "Invalid JSON",
     };
   }
 }
@@ -135,7 +152,7 @@ export function validateHookScript(script: string): {
   } catch (e) {
     return {
       valid: false,
-      error: e instanceof Error ? e.message : 'Syntax error',
+      error: e instanceof Error ? e.message : "Syntax error",
     };
   }
 }

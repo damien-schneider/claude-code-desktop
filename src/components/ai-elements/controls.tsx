@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from "@/utils/tailwind";
 import { Controls as ControlsPrimitive } from "@xyflow/react";
 import type { ComponentProps } from "react";
+import { cn } from "@/utils/tailwind";
 
 export type ControlsProps = ComponentProps<typeof ControlsPrimitive>;
 
