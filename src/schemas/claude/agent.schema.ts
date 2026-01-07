@@ -15,6 +15,12 @@ import {
   stringArraySchema,
 } from "./base";
 
+// Top-level regex patterns for performance
+const FRONTMATTER_REGEX = /^---\n([\s\S]*?)\n---/;
+const FRONTMATTER_REPLACE_REGEX = /^---\n[\s\S]*?\n---\n?/;
+const YAML_LINE_REGEX = /^([a-z]+):\s*(.+)$/i;
+const DASH_PREFIX_REGEX = /^-\s*/;
+
 /**
  * Agent frontmatter schema
  */
@@ -75,7 +81,7 @@ export const agentCreateSchema = z.object({
 export function buildAgentContent(
   values: z.infer<typeof agentFormSchema>
 ): string {
-  const { name, description, content = "" } = values;
+  const { name, content = "" } = values;
 
   const frontmatterData = buildFrontmatterData(values);
   const frontmatter = formatFrontmatter(frontmatterData);
@@ -154,13 +160,13 @@ export function parseAgentContent(content: string): {
   body?: string;
   rawFrontmatter?: string;
 } {
-  const yamlMatch = content.match(/^---\n([\s\S]*?)\n---/);
+  const yamlMatch = content.match(FRONTMATTER_REGEX);
   if (!yamlMatch) {
     return { body: content };
   }
 
   const rawFrontmatter = yamlMatch[1];
-  const body = content.replace(/^---\n[\s\S]*?\n---\n?/, "");
+  const body = content.replace(FRONTMATTER_REPLACE_REGEX, "");
 
   // Simple YAML parser for the frontmatter
   // biome-ignore lint/suspicious/noExplicitAny: Required for JSON schema validation
@@ -168,7 +174,7 @@ export function parseAgentContent(content: string): {
   const lines = rawFrontmatter.split("\n");
 
   for (const line of lines) {
-    const match = line.match(/^([a-z]+):\s*(.+)$/i);
+    const match = line.match(YAML_LINE_REGEX);
     if (match) {
       const [, key, value] = match;
       const trimmedValue = value.trim().replace(/^["']|["']$/g, "");
@@ -177,7 +183,7 @@ export function parseAgentContent(content: string): {
       if (trimmedValue.startsWith("- ")) {
         frontmatter[key] = trimmedValue
           .split("\n")
-          .map((l) => l.replace(/^-\s*/, "").trim())
+          .map((l) => l.replace(DASH_PREFIX_REGEX, "").trim())
           .filter(Boolean);
       } else {
         frontmatter[key] = trimmedValue;

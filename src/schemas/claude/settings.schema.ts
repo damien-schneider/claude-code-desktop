@@ -9,6 +9,9 @@
 
 import { z } from "zod";
 
+// Top-level regex patterns for performance
+const TOOL_PERMISSION_REGEX = /^[a-zA-Z0-9_*():\-/]+$/;
+
 /**
  * Individual tool permission pattern
  * Matches patterns like "Edit", "Bash(git:*)", "Read(*)", etc.
@@ -18,7 +21,7 @@ export const toolPermissionSchema = z
   .min(1, "Tool permission cannot be empty")
   .refine((val) => {
     // Must be alphanumeric with colons, parentheses, asterisks, dashes, underscores
-    return /^[a-zA-Z0-9_*():\-/]+$/.test(val);
+    return TOOL_PERMISSION_REGEX.test(val);
   }, "Invalid tool permission format");
 
 /**

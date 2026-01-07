@@ -19,6 +19,9 @@ import {
   validateClaudeMd,
 } from "@/schemas/claude/claude-md.schema";
 
+// Top-level regex patterns for performance
+const ISO_DATE_REGEX = /\d{4}-\d{2}-\d{2}/;
+
 describe("claudeMdSectionSchema", () => {
   it("should accept valid section with all fields", () => {
     const result = claudeMdSectionSchema.safeParse({
@@ -352,7 +355,7 @@ describe("buildClaudeMd", () => {
     });
 
     expect(result).toContain("lastUpdated:");
-    expect(result).toMatch(/\d{4}-\d{2}-\d{2}/);
+    expect(result).toMatch(ISO_DATE_REGEX);
   });
 });
 

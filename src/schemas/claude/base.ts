@@ -5,6 +5,14 @@
 
 import { z } from "zod";
 
+// Top-level regex patterns for performance
+const NAMED_COLOR_REGEX = /^[a-z]+$/;
+const HEX_COLOR_REGEX = /^#[0-9a-f]{3,6}$/i;
+const RGB_REGEX =
+  /^rgba?\(\s*\d+%?\s*,\s*\d+%?\s*,\s*\d+%?\s*(,\s*[\d.]+\s*)?\)$/;
+const HSL_REGEX =
+  /^hsla?\(\s*\d+%?\s*,\s*\d+%\s*,\s*\d+%\s*(,\s*[\d.]+\s*)?\)$/;
+
 /**
  * Common validation pattern for Claude item names (skills, agents, commands, hooks, rules)
  * - Lowercase letters, numbers, and hyphens only
@@ -36,22 +44,18 @@ export const colorSchema = z
       return true;
     }
     // Allow named colors (blue, green, etc.)
-    if (/^[a-z]+$/.test(val)) {
+    if (NAMED_COLOR_REGEX.test(val)) {
       return true;
     }
     // Allow hex colors (#fff, #ffffff)
-    if (/^#[0-9a-f]{3,6}$/i.test(val)) {
+    if (HEX_COLOR_REGEX.test(val)) {
       return true;
     }
     // Allow rgb/hsl formats
-    if (
-      /^rgba?\(\s*\d+%?\s*,\s*\d+%?\s*,\s*\d+%?\s*(,\s*[\d.]+\s*)?\)$/.test(val)
-    ) {
+    if (RGB_REGEX.test(val)) {
       return true;
     }
-    if (
-      /^hsla?\(\s*\d+%?\s*,\s*\d+%\s*,\s*\d+%\s*(,\s*[\d.]+\s*)?\)$/.test(val)
-    ) {
+    if (HSL_REGEX.test(val)) {
       return true;
     }
     return false;

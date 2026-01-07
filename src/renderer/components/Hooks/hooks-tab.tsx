@@ -71,6 +71,107 @@ interface HookFile {
   isValid?: boolean;
 }
 
+interface HookListItemProps {
+  hook: HookFile;
+  selectedHook: string | null;
+  validationError?: string;
+  sidebarCollapsed: boolean;
+  onSelect: (name: string) => void;
+  onToggleEnabled: (name: string) => void;
+}
+
+const _HookListItem: React.FC<HookListItemProps> = ({
+  hook,
+  selectedHook,
+  validationError,
+  sidebarCollapsed,
+  onSelect,
+  onToggleEnabled,
+}) => {
+  const isValid = hook.isValid !== false && !validationError;
+
+  return (
+    <button
+      className={cn(
+        "cursor-pointer rounded-md p-3 transition-colors",
+        selectedHook === hook.name
+          ? "bg-primary text-primary-foreground"
+          : "hover:bg-muted",
+        sidebarCollapsed && "flex justify-center p-2"
+      )}
+      onClick={() => onSelect(hook.name)}
+      title={sidebarCollapsed ? hook.name : undefined}
+      type="button"
+    >
+      <div
+        className={cn(
+          "flex items-start justify-between gap-2",
+          sidebarCollapsed && "justify-center"
+        )}
+      >
+        {sidebarCollapsed ? (
+          <div className="relative">
+            {isValid ? (
+              <CheckCircle
+                className="h-4 w-4 shrink-0 text-green-500"
+                weight="regular"
+              />
+            ) : (
+              <WarningCircle
+                className="h-4 w-4 shrink-0 text-red-500"
+                weight="regular"
+              />
+            )}
+            {!hook.enabled && (
+              <div className="absolute -top-1 -right-1 h-2 w-2 rounded-full border border-background bg-gray-500" />
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="truncate font-medium text-sm">
+                  {hook.name}
+                </span>
+                {isValid ? (
+                  <CheckCircle
+                    className="h-3 w-3 shrink-0 text-green-500"
+                    weight="regular"
+                  />
+                ) : (
+                  <WarningCircle
+                    className="h-3 w-3 shrink-0 text-red-500"
+                    weight="regular"
+                  />
+                )}
+              </div>
+              <span className="text-xs opacity-70">
+                {hook.hookType || "Unknown"}
+              </span>
+            </div>
+            <button
+              className="shrink-0 rounded p-1 hover:bg-background/20"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleEnabled(hook.name);
+              }}
+              title={hook.enabled ? "Disable" : "Enable"}
+              type="button"
+            >
+              {hook.enabled ? (
+                <Power className="h-4 w-4 text-green-500" weight="regular" />
+              ) : (
+                <Prohibit className="h-4 w-4 text-gray-500" weight="regular" />
+              )}
+            </button>
+          </>
+        )}
+      </div>
+    </button>
+  );
+};
+
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex tab component with state management - refactoring would require extracting custom hooks
 export const HooksTab: React.FC = () => {
   // Jotai atoms - no prop drilling needed!
   const [activePath] = useAtom(activePathAtom);
@@ -383,34 +484,46 @@ console.log('${hookType} hook executed:', {
         return;
       }
 
-      try {
-        const content = await file.text();
-        const importData = JSON.parse(content);
-
-        if (!Array.isArray(importData)) {
-          throw new Error("Invalid import format: expected an array of hooks");
-        }
-
-        const hooksDir = `${activePath}/.claude/hooks`;
-        for (const hook of importData) {
-          if (hook.name && hook.content) {
-            const filePath = `${hooksDir}/${hook.name}.json`;
-            await ipc.client.claude.writeClaudeFile({
-              filePath,
-              content: hook.content,
-            });
-          }
-        }
-
-        await loadHooks();
-      } catch (error) {
-        console.error("Failed to import hooks:", error);
-        setError(
-          error instanceof Error ? error.message : "Failed to import hooks"
-        );
-      }
+      await processImportFile(file);
     };
     input.click();
+  };
+
+  const processImportFile = async (file: File) => {
+    try {
+      const content = await file.text();
+      const importData = JSON.parse(content);
+
+      if (!Array.isArray(importData)) {
+        throw new Error("Invalid import format: expected an array of hooks");
+      }
+
+      await writeImportedHooks(importData);
+      await loadHooks();
+    } catch (error) {
+      console.error("Failed to import hooks:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to import hooks"
+      );
+    }
+  };
+
+  const writeImportedHooks = async (importData: unknown[]) => {
+    const hooksDir = `${activePath}/.claude/hooks`;
+    for (const hook of importData) {
+      if (
+        hook &&
+        typeof hook === "object" &&
+        "name" in hook &&
+        "content" in hook
+      ) {
+        const filePath = `${hooksDir}/${String(hook.name)}.json`;
+        await ipc.client.claude.writeClaudeFile({
+          filePath,
+          content: String(hook.content),
+        });
+      }
+    }
   };
 
   const handleTestHook = () => {
@@ -422,36 +535,8 @@ console.log('${hookType} hook executed:', {
     try {
       const parsed: HookJson = JSON.parse(selectedHookData.content || "{}");
 
-      if (parsed.script) {
-        try {
-          new Function(parsed.script);
-        } catch (e) {
-          throw new Error(
-            `Script syntax error: ${e instanceof Error ? e.message : "Unknown error"}`
-          );
-        }
-      }
-
-      const methods = [
-        "onStart",
-        "onSubmit",
-        "onToolUse",
-        "onToolOutput",
-        "onResponse",
-        "onEnd",
-      ] as const;
-      for (const method of methods) {
-        const methodValue = parsed[method as keyof typeof parsed];
-        if (methodValue) {
-          try {
-            new Function(methodValue as string);
-          } catch (e) {
-            throw new Error(
-              `${method} syntax error: ${e instanceof Error ? e.message : "Unknown error"}`
-            );
-          }
-        }
-      }
+      validateHookScript(parsed);
+      validateHookMethods(parsed);
 
       // biome-ignore lint/suspicious/noAlert: Replacing with toast is out of scope
       alert("Hook validation passed! The hook structure and syntax are valid.");
@@ -462,6 +547,44 @@ console.log('${hookType} hook executed:', {
       );
     } finally {
       setTestingHook(null);
+    }
+  };
+
+  const validateHookScript = (parsed: HookJson) => {
+    if (!parsed.script) {
+      return;
+    }
+
+    try {
+      new Function(parsed.script);
+    } catch (e) {
+      throw new Error(
+        `Script syntax error: ${e instanceof Error ? e.message : "Unknown error"}`
+      );
+    }
+  };
+
+  const validateHookMethods = (parsed: HookJson) => {
+    const methods = [
+      "onStart",
+      "onSubmit",
+      "onToolUse",
+      "onToolOutput",
+      "onResponse",
+      "onEnd",
+    ] as const;
+
+    for (const method of methods) {
+      const methodValue = parsed[method as keyof typeof parsed];
+      if (methodValue) {
+        try {
+          new Function(methodValue as string);
+        } catch (e) {
+          throw new Error(
+            `${method} syntax error: ${e instanceof Error ? e.message : "Unknown error"}`
+          );
+        }
+      }
     }
   };
 
@@ -631,13 +754,14 @@ console.log('${hookType} hook executed:', {
                   </div>
                 ) : (
                   <div className="min-h-0 flex-1 space-y-1 overflow-y-auto p-2">
+                    {/* biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex list item rendering - refactoring would require extracting HookListItem component */}
                     {hooks.map((hook) => {
                       const validationError = validationErrors[hook.name];
                       const isValid =
                         hook.isValid !== false && !validationError;
 
                       return (
-                        <div
+                        <button
                           className={cn(
                             "cursor-pointer rounded-md p-3 transition-colors",
                             selectedHook === hook.name
@@ -647,14 +771,8 @@ console.log('${hookType} hook executed:', {
                           )}
                           key={hook.name}
                           onClick={() => setSelectedHook(hook.name)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              setSelectedHook(hook.name);
-                            }
-                          }}
-                          role="button"
-                          tabIndex={0}
                           title={sidebarCollapsed ? hook.name : undefined}
+                          type="button"
                         >
                           <div
                             className={cn(
@@ -731,7 +849,7 @@ console.log('${hookType} hook executed:', {
                               {validationError}
                             </p>
                           )}
-                        </div>
+                        </button>
                       );
                     })}
                   </div>

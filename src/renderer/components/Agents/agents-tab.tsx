@@ -113,6 +113,7 @@ const buildAgentContent = (values: AgentFormValues): string => {
   return `${buildFrontmatter(frontmatterData)}\n\n# ${name}\n\nYou are a specialist agent for...\n\n## Instructions\n\n${content}`;
 };
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex tab component with state management - refactoring would require extracting custom hooks
 export const AgentsTab: React.FC = () => {
   const {
     items: rawAgents,

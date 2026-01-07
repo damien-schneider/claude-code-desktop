@@ -27,6 +27,9 @@ import {
   toolPermissionSchema,
 } from "@/schemas/claude/settings.schema";
 
+// Top-level regex patterns for performance
+const JSON_PARSE_ERROR_REGEX = /JSON|parse|position/i;
+
 describe("toolPermissionSchema", () => {
   const validPermissions = [
     "Edit",
@@ -458,7 +461,7 @@ describe("parseSettingsJson", () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toBeDefined();
-    expect(result.error).toMatch(/JSON|parse|position/i);
+    expect(result.error).toMatch(JSON_PARSE_ERROR_REGEX);
   });
 });
 

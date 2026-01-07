@@ -56,6 +56,7 @@ interface CommandGroup {
   commands: CommandFile[];
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex tab component with state management - refactoring would require extracting custom hooks
 export const CommandsTab: React.FC = () => {
   const { selectedProjectId, isMainConfigSelected, currentView } =
     useAppStore();
@@ -422,36 +423,41 @@ Add your command instructions here.
         return;
       }
 
-      try {
-        const content = await file.text();
-        const importData = JSON.parse(content);
-
-        if (!Array.isArray(importData)) {
-          throw new Error(
-            "Invalid import format: expected an array of commands"
-          );
-        }
-
-        const commandsDir = `${currentPath}/.claude/commands`;
-        for (const cmd of importData) {
-          if (cmd.name && cmd.content) {
-            const filePath = `${commandsDir}/${cmd.name}.md`;
-            await ipc.client.claude.writeClaudeFile({
-              filePath,
-              content: cmd.content,
-            });
-          }
-        }
-
-        await loadCommands();
-      } catch (error) {
-        console.error("Failed to import commands:", error);
-        setError(
-          error instanceof Error ? error.message : "Failed to import commands"
-        );
-      }
+      await processImportFile(file);
     };
     input.click();
+  };
+
+  const processImportFile = async (file: File) => {
+    try {
+      const content = await file.text();
+      const importData = JSON.parse(content);
+
+      if (!Array.isArray(importData)) {
+        throw new Error("Invalid import format: expected an array of commands");
+      }
+
+      await writeImportedCommands(importData);
+      await loadCommands();
+    } catch (error) {
+      console.error("Failed to import commands:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to import commands"
+      );
+    }
+  };
+
+  const writeImportedCommands = async (importData: unknown[]) => {
+    const commandsDir = `${currentPath}/.claude/commands`;
+    for (const cmd of importData) {
+      if (cmd && typeof cmd === "object" && "name" in cmd && "content" in cmd) {
+        const filePath = `${commandsDir}/${String(cmd.name)}.md`;
+        await ipc.client.claude.writeClaudeFile({
+          filePath,
+          content: String(cmd.content),
+        });
+      }
+    }
   };
 
   return (
@@ -627,7 +633,7 @@ Add your command instructions here.
                                 command.isValid !== false && !validationError;
 
                               return (
-                                <div
+                                <button
                                   className={`cursor-pointer rounded-md p-2 transition-colors ${
                                     selectedCommand === command.name
                                       ? "bg-primary text-primary-foreground"
@@ -637,13 +643,7 @@ Add your command instructions here.
                                   onClick={() =>
                                     setSelectedCommand(command.name)
                                   }
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter" || e.key === " ") {
-                                      setSelectedCommand(command.name);
-                                    }
-                                  }}
-                                  role="button"
-                                  tabIndex={0}
+                                  type="button"
                                 >
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0 flex-1">
@@ -678,7 +678,7 @@ Add your command instructions here.
                                       {validationError}
                                     </p>
                                   )}
-                                </div>
+                                </button>
                               );
                             })}
                           </div>

@@ -9,6 +9,17 @@
 
 import { z } from "zod";
 
+// Top-level regex patterns for performance
+const FRONTMATTER_WITH_BODY_REGEX = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/;
+const VERSION_REGEX = /^version:\s*(.+)$/m;
+const LAST_UPDATED_REGEX = /^lastUpdated:\s*(.+)$/m;
+const AUTHOR_REGEX = /^author:\s*(.+)$/m;
+const TAGS_REGEX = /^tags:\s*\[(.*?)\]$/m;
+const HEADER_REGEX = /^(#{1,6})\s+(.+)$/;
+const OVERVIEW_REGEX = /##?\s*Overview/i;
+const ARCHITECTURE_REGEX = /##?\s*Architecture/i;
+const LEADING_DOT_SLASH_REGEX = /^\.\//;
+
 /**
  * CLAUDE.md section types
  */
@@ -80,7 +91,7 @@ export function parseClaudeMd(content: string): {
   rawContent: string;
   hasFrontmatter: boolean;
 } {
-  const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  const frontmatterMatch = content.match(FRONTMATTER_WITH_BODY_REGEX);
 
   // biome-ignore lint/suspicious/noExplicitAny: Required for JSON schema validation
   const frontmatter: Record<string, any> = {};
@@ -93,10 +104,10 @@ export function parseClaudeMd(content: string): {
 
     // Parse YAML frontmatter
     const yaml = frontmatterMatch[1];
-    const versionMatch = yaml.match(/^version:\s*(.+)$/m);
-    const lastUpdatedMatch = yaml.match(/^lastUpdated:\s*(.+)$/m);
-    const authorMatch = yaml.match(/^author:\s*(.+)$/m);
-    const tagsMatch = yaml.match(/^tags:\s*\[(.*?)\]$/m);
+    const versionMatch = yaml.match(VERSION_REGEX);
+    const lastUpdatedMatch = yaml.match(LAST_UPDATED_REGEX);
+    const authorMatch = yaml.match(AUTHOR_REGEX);
+    const tagsMatch = yaml.match(TAGS_REGEX);
 
     if (versionMatch) {
       frontmatter.version = versionMatch[1].trim();
@@ -123,7 +134,7 @@ export function parseClaudeMd(content: string): {
   let currentContent: string[] = [];
 
   for (const line of lines) {
-    const headerMatch = line.match(/^(#{1,6})\s+(.+)$/);
+    const headerMatch = line.match(HEADER_REGEX);
 
     if (headerMatch) {
       // Save previous section
@@ -250,8 +261,8 @@ export function validateClaudeMd(content: string): {
   }
 
   // Check for common sections
-  const hasOverview = /##?\s*Overview/i.test(content);
-  const _hasArchitecture = /##?\s*Architecture/i.test(content);
+  const hasOverview = OVERVIEW_REGEX.test(content);
+  const _hasArchitecture = ARCHITECTURE_REGEX.test(content);
 
   if (!hasOverview) {
     warnings.push("Missing Overview section - recommended for all projects");
@@ -305,7 +316,7 @@ export function resolveImportPath(
   projectRoot: string
 ): string {
   // Remove leading ./
-  const relativePath = importPath.replace(/^\.\//, "");
+  const relativePath = importPath.replace(LEADING_DOT_SLASH_REGEX, "");
   return `${projectRoot}/${relativePath}`;
 }
 

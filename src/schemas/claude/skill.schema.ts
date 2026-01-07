@@ -10,6 +10,14 @@
 import { z } from "zod";
 import { claudeNameSchema } from "./base";
 
+// Top-level regex patterns for performance
+const FRONTMATTER_REGEX = /^---\n([\s\S]*?)\n---/;
+const FRONTMATTER_REPLACE_REGEX = /^---\n[\s\S]*?\n---\n?/;
+const SKILL_NAME_REGEX = /^name:\s*(.+)$/m;
+const SKILL_DESCRIPTION_REGEX = /^description:\s*(.+)$/m;
+const SKILL_LICENSE_REGEX = /^license:\s*(.+)$/m;
+const SKILL_COMPATIBILITY_REGEX = /^compatibility:\s*(.+)$/m;
+
 /**
  * Skill frontmatter schema
  */
@@ -105,22 +113,22 @@ export function parseSkillContent(content: string): {
   body?: string;
   rawFrontmatter?: string;
 } {
-  const yamlMatch = content.match(/^---\n([\s\S]*?)\n---/);
+  const yamlMatch = content.match(FRONTMATTER_REGEX);
   if (!yamlMatch) {
     return { body: content };
   }
 
   const rawFrontmatter = yamlMatch[1];
-  const body = content.replace(/^---\n[\s\S]*?\n---\n?/, "");
+  const body = content.replace(FRONTMATTER_REPLACE_REGEX, "");
 
   // Simple YAML parser
   // biome-ignore lint/suspicious/noExplicitAny: Required for JSON schema validation
   const frontmatter: Record<string, any> = {};
 
-  const nameMatch = rawFrontmatter.match(/^name:\s*(.+)$/m);
-  const descMatch = rawFrontmatter.match(/^description:\s*(.+)$/m);
-  const licenseMatch = rawFrontmatter.match(/^license:\s*(.+)$/m);
-  const compatMatch = rawFrontmatter.match(/^compatibility:\s*(.+)$/m);
+  const nameMatch = rawFrontmatter.match(SKILL_NAME_REGEX);
+  const descMatch = rawFrontmatter.match(SKILL_DESCRIPTION_REGEX);
+  const licenseMatch = rawFrontmatter.match(SKILL_LICENSE_REGEX);
+  const compatMatch = rawFrontmatter.match(SKILL_COMPATIBILITY_REGEX);
 
   if (nameMatch) {
     frontmatter.name = nameMatch[1].trim();

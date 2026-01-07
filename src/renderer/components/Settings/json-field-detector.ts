@@ -30,6 +30,11 @@ const MODEL_PATTERNS = ["model", "haiku_model", "sonnet_model", "opus_model"];
 
 const DURATION_PATTERNS = ["timeout", "duration", "delay", "interval", "ttl"];
 
+// Top-level regex for performance
+const UNDERSCORE_REGEX = /_/g;
+const CAMEL_CASE_REGEX = /([A-Z])/g;
+const FIRST_WORD_CHAR_REGEX = /^\w/;
+
 /**
  * Detects the appropriate UI field type for a JSON value
  *
@@ -133,9 +138,9 @@ function detectTypeFromValue(value: unknown): FieldType {
 export function getFieldLabel(key: string): string {
   // Convert snake_case or camelCase to Title Case
   return key
-    .replace(/_/g, " ")
-    .replace(/([A-Z])/g, " $1")
-    .replace(/^\w/, (c) => c.toUpperCase())
+    .replace(UNDERSCORE_REGEX, " ")
+    .replace(CAMEL_CASE_REGEX, " $1")
+    .replace(FIRST_WORD_CHAR_REGEX, (c) => c.toUpperCase())
     .trim();
 }
 

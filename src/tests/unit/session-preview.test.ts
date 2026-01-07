@@ -3,6 +3,10 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
+// Top-level regex patterns for performance
+const MEANINGFUL_MESSAGE_REGEX =
+  /Est-ce qu'il y aurait|pourquoi|please|help|can you/i;
+
 /**
  * Test suite for session preview message filtering
  * Ensures that preview messages don't contain sub-agent content like "Warmup"
@@ -196,9 +200,7 @@ describe("Session Preview Message Filtering", () => {
 
         // The preview should be a meaningful user message
         expect(preview.length).toBeGreaterThan(0);
-        expect(preview).toMatch(
-          /Est-ce qu'il y aurait|pourquoi|please|help|can you/i
-        );
+        expect(preview).toMatch(MEANINGFUL_MESSAGE_REGEX);
       } catch (error) {
         console.warn("Could not read current session:", error);
       }

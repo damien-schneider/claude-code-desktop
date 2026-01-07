@@ -7,6 +7,11 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ThinkingIndicator } from "@/renderer/components/chat/thinking-indicator";
 
+// Top-level regex patterns for performance
+const THINKING_WITH_DURATION_REGEX = /Thinking.*\(.*s\)/;
+const THINKING_REGEX = /Thinking/;
+const STILL_THINKING_REGEX = /Still thinking/;
+
 // Mock jotai properly with factory function
 vi.mock("jotai", async () => {
   const actual = await vi.importActual("jotai");
@@ -78,7 +83,7 @@ describe("ThinkingIndicator", () => {
     render(<ThinkingIndicator />);
 
     // Should show some text with "Thinking" and "(5s)" or similar
-    expect(screen.getByText(/Thinking.*\(.*s\)/)).toBeInTheDocument();
+    expect(screen.getByText(THINKING_WITH_DURATION_REGEX)).toBeInTheDocument();
   });
 
   it("should cleanup interval on unmount", () => {
@@ -98,13 +103,13 @@ describe("ThinkingIndicator", () => {
 
     const { rerender } = render(<ThinkingIndicator />);
 
-    expect(screen.getByText(/Thinking/)).toBeInTheDocument();
+    expect(screen.getByText(THINKING_REGEX)).toBeInTheDocument();
 
     // Change start time
     (useAtom as any).mockReturnValue([Date.now() - 8000, vi.fn()]);
     rerender(<ThinkingIndicator />);
 
-    expect(screen.getByText(/Thinking/)).toBeInTheDocument();
+    expect(screen.getByText(THINKING_REGEX)).toBeInTheDocument();
   });
 
   it("should show 'Still thinking' for long durations", () => {
@@ -112,6 +117,6 @@ describe("ThinkingIndicator", () => {
 
     render(<ThinkingIndicator />);
 
-    expect(screen.getByText(/Still thinking/)).toBeInTheDocument();
+    expect(screen.getByText(STILL_THINKING_REGEX)).toBeInTheDocument();
   });
 });

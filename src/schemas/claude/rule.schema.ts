@@ -10,6 +10,13 @@
 import { z } from "zod";
 import { claudeNameSchema } from "./base";
 
+// Top-level regex patterns for performance
+const FRONTMATTER_WITH_BODY_REGEX = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/;
+const NAME_REGEX = /^name:\s*(.+)$/m;
+const DESCRIPTION_REGEX = /^description:\s*(.+)$/m;
+const PRIORITY_REGEX = /^priority:\s*(.+)$/m;
+const CATEGORY_REGEX = /^category:\s*(.+)$/m;
+
 /**
  * Rule frontmatter schema (optional)
  */
@@ -53,17 +60,17 @@ export function parseRuleContent(content: string): {
   body: string;
   hasFrontmatter: boolean;
 } {
-  const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  const frontmatterMatch = content.match(FRONTMATTER_WITH_BODY_REGEX);
   if (frontmatterMatch) {
     // Simple YAML parser
     // biome-ignore lint/suspicious/noExplicitAny: Required for JSON schema validation
     const frontmatter: Record<string, any> = {};
     const yaml = frontmatterMatch[1];
 
-    const nameMatch = yaml.match(/^name:\s*(.+)$/m);
-    const descMatch = yaml.match(/^description:\s*(.+)$/m);
-    const priorityMatch = yaml.match(/^priority:\s*(.+)$/m);
-    const categoryMatch = yaml.match(/^category:\s*(.+)$/m);
+    const nameMatch = yaml.match(NAME_REGEX);
+    const descMatch = yaml.match(DESCRIPTION_REGEX);
+    const priorityMatch = yaml.match(PRIORITY_REGEX);
+    const categoryMatch = yaml.match(CATEGORY_REGEX);
 
     if (nameMatch) {
       frontmatter.name = nameMatch[1].trim();

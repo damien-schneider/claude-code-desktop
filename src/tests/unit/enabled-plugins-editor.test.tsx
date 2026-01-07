@@ -3,6 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 import { EnabledPluginsEditor } from "@/renderer/components/settings/enabled-plugins-editor";
 import type { EnabledPlugins } from "@/renderer/components/settings/settings-types";
 
+// Top-level regex patterns for performance
+const REMOVE_LABEL_REGEX = /remove/i;
+
 describe("EnabledPluginsEditor", () => {
   it("should render all plugin entries sorted alphabetically", () => {
     const plugins: EnabledPlugins = {
@@ -63,7 +66,7 @@ describe("EnabledPluginsEditor", () => {
     expect(screen.getByText("New Plugin ID")).toBeInTheDocument();
 
     // Remove the existing plugin
-    const deleteButtons = screen.getAllByLabelText(/remove/i);
+    const deleteButtons = screen.getAllByLabelText(REMOVE_LABEL_REGEX);
     expect(deleteButtons.length).toBeGreaterThan(0);
     fireEvent.click(deleteButtons[0]);
 

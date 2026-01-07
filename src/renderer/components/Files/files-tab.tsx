@@ -523,20 +523,14 @@ export const FilesTab: React.FC = () => {
 
       return (
         <div key={node.path}>
-          <div
+          <button
             className={cn(
-              "flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 text-sm transition-colors hover:bg-muted/50",
+              "flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1 text-left text-sm transition-colors hover:bg-muted/50",
               isSelected && "bg-accent"
             )}
             onClick={() => handleFileClick(node)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                handleFileClick(node);
-              }
-            }}
-            role="button"
             style={{ paddingLeft: `${8 + level * 16}px` }}
-            tabIndex={0}
+            type="button"
           >
             {hasChildren && (
               <CaretRight
@@ -555,7 +549,7 @@ export const FilesTab: React.FC = () => {
                 {formatFileSize(node.size)}
               </span>
             )}
-          </div>
+          </button>
           {node.isExpanded && node.children && (
             <div>{renderFileTree(node.children, level + 1)}</div>
           )}

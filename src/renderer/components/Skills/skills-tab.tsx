@@ -39,6 +39,16 @@ import {
 import { cn } from "@/utils/tailwind";
 import { useClaudeItems } from "../hooks/use-claude-items";
 
+// Top-level regex patterns for performance
+const FRONTMATTER_REGEX = /^---\n([\s\S]*?)\n---/;
+const FRONTMATTER_REPLACE_REGEX = /^---\n[\s\S]*?\n---\n?/;
+const NAME_REGEX = /^name:\s*(.+)$/m;
+const DESCRIPTION_REGEX = /^description:\s*(.+)$/m;
+const LICENSE_REGEX = /^license:\s*(.+)$/m;
+const COMPATIBILITY_REGEX = /^compatibility:\s*(.+)$/m;
+const METADATA_REGEX = /^metadata:\s*\n((?: {2}.+\n?)+)/m;
+const METADATA_LINE_REGEX = /^ {2}(\w+):\s*(.+)$/;
+
 interface Skill {
   name: string;
   path: string;
@@ -64,7 +74,7 @@ interface SkillFrontmatter {
 const parseSkillFrontmatter = (
   content: string
 ): { frontmatter?: SkillFrontmatter; body?: string } => {
-  const yamlMatch = content.match(/^---\n([\s\S]*?)\n---/);
+  const yamlMatch = content.match(FRONTMATTER_REGEX);
   if (!yamlMatch) {
     return { body: content };
   }
@@ -73,10 +83,10 @@ const parseSkillFrontmatter = (
     const yaml = yamlMatch[1];
     const frontmatter: SkillFrontmatter = { name: "", description: "" };
 
-    const nameMatch = yaml.match(/^name:\s*(.+)$/m);
-    const descMatch = yaml.match(/^description:\s*(.+)$/m);
-    const licenseMatch = yaml.match(/^license:\s*(.+)$/m);
-    const compatMatch = yaml.match(/^compatibility:\s*(.+)$/m);
+    const nameMatch = yaml.match(NAME_REGEX);
+    const descMatch = yaml.match(DESCRIPTION_REGEX);
+    const licenseMatch = yaml.match(LICENSE_REGEX);
+    const compatMatch = yaml.match(COMPATIBILITY_REGEX);
 
     if (nameMatch) {
       frontmatter.name = nameMatch[1].trim();
@@ -92,11 +102,11 @@ const parseSkillFrontmatter = (
     }
 
     // Parse metadata field if present
-    const metadataMatch = yaml.match(/^metadata:\s*\n((?: {2}.+\n?)+)/m);
+    const metadataMatch = yaml.match(METADATA_REGEX);
     if (metadataMatch) {
       frontmatter.metadata = {};
       for (const line of metadataMatch[1].split("\n")) {
-        const match = line.match(/^ {2}(\w+):\s*(.+)$/);
+        const match = line.match(METADATA_LINE_REGEX);
         if (match) {
           const metadata = frontmatter.metadata;
           if (metadata) {
@@ -108,7 +118,7 @@ const parseSkillFrontmatter = (
 
     return {
       frontmatter,
-      body: content.replace(/^---\n[\s\S]*?\n---\n?/, ""),
+      body: content.replace(FRONTMATTER_REPLACE_REGEX, ""),
     };
   } catch {
     return { body: content };
@@ -143,6 +153,7 @@ description: ${description}
   return `${frontmatter}\n${content}`;
 };
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex tab component with state management - refactoring would require extracting custom hooks
 export const SkillsTab: React.FC = () => {
   const {
     items: rawSkills,
@@ -400,7 +411,7 @@ export const SkillsTab: React.FC = () => {
                   </div>
                 ) : (
                   skills.map((skill) => (
-                    <div
+                    <button
                       className={cn(
                         "cursor-pointer rounded-md p-2 transition-colors",
                         selectedSkill === skill.path
@@ -410,18 +421,12 @@ export const SkillsTab: React.FC = () => {
                       )}
                       key={skill.path}
                       onClick={() => setSelectedSkill(skill.path)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          setSelectedSkill(skill.path);
-                        }
-                      }}
-                      role="button"
-                      tabIndex={0}
                       title={
                         sidebarCollapsed
                           ? skill.displayName || skill.name
                           : undefined
                       }
+                      type="button"
                     >
                       <div className="flex items-start gap-2">
                         <FolderOpen
@@ -441,7 +446,7 @@ export const SkillsTab: React.FC = () => {
                           </div>
                         )}
                       </div>
-                    </div>
+                    </button>
                   ))
                 )}
               </div>

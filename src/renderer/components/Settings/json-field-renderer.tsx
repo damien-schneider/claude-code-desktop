@@ -503,10 +503,18 @@ function ArrayField({
     value.length > 0 ? detectFieldType(value[0]) : FieldType.STRING;
 
   const getNewItem = (): unknown => {
-    if (arrayType === FieldType.NUMBER) return 0;
-    if (arrayType === FieldType.BOOLEAN) return false;
-    if (arrayType === FieldType.ARRAY) return [];
-    if (arrayType === FieldType.OBJECT) return {};
+    if (arrayType === FieldType.NUMBER) {
+      return 0;
+    }
+    if (arrayType === FieldType.BOOLEAN) {
+      return false;
+    }
+    if (arrayType === FieldType.ARRAY) {
+      return [];
+    }
+    if (arrayType === FieldType.OBJECT) {
+      return {};
+    }
     return "";
   };
 

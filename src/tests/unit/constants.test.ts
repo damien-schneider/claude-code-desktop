@@ -4,6 +4,21 @@
 import { describe, expect, it } from "vitest";
 import { IPC_CHANNELS } from "@/constants";
 
+// Top-level regex patterns for performance
+const CLAUDE_MODEL_REGEX = /^claude-/;
+const WINDOWS_PATH_REGEX = /^[A-Z]:\\/;
+const UNIX_PATH_REGEX = /^\//;
+const HTTP_URL_REGEX = /^https?:\/\//;
+const FILE_URL_REGEX = /^file:\/\//;
+const ISO_DATETIME_REGEX = /^\d{4}-\d{2}-\d{2}T/;
+const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_REGEX = /^\d{2}:\d{2}:\d{2}$/;
+const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{3,6}$/;
+const RGB_START_REGEX = /^rgb\(/;
+const HSL_START_REGEX = /^hsl\(/;
+const UPPERCASE_START_REGEX = /^[A-Z]/;
+const ERR_PREFIX_REGEX = /^ERR_/;
+
 describe("Constants", () => {
   describe("IPC_CHANNELS", () => {
     it("should have START_ORPC_SERVER channel", () => {
@@ -67,7 +82,7 @@ describe("Constants", () => {
       ];
 
       for (const model of models) {
-        expect(model).toMatch(/^claude-/);
+        expect(model).toMatch(CLAUDE_MODEL_REGEX);
       }
     });
   });
@@ -105,12 +120,12 @@ describe("Constants", () => {
   describe("Platform detection patterns", () => {
     it("should detect Windows paths", () => {
       const windowsPath = "C:\\Users\\test";
-      expect(windowsPath).toMatch(/^[A-Z]:\\/);
+      expect(windowsPath).toMatch(WINDOWS_PATH_REGEX);
     });
 
     it("should detect Unix paths", () => {
       const unixPath = "/home/user";
-      expect(unixPath).toMatch(/^\//);
+      expect(unixPath).toMatch(UNIX_PATH_REGEX);
     });
 
     it("should detect home directory shorthand", () => {
@@ -122,17 +137,17 @@ describe("Constants", () => {
   describe("URL patterns", () => {
     it("should recognize HTTP URLs", () => {
       const url = "http://example.com";
-      expect(url).toMatch(/^https?:\/\//);
+      expect(url).toMatch(HTTP_URL_REGEX);
     });
 
     it("should recognize HTTPS URLs", () => {
       const url = "https://example.com";
-      expect(url).toMatch(/^https?:\/\//);
+      expect(url).toMatch(HTTP_URL_REGEX);
     });
 
     it("should recognize file URLs", () => {
       const url = "file:///path/to/file";
-      expect(url).toMatch(/^file:\/\//);
+      expect(url).toMatch(FILE_URL_REGEX);
     });
   });
 
@@ -163,17 +178,17 @@ describe("Constants", () => {
   describe("Date/time formats", () => {
     it("should handle ISO date strings", () => {
       const date = "2024-01-15T10:30:00Z";
-      expect(date).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+      expect(date).toMatch(ISO_DATETIME_REGEX);
     });
 
     it("should handle date-only strings", () => {
       const date = "2024-01-15";
-      expect(date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(date).toMatch(ISO_DATE_REGEX);
     });
 
     it("should handle time-only strings", () => {
       const time = "10:30:00";
-      expect(time).toMatch(/^\d{2}:\d{2}:\d{2}$/);
+      expect(time).toMatch(TIME_REGEX);
     });
   });
 
@@ -181,30 +196,30 @@ describe("Constants", () => {
     it("should recognize hex colors", () => {
       const hexColors = ["#fff", "#ffffff", "#FFF", "#FFFFFF"];
       for (const color of hexColors) {
-        expect(color).toMatch(/^#[0-9a-fA-F]{3,6}$/);
+        expect(color).toMatch(HEX_COLOR_REGEX);
       }
     });
 
     it("should recognize RGB colors", () => {
       const rgb = "rgb(255, 0, 0)";
-      expect(rgb).toMatch(/^rgb\(/);
+      expect(rgb).toMatch(RGB_START_REGEX);
     });
 
     it("should recognize HSL colors", () => {
       const hsl = "hsl(120, 100%, 50%)";
-      expect(hsl).toMatch(/^hsl\(/);
+      expect(hsl).toMatch(HSL_START_REGEX);
     });
   });
 
   describe("Error message patterns", () => {
     it("should format error messages consistently", () => {
       const error = "Error: Something went wrong";
-      expect(error).toMatch(/^[A-Z]/);
+      expect(error).toMatch(UPPERCASE_START_REGEX);
     });
 
     it("should handle error codes", () => {
       const errorCode = "ERR_001";
-      expect(errorCode).toMatch(/^ERR_/);
+      expect(errorCode).toMatch(ERR_PREFIX_REGEX);
     });
   });
 });

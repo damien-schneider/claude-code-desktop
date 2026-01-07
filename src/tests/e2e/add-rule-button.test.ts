@@ -7,6 +7,9 @@ import {
 } from "@playwright/test";
 import { findLatestBuild, parseElectronApp } from "electron-playwright-helpers";
 
+// Top-level regex patterns for performance
+const ADD_RULE_BUTTON_REGEX = /Add Rule/i;
+
 let electronApp: ElectronApplication;
 
 test.beforeAll(async () => {
@@ -69,7 +72,7 @@ test.describe("Add Rule Button", () => {
 
     // Find and click the Add Rule button
     console.log("=== TEST: Looking for Add Rule button ===");
-    const addButton = page.getByRole("button", { name: /Add Rule/i });
+    const addButton = page.getByRole("button", { name: ADD_RULE_BUTTON_REGEX });
 
     // Check if button is visible
     const isVisible = await addButton.isVisible();

@@ -191,6 +191,7 @@ export const useClaudeStream = (processId: string | null) => {
   const rafRef = useRef<number | null>(null);
 
   const handleMessage = useCallback(
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex IPC message handler with multiple event types - refactoring would require breaking into multiple handlers
     (_event: unknown, data: IPCMessageWrapper) => {
       const eventData = data.data;
       if (eventData.processId !== processId) {

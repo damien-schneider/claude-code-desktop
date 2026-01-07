@@ -8,6 +8,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+// Top-level regex patterns for performance
+const NEW_SKILL_REGEX = /^new-skill-[a-z0-9]+$/;
+const NEW_COMMAND_REGEX = /^new-command-[a-z0-9]+$/;
+
 // Helper to create temp directory
 async function createTempDir(): Promise<string> {
   const tempPath = join(tmpdir(), `claude-test-${Date.now()}`);
@@ -257,12 +261,12 @@ Add your agent instructions here.
 
     it("should generate default name for skills", () => {
       const name = getDefaultName("skills");
-      expect(name).toMatch(/^new-skill-[a-z0-9]+$/);
+      expect(name).toMatch(NEW_SKILL_REGEX);
     });
 
     it("should generate default name for commands", () => {
       const name = getDefaultName("commands");
-      expect(name).toMatch(/^new-command-[a-z0-9]+$/);
+      expect(name).toMatch(NEW_COMMAND_REGEX);
     });
 
     it("should generate unique names for sequential calls", () => {

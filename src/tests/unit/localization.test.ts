@@ -6,6 +6,10 @@ import { describe, expect, it } from "vitest";
 import langs from "@/localization/langs";
 import type { Language } from "@/localization/language";
 
+// Top-level regex patterns for performance
+const LANGUAGE_KEY_REGEX = /^[a-z]{2}(-[A-Z]{2})?$/;
+const LANGUAGE_PREFIX_REGEX = /^[A-Z]{2}-[A-Z]{2}$/;
+
 describe("Language type", () => {
   it("should have correct structure", () => {
     const lang: Language = {
@@ -79,13 +83,13 @@ describe("Language format validation", () => {
   it("should have language keys in valid format", () => {
     for (const lang of langs) {
       // Language keys should be ISO 639-1 codes possibly with region
-      expect(lang.key).toMatch(/^[a-z]{2}(-[A-Z]{2})?$/);
+      expect(lang.key).toMatch(LANGUAGE_KEY_REGEX);
     }
   });
 
   it("should have prefixes in uppercase with hyphen", () => {
     for (const lang of langs) {
-      expect(lang.prefix).toMatch(/^[A-Z]{2}-[A-Z]{2}$/);
+      expect(lang.prefix).toMatch(LANGUAGE_PREFIX_REGEX);
     }
   });
 

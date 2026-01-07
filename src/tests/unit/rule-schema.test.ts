@@ -12,6 +12,10 @@ import {
   ruleFrontmatterSchema,
 } from "@/schemas/claude/rule.schema";
 
+// Top-level regex patterns for performance
+const RULE_FRONTMATTER_REGEX =
+  /^---\nname: test\ndescription: desc\n---\n\nbody$/;
+
 describe("ruleFrontmatterSchema", () => {
   it("should accept valid frontmatter", () => {
     const result = ruleFrontmatterSchema.safeParse({
@@ -275,6 +279,6 @@ describe("buildRuleContent", () => {
       "body"
     );
 
-    expect(result).toMatch(/^---\nname: test\ndescription: desc\n---\n\nbody$/);
+    expect(result).toMatch(RULE_FRONTMATTER_REGEX);
   });
 });

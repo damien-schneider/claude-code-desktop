@@ -15,6 +15,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+// Top-level regex patterns for performance
+const VALID_SKILL_NAME_REGEX = /^[a-z][a-z0-9-]*$/;
+const CLAUDE_MODEL_PREFIX_REGEX = /^claude-/;
+
 async function createTempDir(): Promise<string> {
   // Use shorter name to avoid path length issues on macOS
   const tempPath = join(tmpdir(), `ipc-${Date.now().toString(36)}`);
@@ -493,11 +497,11 @@ Instructions here.`;
       ];
 
       for (const name of validNames) {
-        expect(name).toMatch(/^[a-z][a-z0-9-]*$/);
+        expect(name).toMatch(VALID_SKILL_NAME_REGEX);
       }
 
       for (const name of invalidNames) {
-        expect(name.match(/^[a-z][a-z0-9-]*$/)).toBeNull();
+        expect(name.match(VALID_SKILL_NAME_REGEX)).toBeNull();
       }
     });
 
@@ -517,7 +521,7 @@ Instructions here.`;
       ];
 
       for (const model of validModels) {
-        expect(model).toMatch(/^claude-/);
+        expect(model).toMatch(CLAUDE_MODEL_PREFIX_REGEX);
       }
     });
 

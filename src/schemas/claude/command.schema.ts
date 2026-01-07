@@ -10,6 +10,13 @@
 import { z } from "zod";
 import { claudeNameSchema } from "./base";
 
+// Top-level regex patterns for performance
+const FRONTMATTER_WITH_BODY_REGEX = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/;
+const DESCRIPTION_REGEX = /^description:\s*(.+)$/m;
+const CATEGORY_REGEX = /^category:\s*(.+)$/m;
+const ENABLED_REGEX = /^enabled:\s*(true|false)$/m;
+const FRONTMATTER_REGEX = /^---\n[\s\S]*?\n---/;
+
 /**
  * Command frontmatter schema
  */
@@ -94,7 +101,7 @@ export function parseCommandContent(content: string): {
   hasFrontmatter: boolean;
   rawFrontmatter?: string;
 } {
-  const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  const frontmatterMatch = content.match(FRONTMATTER_WITH_BODY_REGEX);
   if (frontmatterMatch) {
     const rawFrontmatter = frontmatterMatch[1];
     const body = frontmatterMatch[2];
@@ -103,17 +110,17 @@ export function parseCommandContent(content: string): {
     // biome-ignore lint/suspicious/noExplicitAny: Required for JSON schema validation
     const frontmatter: Record<string, any> = {};
 
-    const descMatch = rawFrontmatter.match(/^description:\s*(.+)$/m);
+    const descMatch = rawFrontmatter.match(DESCRIPTION_REGEX);
     if (descMatch) {
       frontmatter.description = descMatch[1].trim().replace(/^["']|["']$/g, "");
     }
 
-    const categoryMatch = rawFrontmatter.match(/^category:\s*(.+)$/m);
+    const categoryMatch = rawFrontmatter.match(CATEGORY_REGEX);
     if (categoryMatch) {
       frontmatter.category = categoryMatch[1].trim();
     }
 
-    const enabledMatch = rawFrontmatter.match(/^enabled:\s*(true|false)$/m);
+    const enabledMatch = rawFrontmatter.match(ENABLED_REGEX);
     if (enabledMatch) {
       frontmatter.enabled = enabledMatch[1] === "true";
     }
@@ -141,7 +148,7 @@ export function validateCommandStructure(content: string): {
     return { valid: false, error: "Command content cannot be empty" };
   }
 
-  const hasFrontmatter = content.match(/^---\n[\s\S]*?\n---/);
+  const hasFrontmatter = content.match(FRONTMATTER_REGEX);
   if (!hasFrontmatter) {
     return {
       valid: false,

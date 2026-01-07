@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+// Top-level regex patterns for performance
+const FRONTMATTER_WITH_BODY_REGEX = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/;
+const FRONTMATTER_REGEX = /^---\n[\s\S]*?\n---/;
+
 describe("parseCommand", () => {
   it("should parse command with valid frontmatter", () => {
     const content = `---
@@ -11,7 +15,7 @@ description: My command
 $ARGUMENTS
 `;
 
-    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+    const frontmatterMatch = content.match(FRONTMATTER_WITH_BODY_REGEX);
     expect(frontmatterMatch).toBeTruthy();
 
     if (frontmatterMatch) {
@@ -30,7 +34,7 @@ $ARGUMENTS
 $ARGUMENTS
 `;
 
-    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+    const frontmatterMatch = content.match(FRONTMATTER_WITH_BODY_REGEX);
     expect(frontmatterMatch).toBeNull();
   });
 
@@ -39,7 +43,7 @@ $ARGUMENTS
 
 $ARGUMENTS`;
 
-    const hasFrontmatter = /^---\n[\s\S]*?\n---/.test(content);
+    const hasFrontmatter = FRONTMATTER_REGEX.test(content);
     expect(hasFrontmatter).toBe(false);
   });
 
@@ -51,7 +55,7 @@ description: Test
 Content`;
     const withoutFrontmatter = "Just content";
 
-    expect(/^---\n[\s\S]*?\n---/.test(withFrontmatter)).toBe(true);
-    expect(/^---\n[\s\S]*?\n---/.test(withoutFrontmatter)).toBe(false);
+    expect(FRONTMATTER_REGEX.test(withFrontmatter)).toBe(true);
+    expect(FRONTMATTER_REGEX.test(withoutFrontmatter)).toBe(false);
   });
 });

@@ -59,6 +59,7 @@ import {
 import { cn } from "@/utils/tailwind";
 import { ThinkingIndicator } from "./thinking-indicator";
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex chat UI with message handling - refactoring would require extracting message components
 export const ChatArea: React.FC = () => {
   const [messages] = useAtom(currentSessionMessagesAtom);
   const [isStreaming] = useAtom(isStreamingAtom);
@@ -119,6 +120,7 @@ export const ChatArea: React.FC = () => {
   const handleSubmit = async (
     { text }: { text: string; files: FileUIPart[] },
     e: React.FormEvent
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex form submission with file handling - refactoring would require extracting file upload logic
   ) => {
     e.preventDefault();
     if (!text.trim() || isStreaming || isSending) {

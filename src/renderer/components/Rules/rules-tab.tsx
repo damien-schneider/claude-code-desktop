@@ -37,6 +37,7 @@ import { type RuleCreateValues, ruleCreateSchema } from "@/schemas/claude";
 import { cn } from "@/utils/tailwind";
 import { useClaudeItems } from "../hooks/use-claude-items";
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex tab component with state management - refactoring would require extracting custom hooks
 export const RulesTab: React.FC = () => {
   const {
     items: rules,
@@ -325,7 +326,7 @@ export const RulesTab: React.FC = () => {
                 ) : (
                   <div className="min-h-0 flex-1 space-y-1 overflow-y-auto p-2">
                     {rules.map((rule) => (
-                      <div
+                      <button
                         className={cn(
                           "cursor-pointer rounded-md p-2 transition-colors",
                           selectedRule === rule.path
@@ -335,14 +336,8 @@ export const RulesTab: React.FC = () => {
                         )}
                         key={rule.path}
                         onClick={() => setSelectedRule(rule.path)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            setSelectedRule(rule.path);
-                          }
-                        }}
-                        role="button"
-                        tabIndex={0}
                         title={sidebarCollapsed ? rule.name : undefined}
+                        type="button"
                       >
                         <div className="flex items-center gap-2">
                           <FileText className="h-4 w-4 shrink-0" />
@@ -352,7 +347,7 @@ export const RulesTab: React.FC = () => {
                             </span>
                           )}
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}

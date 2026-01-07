@@ -5,6 +5,7 @@ import { cn } from "@/utils/tailwind";
 
 // Top-level regex and functions for performance
 const CAMEL_CASE_REGEX = /([A-Z])/g;
+const FIRST_CHAR_REGEX = /^./;
 const UPPERCASE_FIRST_FN = (str: string) => str.toUpperCase();
 
 /**
@@ -67,7 +68,7 @@ function formatModeLabel(mode: string): string {
   // Convert camelCase or PascalCase to Title Case
   return mode
     .replace(CAMEL_CASE_REGEX, " $1")
-    .replace(/^./, UPPERCASE_FIRST_FN)
+    .replace(FIRST_CHAR_REGEX, UPPERCASE_FIRST_FN)
     .trim();
 }
 
@@ -174,7 +175,7 @@ export const PermissionModeSelector: React.FC<PermissionModeSelectorProps> = ({
       <span className="font-medium text-muted-foreground text-xs">
         Permission Mode
       </span>
-      <div className="flex flex-wrap gap-2" role="group">
+      <fieldset className="flex flex-wrap gap-2">
         {availableModes.map((mode) => {
           const info = getModeInfo(mode);
           const isSelected = value === mode;
@@ -214,7 +215,7 @@ export const PermissionModeSelector: React.FC<PermissionModeSelectorProps> = ({
             </Button>
           );
         })}
-      </div>
+      </fieldset>
     </div>
   );
 };

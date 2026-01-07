@@ -3,6 +3,14 @@ import { describe, expect, it } from "vitest";
 import { SettingsForm } from "@/renderer/components/settings/settings-form";
 import type { ClaudeSettings } from "@/renderer/components/settings/settings-types";
 
+// Top-level regex patterns for performance
+const PERMISSIONS_TAB_REGEX = /permissions/i;
+const MCP_SERVERS_TAB_REGEX = /mcp servers/i;
+const HOOKS_TAB_REGEX = /hooks/i;
+const ENV_VARS_TAB_REGEX = /env vars/i;
+const PLUGINS_TAB_REGEX = /plugins/i;
+const ADVANCED_TAB_REGEX = /advanced/i;
+
 describe("SettingsForm", () => {
   const mockSettings: ClaudeSettings = {
     permissions: {
@@ -51,18 +59,22 @@ describe("SettingsForm", () => {
 
       // Check for all 6 tab triggers
       expect(
-        screen.getByRole("tab", { name: /permissions/i })
+        screen.getByRole("tab", { name: PERMISSIONS_TAB_REGEX })
       ).toBeInTheDocument();
       expect(
-        screen.getByRole("tab", { name: /mcp servers/i })
+        screen.getByRole("tab", { name: MCP_SERVERS_TAB_REGEX })
       ).toBeInTheDocument();
-      expect(screen.getByRole("tab", { name: /hooks/i })).toBeInTheDocument();
       expect(
-        screen.getByRole("tab", { name: /env vars/i })
+        screen.getByRole("tab", { name: HOOKS_TAB_REGEX })
       ).toBeInTheDocument();
-      expect(screen.getByRole("tab", { name: /plugins/i })).toBeInTheDocument();
       expect(
-        screen.getByRole("tab", { name: /advanced/i })
+        screen.getByRole("tab", { name: ENV_VARS_TAB_REGEX })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("tab", { name: PLUGINS_TAB_REGEX })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("tab", { name: ADVANCED_TAB_REGEX })
       ).toBeInTheDocument();
     });
 

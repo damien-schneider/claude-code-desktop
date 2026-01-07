@@ -2,6 +2,9 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { AdvancedSettingsEditor } from "@/renderer/components/settings/advanced-settings-editor";
 
+// Top-level regex patterns for performance
+const ALWAYS_THINKING_ENABLED_REGEX = /always thinking enabled/i;
+
 describe("AdvancedSettingsEditor", () => {
   it("should render AI behavior settings with Brain icon", () => {
     const settings = {
@@ -24,7 +27,7 @@ describe("AdvancedSettingsEditor", () => {
 
     // Check for alwaysThinkingEnabled switch
     const thinkingSwitch = screen.getByRole("switch", {
-      name: /always thinking enabled/i,
+      name: ALWAYS_THINKING_ENABLED_REGEX,
     });
     expect(thinkingSwitch).toBeInTheDocument();
     expect(thinkingSwitch).not.toBeChecked();
@@ -41,7 +44,7 @@ describe("AdvancedSettingsEditor", () => {
     );
 
     const toggle = screen.getByRole("switch", {
-      name: /always thinking enabled/i,
+      name: ALWAYS_THINKING_ENABLED_REGEX,
     });
     fireEvent.click(toggle);
 
