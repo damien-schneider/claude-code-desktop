@@ -201,7 +201,7 @@ export const QuickOpenDialog: React.FC<QuickOpenDialogProps> = ({
   // Handle keyboard navigation
   useEffect(() => {
     setSelectedIndex(0);
-  }, [searchQuery]);
+  }, []);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {

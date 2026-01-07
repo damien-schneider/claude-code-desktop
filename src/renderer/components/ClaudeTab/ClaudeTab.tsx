@@ -20,7 +20,7 @@ export const ClaudeTab: React.FC = () => {
   const [homePath, setHomePath] = useState<string>("");
   const [content, setContent] = useState<string>("");
   const [originalContent, setOriginalContent] = useState<string>("");
-  const [exists, setExists] = useState<boolean>(false);
+  const [_exists, setExists] = useState<boolean>(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -73,7 +73,9 @@ export const ClaudeTab: React.FC = () => {
   }, [currentView, loadClaudeMD]);
 
   const handleSave = async () => {
-    if (!currentPath) return;
+    if (!currentPath) {
+      return;
+    }
 
     setSaving(true);
     try {

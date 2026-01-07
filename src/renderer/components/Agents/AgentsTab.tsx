@@ -88,7 +88,9 @@ const buildAgentContent = (values: AgentFormValues): string => {
     description,
   };
 
-  if (instructions) frontmatterData.instructions = instructions;
+  if (instructions) {
+    frontmatterData.instructions = instructions;
+  }
   if (tools) {
     frontmatterData.tools = tools
       .split(",")
@@ -101,8 +103,12 @@ const buildAgentContent = (values: AgentFormValues): string => {
       .map((p) => p.trim())
       .filter(Boolean);
   }
-  if (model) frontmatterData.model = model;
-  if (color) frontmatterData.color = color;
+  if (model) {
+    frontmatterData.model = model;
+  }
+  if (color) {
+    frontmatterData.color = color;
+  }
 
   return `${buildFrontmatter(frontmatterData)}\n\n# ${name}\n\nYou are a specialist agent for...\n\n## Instructions\n\n${content}`;
 };
@@ -198,7 +204,9 @@ export const AgentsTab: React.FC = () => {
   const selectedAgentData = agents.find((a) => a.path === selectedAgent);
 
   const handleSave = async (values: AgentFormValues) => {
-    if (!selectedAgent) return;
+    if (!selectedAgent) {
+      return;
+    }
 
     setSaving(true);
     try {
@@ -214,7 +222,9 @@ export const AgentsTab: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (!selectedAgent) return;
+    if (!selectedAgent) {
+      return;
+    }
 
     if (confirm("Are you sure you want to delete this agent?")) {
       const success = await deleteItem(selectedAgent);
@@ -290,7 +300,9 @@ export const AgentsTab: React.FC = () => {
                                 autoFocus
                                 className="font-mono text-sm"
                                 onKeyDown={(e) => {
-                                  if (e.key === "Escape") handleCancelAdd();
+                                  if (e.key === "Escape") {
+                                    handleCancelAdd();
+                                  }
                                 }}
                                 placeholder="my-agent-name (optional, leave empty for auto-name)"
                               />

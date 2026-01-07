@@ -77,7 +77,9 @@ export const RulesTab: React.FC = () => {
 
   // Load full content when selecting a rule
   useEffect(() => {
-    if (!selectedRule) return;
+    if (!selectedRule) {
+      return;
+    }
 
     // Only load if content is empty (not already loaded)
     const rule = rules.find((r) => r.path === selectedRule);
@@ -109,12 +111,16 @@ export const RulesTab: React.FC = () => {
   const selectedRuleData = rules.find((r) => r.path === selectedRule);
 
   const hasChanges = useMemo(() => {
-    if (!selectedRule) return false;
+    if (!selectedRule) {
+      return false;
+    }
     return ruleContents[selectedRule] !== originalRuleContents[selectedRule];
   }, [selectedRule, ruleContents, originalRuleContents]);
 
   const handleSave = async () => {
-    if (!(selectedRule && selectedRuleData)) return;
+    if (!(selectedRule && selectedRuleData)) {
+      return;
+    }
 
     setSaving(true);
     try {
@@ -153,7 +159,9 @@ export const RulesTab: React.FC = () => {
   }, [hasChanges, saving, handleSave]);
 
   const handleDelete = async () => {
-    if (!selectedRule) return;
+    if (!selectedRule) {
+      return;
+    }
 
     if (confirm("Are you sure you want to delete this rule?")) {
       const success = await deleteItem(selectedRule);
@@ -236,7 +244,9 @@ export const RulesTab: React.FC = () => {
                                     autoFocus
                                     className="font-mono text-sm"
                                     onKeyDown={(e) => {
-                                      if (e.key === "Escape") handleCancelAdd();
+                                      if (e.key === "Escape") {
+                                        handleCancelAdd();
+                                      }
                                     }}
                                     placeholder="my-rule (optional, leave empty for auto-name)"
                                   />

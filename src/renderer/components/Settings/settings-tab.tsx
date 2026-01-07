@@ -53,7 +53,9 @@ export const SettingsTab: React.FC = () => {
   }, [activePath]);
 
   const handleSave = async () => {
-    if (!activePath) return;
+    if (!activePath) {
+      return;
+    }
 
     setSaving(true);
     try {

@@ -174,7 +174,9 @@ export const FilesTab: React.FC = () => {
   // Load tree - unified effect that handles all cases
   useEffect(() => {
     // Only load if we're on the files tab
-    if (currentView !== "files") return;
+    if (currentView !== "files") {
+      return;
+    }
 
     const basePath = isGlobalSettingsSelected
       ? homePath
@@ -274,7 +276,9 @@ export const FilesTab: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      return;
+    }
 
     setSaving(true);
     try {
@@ -295,10 +299,14 @@ export const FilesTab: React.FC = () => {
   };
 
   const handleCreateFile = async () => {
-    if (!rootPath) return;
+    if (!rootPath) {
+      return;
+    }
 
     const fileName = prompt("Enter file name:");
-    if (!fileName) return;
+    if (!fileName) {
+      return;
+    }
 
     const filePath = `${rootPath}/${fileName}`;
     try {
@@ -315,10 +323,14 @@ export const FilesTab: React.FC = () => {
   };
 
   const handleCreateFolder = async () => {
-    if (!rootPath) return;
+    if (!rootPath) {
+      return;
+    }
 
     const folderName = prompt("Enter folder name:");
-    if (!folderName) return;
+    if (!folderName) {
+      return;
+    }
 
     const folderPath = `${rootPath}/${folderName}`;
     try {
@@ -334,7 +346,9 @@ export const FilesTab: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      return;
+    }
 
     if (confirm(`Are you sure you want to delete ${selectedFile.name}?`)) {
       try {
@@ -353,7 +367,9 @@ export const FilesTab: React.FC = () => {
   };
 
   const isEditableFile = (item: FileNode | null) => {
-    if (!item || item.type === "directory") return false;
+    if (!item || item.type === "directory") {
+      return false;
+    }
 
     const ext = item.extension?.toLowerCase();
     const editableExts = [

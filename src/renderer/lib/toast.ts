@@ -9,7 +9,7 @@ export const showSuccess = (message: string) => {
 export const showError = (message: string, error?: unknown) => {
   console.error(message, error);
   const errorMessage = error instanceof Error ? error.message : String(error);
-  toast.error(`${message}${errorMessage ? ": " + errorMessage : ""}`);
+  toast.error(`${message}${errorMessage ? `: ${errorMessage}` : ""}`);
 };
 
 // Info toast
@@ -34,7 +34,7 @@ export const withPromise = <T>(
   success: string,
   error: string
 ): Promise<T> => {
-  const result = toast.promise(promise, {
+  const _result = toast.promise(promise, {
     loading,
     success,
     error,

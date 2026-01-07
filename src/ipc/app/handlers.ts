@@ -1,7 +1,7 @@
+import { homedir } from "node:os";
+import { cwd } from "node:process";
 import { os } from "@orpc/server";
 import { app } from "electron";
-import { homedir } from "os";
-import { cwd } from "process";
 
 export const currentPlatfom = os.handler(() => {
   return process.platform;

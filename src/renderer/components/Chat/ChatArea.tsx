@@ -103,14 +103,16 @@ export const ChatArea: React.FC = () => {
   // Auto-scroll to bottom when messages change or streaming
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length, Boolean(streamingMessage), isThinking]);
+  }, []);
 
   const handleSubmit = async (
     { text }: { text: string; files: FileUIPart[] },
     e: React.FormEvent
   ) => {
     e.preventDefault();
-    if (!text.trim() || isStreaming || isSending) return;
+    if (!text.trim() || isStreaming || isSending) {
+      return;
+    }
 
     // If no active process but we have a session, try to resume it first
     if (!activeProcessId && currentSessionId && currentSession) {
@@ -160,7 +162,9 @@ export const ChatArea: React.FC = () => {
   };
 
   const handleResumeSession = async () => {
-    if (!(currentSessionId && currentSession)) return;
+    if (!(currentSessionId && currentSession)) {
+      return;
+    }
 
     setIsResuming(true);
     try {

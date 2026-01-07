@@ -9,7 +9,7 @@ export type AppMode = "settings" | "chat";
 
 export const appModeAtom = atom<AppMode>("settings");
 
-export const setAppModeAtom = atom(null, (get, set, mode: AppMode) => {
+export const setAppModeAtom = atom(null, (_get, set, mode: AppMode) => {
   set(appModeAtom, mode);
 });
 
@@ -35,14 +35,14 @@ export const currentViewAtom = atom<NavigationView>("files");
 // Set current view (write-only atom)
 export const setCurrentViewAtom = atom(
   null,
-  (get, set, view: NavigationView) => {
+  (_get, set, view: NavigationView) => {
     set(currentViewAtom, view);
   }
 );
 
 // Home path from main process (with setter)
 export const homePathAtom = atom<string>("");
-export const setHomePathAtom = atom(null, async (get, set, path: string) => {
+export const setHomePathAtom = atom(null, async (_get, set, path: string) => {
   set(homePathAtom, path);
 });
 
@@ -190,7 +190,7 @@ export const favoritePathsAtom = atomWithStorage<string[]>(
 // Set projects list
 export const setProjectsAtom = atom(
   null,
-  (get, set, projects: ClaudeProject[]) => {
+  (_get, set, projects: ClaudeProject[]) => {
     set(projectsAtom, projects);
   }
 );
@@ -198,7 +198,7 @@ export const setProjectsAtom = atom(
 // Select a project (clears global settings selection)
 export const selectProjectAtom = atom(
   null,
-  (get, set, projectId: string | null) => {
+  (_get, set, projectId: string | null) => {
     console.log("[selectProjectAtom] called with:", projectId);
     set(selectedProjectIdAtom, projectId);
     set(isGlobalSettingsSelectedAtom, false);
@@ -211,7 +211,7 @@ export const selectProjectAtom = atom(
 );
 
 // Select global settings (clears project selection)
-export const selectGlobalSettingsAtom = atom(null, (get, set) => {
+export const selectGlobalSettingsAtom = atom(null, (_get, set) => {
   set(selectedProjectIdAtom, null);
   set(isGlobalSettingsSelectedAtom, true);
   set(currentViewAtom, "files");
@@ -225,7 +225,9 @@ export const toggleFavoriteAtom = atom(
     const favorites = get(favoritePathsAtom);
 
     const project = projects.find((p) => p.path === projectPath);
-    if (!project) return;
+    if (!project) {
+      return;
+    }
 
     // Update project favorite status
     set(
@@ -248,7 +250,7 @@ export const toggleFavoriteAtom = atom(
 );
 
 // Set search query
-export const setSearchQueryAtom = atom(null, (get, set, query: string) => {
+export const setSearchQueryAtom = atom(null, (_get, set, query: string) => {
   set(searchQueryAtom, query);
 });
 
@@ -267,7 +269,7 @@ export const setShowWithClaudeOnlyAtom = atom(null, (get, set) => {
 // Scan projects
 export const scanProjectsAtom = atom(
   null,
-  async (get, set, options?: { maxDepth?: number }) => {
+  async (_get, set, options?: { maxDepth?: number }) => {
     set(isScanningAtom, true);
     try {
       const { ipc } = await import("@/ipc/manager");

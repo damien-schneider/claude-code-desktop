@@ -89,7 +89,9 @@ function hasValidExtension(
   fileName: string,
   extensions: string[] | undefined
 ): boolean {
-  if (!extensions) return true;
+  if (!extensions) {
+    return true;
+  }
   return extensions.some((ext) => fileName.endsWith(ext));
 }
 

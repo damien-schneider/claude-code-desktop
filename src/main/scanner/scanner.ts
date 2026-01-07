@@ -1,6 +1,6 @@
-import { access, readdir, stat } from "fs/promises";
-import { homedir } from "os";
-import { basename, join } from "path";
+import { access, readdir, stat } from "node:fs/promises";
+import { homedir } from "node:os";
+import { basename, join } from "node:path";
 
 export interface ClaudeProject {
   path: string;

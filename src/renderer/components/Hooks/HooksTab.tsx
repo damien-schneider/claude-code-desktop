@@ -74,7 +74,7 @@ interface HookFile {
 export const HooksTab: React.FC = () => {
   // Jotai atoms - no prop drilling needed!
   const [activePath] = useAtom(activePathAtom);
-  const [homePath] = useAtom(homePathAtom);
+  const [_homePath] = useAtom(homePathAtom);
   const [currentView] = useAtom(currentViewAtom);
   const [, setHomePath] = useAtom(homePathAtom);
 
@@ -210,7 +210,9 @@ export const HooksTab: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!selectedHookData) return;
+    if (!selectedHookData) {
+      return;
+    }
 
     const validation = validateHookJSON(selectedHookData.content || "{}");
     if (!validation.valid) {
@@ -243,7 +245,9 @@ export const HooksTab: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (!selectedHookData) return;
+    if (!selectedHookData) {
+      return;
+    }
 
     if (
       !confirm(
@@ -269,12 +273,16 @@ export const HooksTab: React.FC = () => {
   };
 
   const handleAdd = () => {
-    if (!activePath) return;
+    if (!activePath) {
+      return;
+    }
     setIsAdding(true);
   };
 
   const handleConfirmAdd = async (values: HookCreateValues) => {
-    if (!activePath) return;
+    if (!activePath) {
+      return;
+    }
 
     const { name, hookType } = values;
 
@@ -321,7 +329,9 @@ console.log('${hookType} hook executed:', {
 
   const handleToggleEnabled = async (hookName: string) => {
     const hook = hooks.find((h) => h.name === hookName);
-    if (!(hook && hook.content)) return;
+    if (!hook?.content) {
+      return;
+    }
 
     try {
       const parsed: HookJson = JSON.parse(hook.content);
@@ -342,7 +352,9 @@ console.log('${hookType} hook executed:', {
   };
 
   const handleExport = async () => {
-    if (hooks.length === 0) return;
+    if (hooks.length === 0) {
+      return;
+    }
 
     try {
       const exportData = hooks.map((h) => ({
@@ -370,7 +382,9 @@ console.log('${hookType} hook executed:', {
     input.accept = ".json";
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
+      if (!file) {
+        return;
+      }
 
       try {
         const content = await file.text();
@@ -403,7 +417,9 @@ console.log('${hookType} hook executed:', {
   };
 
   const handleTestHook = async () => {
-    if (!selectedHookData) return;
+    if (!selectedHookData) {
+      return;
+    }
 
     setTestingHook(selectedHookData.name);
     try {

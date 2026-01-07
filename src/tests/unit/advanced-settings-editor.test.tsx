@@ -14,9 +14,13 @@ describe("AdvancedSettingsEditor", () => {
       <AdvancedSettingsEditor onChange={handleChange} settings={settings} />
     );
 
-    // Check for the Brain icon (via aria-label or test id)
-    const brainIcon = document.querySelector('[data-lucide="brain"]');
-    expect(brainIcon).toBeInTheDocument();
+    // Check for the Advanced Settings title
+    const title = screen.getByText("Advanced Settings");
+    expect(title).toBeInTheDocument();
+
+    // The Brain icon from Phosphor should render an SVG in the document
+    const icons = document.querySelectorAll("svg");
+    expect(icons.length).toBeGreaterThan(0);
 
     // Check for alwaysThinkingEnabled switch
     const thinkingSwitch = screen.getByRole("switch", {

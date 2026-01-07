@@ -1,3 +1,10 @@
+import { exec } from "node:child_process";
+import { EventEmitter } from "node:events";
+import { existsSync } from "node:fs";
+import { readdir } from "node:fs/promises";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import { promisify } from "node:util";
 import type {
   Query,
   SDKAssistantMessage,
@@ -9,13 +16,6 @@ import type {
 } from "@anthropic-ai/claude-agent-sdk";
 import { query as sdkQuery } from "@anthropic-ai/claude-agent-sdk";
 import { os } from "@orpc/server";
-import { exec } from "child_process";
-import { EventEmitter } from "events";
-import { existsSync } from "fs";
-import { readdir } from "fs/promises";
-import { homedir } from "os";
-import { join } from "path";
-import { promisify } from "util";
 import { z } from "zod";
 import { ipcContext } from "@/ipc/context";
 
@@ -354,7 +354,9 @@ async function processMessage(
   } = {}
 ): Promise<void> {
   const state = activeProcesses.get(processId);
-  if (!state) return;
+  if (!state) {
+    return;
+  }
 
   try {
     console.log("[SDK:processMessage] Processing message with SDK query()");
@@ -402,7 +404,7 @@ async function processMessage(
         try {
           const files = await readdir(sessionDir);
           console.log("[SDK:processMessage] Available session files:", files);
-        } catch (e) {
+        } catch (_e) {
           console.log(
             "[SDK:processMessage] Session directory doesn't exist:",
             sessionDir
@@ -512,7 +514,7 @@ async function processMessage(
     state.query = queryResult;
 
     // Track if we received a valid result (to handle exit code 1 after success)
-    let receivedResult = false;
+    let _receivedResult = false;
     let resultIsError = false;
 
     // Process streaming messages
@@ -523,7 +525,7 @@ async function processMessage(
 
       // Track result messages
       if (sdkMessage.type === "result") {
-        receivedResult = true;
+        _receivedResult = true;
         const resultMsg = sdkMessage as SDKResultMessage;
         resultIsError = resultMsg.is_error || resultMsg.subtype !== "success";
         console.log("[SDK:processMessage] Received result:", {
@@ -556,7 +558,7 @@ async function processMessage(
 
     // If we received a result before the error, this might just be normal process cleanup
     // The SDK sometimes throws after the generator completes
-    const state = activeProcesses.get(processId);
+    const _state = activeProcesses.get(processId);
 
     if (isExitCode1) {
       // Log but don't necessarily treat as fatal error
@@ -745,7 +747,9 @@ function handleSDKMessage(processId: string, message: SDKMessage) {
  * Extract text content from Anthropic stream events
  */
 function extractTextFromStreamEvent(event: unknown): string {
-  if (!event || typeof event !== "object") return "";
+  if (!event || typeof event !== "object") {
+    return "";
+  }
 
   const anyEvent = event as Record<string, unknown>;
 
@@ -866,7 +870,7 @@ export const queryOnce = os
     async ({ input: { prompt, projectPath, permissionMode, maxTurns } }) => {
       console.log(
         "[SDK:queryOnce] One-shot query:",
-        prompt.slice(0, 50) + "..."
+        `${prompt.slice(0, 50)}...`
       );
 
       const processId = generateProcessId();

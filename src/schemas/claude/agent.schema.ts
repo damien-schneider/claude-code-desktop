@@ -91,7 +91,9 @@ export function buildAgentContent(
     description,
   };
 
-  if (instructions) frontmatterData.instructions = instructions;
+  if (instructions) {
+    frontmatterData.instructions = instructions;
+  }
   if (tools) {
     frontmatterData.tools = tools
       .split(",")
@@ -104,8 +106,12 @@ export function buildAgentContent(
       .map((p) => p.trim())
       .filter(Boolean);
   }
-  if (model) frontmatterData.model = model;
-  if (color) frontmatterData.color = color;
+  if (model) {
+    frontmatterData.model = model;
+  }
+  if (color) {
+    frontmatterData.color = color;
+  }
 
   // Build YAML frontmatter
   let frontmatter = "---\n";

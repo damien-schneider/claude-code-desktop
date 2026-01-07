@@ -160,7 +160,9 @@ export function buildDefaultSettings(): string {
  * Helper to format allowed tools array to string for editing
  */
 export function formatAllowedTools(tools: string[]): string {
-  if (tools.length === 0) return "";
+  if (tools.length === 0) {
+    return "";
+  }
   return tools.join("\n");
 }
 
@@ -179,7 +181,9 @@ export function parseAllowedTools(input: string): string[] {
  */
 export function formatModelPreferences(prefs: Record<string, string>): string {
   const entries = Object.entries(prefs);
-  if (entries.length === 0) return "";
+  if (entries.length === 0) {
+    return "";
+  }
   return entries.map(([key, value]) => `${key}=${value}`).join("\n");
 }
 
@@ -192,7 +196,9 @@ export function parseModelPreferences(input: string): Record<string, string> {
 
   for (const line of lines) {
     const trimmed = line.trim();
-    if (!(trimmed && trimmed.includes("="))) continue;
+    if (!trimmed?.includes("=")) {
+      continue;
+    }
 
     const [key, ...valueParts] = trimmed.split("=");
     const value = valueParts.join("=").trim();

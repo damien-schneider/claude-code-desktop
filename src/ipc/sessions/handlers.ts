@@ -1,8 +1,8 @@
+import { constants } from "node:fs";
+import { access, readdir, readFile, stat, unlink } from "node:fs/promises";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { os } from "@orpc/server";
-import { constants } from "fs";
-import { access, readdir, readFile, stat, unlink } from "fs/promises";
-import { homedir } from "os";
-import { join } from "path";
 import { z } from "zod";
 
 /**
@@ -157,7 +157,9 @@ async function getProjectSessionsInternal(
           const content = await readFile(filePath, "utf-8");
           const lines = content.split("\n").filter(Boolean);
 
-          if (lines.length === 0) return null;
+          if (lines.length === 0) {
+            return null;
+          }
 
           // Find the first user message for preview (skip file-history-snapshot)
           let previewMessage = "";
@@ -219,8 +221,12 @@ async function getProjectSessionsInternal(
           };
 
           // Only add optional fields if they have values
-          if (gitBranch) result.gitBranch = gitBranch;
-          if (previewMessage) result.previewMessage = previewMessage;
+          if (gitBranch) {
+            result.gitBranch = gitBranch;
+          }
+          if (previewMessage) {
+            result.previewMessage = previewMessage;
+          }
 
           return result;
         } catch (error) {
@@ -338,7 +344,9 @@ export const deleteSession = os
 export const searchSessions = os
   .input(z.object({ query: z.string() }))
   .handler(async ({ input: { query } }) => {
-    if (!query.trim()) return [];
+    if (!query.trim()) {
+      return [];
+    }
 
     try {
       // Get all project paths from history (the correct source)

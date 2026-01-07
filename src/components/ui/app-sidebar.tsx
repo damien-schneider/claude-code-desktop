@@ -12,12 +12,12 @@ import {
 } from "@/renderer/stores";
 import { cn } from "@/utils/tailwind";
 
-const SIDEBAR_COOKIE_NAME = "sidebar:state";
-const SIDEBAR_WIDTH = "20rem";
-const SIDEBAR_WIDTH_ICON_ONLY = "4rem";
-const SIDEBAR_KEYBOARD_SHORTCUT = "b";
+const _SIDEBAR_COOKIE_NAME = "sidebar:state";
+const _SIDEBAR_WIDTH = "20rem";
+const _SIDEBAR_WIDTH_ICON_ONLY = "4rem";
+const _SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
-type SidebarContext = {
+interface SidebarContext {
   state: "expanded" | "collapsed";
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -25,7 +25,7 @@ type SidebarContext = {
   setOpenMobile: (open: boolean) => void;
   isMobile: boolean;
   toggleSidebar: () => void;
-};
+}
 
 const SidebarContext = React.createContext<SidebarContext | null>(null);
 
@@ -82,13 +82,7 @@ const Sidebar = React.forwardRef<
       return isMobile
         ? setOpenMobile(!openMobile)
         : setSidebarCollapsed(!sidebarCollapsed);
-    }, [
-      isMobile,
-      openMobile,
-      sidebarCollapsed,
-      setSidebarCollapsed,
-      setOpenMobile,
-    ]);
+    }, [isMobile, openMobile, sidebarCollapsed, setSidebarCollapsed]);
 
     // Register the toggle function globally for keyboard shortcut
     React.useEffect(() => {

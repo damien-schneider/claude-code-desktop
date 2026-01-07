@@ -263,7 +263,9 @@ export const CommandsTab: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!selectedCommandData) return;
+    if (!selectedCommandData) {
+      return;
+    }
 
     const fullContent = frontmatter
       ? `---\n${frontmatter}\n---\n${body}`
@@ -302,7 +304,9 @@ export const CommandsTab: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (!selectedCommandData) return;
+    if (!selectedCommandData) {
+      return;
+    }
 
     if (
       !confirm(
@@ -328,13 +332,17 @@ export const CommandsTab: React.FC = () => {
   };
 
   const handleAdd = () => {
-    if (!currentPath) return;
+    if (!currentPath) {
+      return;
+    }
     setIsAdding(true);
     createForm.setValue("name", `my-command-${commands.length + 1}`);
   };
 
   const handleConfirmAdd = async (values: CommandCreateValues) => {
-    if (!currentPath) return;
+    if (!currentPath) {
+      return;
+    }
 
     const { name } = values;
 
@@ -385,7 +393,9 @@ Add your command instructions here.
   };
 
   const handleExport = async () => {
-    if (commands.length === 0) return;
+    if (commands.length === 0) {
+      return;
+    }
 
     try {
       const exportData = commands.map((c) => ({
@@ -413,7 +423,9 @@ Add your command instructions here.
     input.accept = ".json";
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
+      if (!file) {
+        return;
+      }
 
       try {
         const content = await file.text();

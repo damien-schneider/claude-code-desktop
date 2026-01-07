@@ -6,17 +6,30 @@ import type { router } from "./router";
 
 type RPCClient = RouterClient<typeof router>;
 
-class IPCManager {
-  private readonly clientPort: MessagePort;
-  private readonly serverPort: MessagePort;
+// Check if we're in a test environment or browser environment
+const isBrowser =
+  typeof window !== "undefined" && typeof MessageChannel !== "undefined";
 
-  private readonly rpcLink: RPCLink<ClientContext>;
+class IPCManager {
+  private readonly clientPort: MessagePort | null;
+  private readonly serverPort: MessagePort | null;
+
+  private readonly rpcLink: RPCLink<ClientContext> | null;
 
   public readonly client: RPCClient;
 
   private initialized = false;
 
   constructor() {
+    if (!isBrowser) {
+      // In test/Node environment, create a mock client
+      this.clientPort = null;
+      this.serverPort = null;
+      this.rpcLink = null;
+      this.client = {} as RPCClient;
+      return;
+    }
+
     const { port1: clientChannelPort, port2: serverChannelPort } =
       new MessageChannel();
     this.clientPort = clientChannelPort;
@@ -29,11 +42,11 @@ class IPCManager {
   }
 
   public initialize() {
-    if (this.initialized) {
+    if (this.initialized || !isBrowser) {
       return;
     }
 
-    this.clientPort.start();
+    this.clientPort?.start();
 
     window.postMessage(IPC_CHANNELS.START_ORPC_SERVER, "*", [this.serverPort]);
     this.initialized = true;
@@ -41,4 +54,8 @@ class IPCManager {
 }
 
 export const ipc = new IPCManager();
-ipc.initialize();
+
+// Only initialize in browser environment
+if (isBrowser) {
+  ipc.initialize();
+}

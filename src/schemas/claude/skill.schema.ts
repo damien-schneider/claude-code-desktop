@@ -121,11 +121,18 @@ export function parseSkillContent(content: string): {
   const licenseMatch = rawFrontmatter.match(/^license:\s*(.+)$/m);
   const compatMatch = rawFrontmatter.match(/^compatibility:\s*(.+)$/m);
 
-  if (nameMatch) frontmatter.name = nameMatch[1].trim();
-  if (descMatch)
+  if (nameMatch) {
+    frontmatter.name = nameMatch[1].trim();
+  }
+  if (descMatch) {
     frontmatter.description = descMatch[1].trim().replace(/^["']|["']$/g, "");
-  if (licenseMatch) frontmatter.license = licenseMatch[1].trim();
-  if (compatMatch) frontmatter.compatibility = compatMatch[1].trim();
+  }
+  if (licenseMatch) {
+    frontmatter.license = licenseMatch[1].trim();
+  }
+  if (compatMatch) {
+    frontmatter.compatibility = compatMatch[1].trim();
+  }
 
   return { frontmatter: frontmatter as any, body, rawFrontmatter };
 }

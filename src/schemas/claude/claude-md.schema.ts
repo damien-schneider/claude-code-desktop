@@ -97,9 +97,15 @@ export function parseClaudeMd(content: string): {
     const authorMatch = yaml.match(/^author:\s*(.+)$/m);
     const tagsMatch = yaml.match(/^tags:\s*\[(.*?)\]$/m);
 
-    if (versionMatch) frontmatter.version = versionMatch[1].trim();
-    if (lastUpdatedMatch) frontmatter.lastUpdated = lastUpdatedMatch[1].trim();
-    if (authorMatch) frontmatter.author = authorMatch[1].trim();
+    if (versionMatch) {
+      frontmatter.version = versionMatch[1].trim();
+    }
+    if (lastUpdatedMatch) {
+      frontmatter.lastUpdated = lastUpdatedMatch[1].trim();
+    }
+    if (authorMatch) {
+      frontmatter.author = authorMatch[1].trim();
+    }
     if (tagsMatch) {
       frontmatter.tags = tagsMatch[1]
         .split(",")
@@ -187,8 +193,12 @@ export function buildClaudeMd(options: {
   // Add frontmatter if provided
   if (frontmatter && Object.keys(frontmatter).length > 0) {
     content += "---\n";
-    if (frontmatter.version) content += `version: ${frontmatter.version}\n`;
-    if (frontmatter.author) content += `author: ${frontmatter.author}\n`;
+    if (frontmatter.version) {
+      content += `version: ${frontmatter.version}\n`;
+    }
+    if (frontmatter.author) {
+      content += `author: ${frontmatter.author}\n`;
+    }
     if (frontmatter.tags && frontmatter.tags.length > 0) {
       content += `tags: [${frontmatter.tags.map((t) => `"${t}"`).join(", ")}]\n`;
     }
@@ -240,7 +250,7 @@ export function validateClaudeMd(content: string): {
 
   // Check for common sections
   const hasOverview = /##?\s*Overview/i.test(content);
-  const hasArchitecture = /##?\s*Architecture/i.test(content);
+  const _hasArchitecture = /##?\s*Architecture/i.test(content);
 
   if (!hasOverview) {
     warnings.push("Missing Overview section - recommended for all projects");

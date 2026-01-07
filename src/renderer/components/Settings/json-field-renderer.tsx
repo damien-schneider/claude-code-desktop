@@ -117,7 +117,7 @@ export function JsonFieldRenderer({
           id={fieldKey}
           onChange={(e) => {
             const num = Number(e.target.value);
-            onChange(isNaN(num) ? 0 : num);
+            onChange(Number.isNaN(num) ? 0 : num);
           }}
           type="number"
           value={value as number}
@@ -259,7 +259,7 @@ export function JsonFieldRenderer({
             min={0}
             onChange={(e) => {
               const num = Number(e.target.value);
-              onChange(isNaN(num) ? 0 : num);
+              onChange(Number.isNaN(num) ? 0 : num);
             }}
             type="number"
             value={value as number}

@@ -145,22 +145,19 @@ export function useClaudeItems({
     [loadItems, type]
   );
 
-  const saveItem = useCallback(
-    async (itemPath: string, content: string) => {
-      try {
-        await ipc.client.claude.writeFileContent({
-          filePath: itemPath,
-          content,
-        });
-        showSuccess("Saved successfully");
-        return true;
-      } catch (error) {
-        showError("Failed to save", error);
-        return false;
-      }
-    },
-    [type]
-  );
+  const saveItem = useCallback(async (itemPath: string, content: string) => {
+    try {
+      await ipc.client.claude.writeFileContent({
+        filePath: itemPath,
+        content,
+      });
+      showSuccess("Saved successfully");
+      return true;
+    } catch (error) {
+      showError("Failed to save", error);
+      return false;
+    }
+  }, []);
 
   return {
     items,

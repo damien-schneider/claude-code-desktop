@@ -65,7 +65,9 @@ const parseSkillFrontmatter = (
   content: string
 ): { frontmatter?: SkillFrontmatter; body?: string } => {
   const yamlMatch = content.match(/^---\n([\s\S]*?)\n---/);
-  if (!yamlMatch) return { body: content };
+  if (!yamlMatch) {
+    return { body: content };
+  }
 
   try {
     const yaml = yamlMatch[1];
@@ -76,10 +78,18 @@ const parseSkillFrontmatter = (
     const licenseMatch = yaml.match(/^license:\s*(.+)$/m);
     const compatMatch = yaml.match(/^compatibility:\s*(.+)$/m);
 
-    if (nameMatch) frontmatter.name = nameMatch[1].trim();
-    if (descMatch) frontmatter.description = descMatch[1].trim();
-    if (licenseMatch) frontmatter.license = licenseMatch[1].trim();
-    if (compatMatch) frontmatter.compatibility = compatMatch[1].trim();
+    if (nameMatch) {
+      frontmatter.name = nameMatch[1].trim();
+    }
+    if (descMatch) {
+      frontmatter.description = descMatch[1].trim();
+    }
+    if (licenseMatch) {
+      frontmatter.license = licenseMatch[1].trim();
+    }
+    if (compatMatch) {
+      frontmatter.compatibility = compatMatch[1].trim();
+    }
 
     // Parse metadata field if present
     const metadataMatch = yaml.match(/^metadata:\s*\n((?: {2}.+\n?)+)/m);
@@ -214,7 +224,9 @@ export const SkillsTab: React.FC = () => {
   const selectedSkillData = skills.find((s) => s.path === selectedSkill);
 
   const handleSave = async (values: SkillFormValues) => {
-    if (!selectedSkill) return;
+    if (!selectedSkill) {
+      return;
+    }
 
     setSaving(true);
     try {
@@ -230,7 +242,9 @@ export const SkillsTab: React.FC = () => {
   };
 
   const handleDelete = async () => {
-    if (!selectedSkill) return;
+    if (!selectedSkill) {
+      return;
+    }
 
     if (confirm("Are you sure you want to delete this skill?")) {
       const success = await deleteItem(selectedSkill);
@@ -306,7 +320,9 @@ export const SkillsTab: React.FC = () => {
                                 autoFocus
                                 className="font-mono text-sm"
                                 onKeyDown={(e) => {
-                                  if (e.key === "Escape") handleCancelAdd();
+                                  if (e.key === "Escape") {
+                                    handleCancelAdd();
+                                  }
                                 }}
                                 placeholder="my-skill-name (optional, leave empty for auto-name)"
                               />

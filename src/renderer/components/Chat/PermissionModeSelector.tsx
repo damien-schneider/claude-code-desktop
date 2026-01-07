@@ -73,12 +73,24 @@ function formatModeLabel(mode: string): string {
 function getModeIcon(mode: string): string {
   const lowerMode = mode.toLowerCase();
 
-  if (lowerMode.includes("bypass") || lowerMode.includes("danger")) return "⚠️";
-  if (lowerMode.includes("plan")) return "📋";
-  if (lowerMode.includes("accept") || lowerMode.includes("auto")) return "⚡";
-  if (lowerMode.includes("delegate")) return "🤝";
-  if (lowerMode.includes("dont") || lowerMode.includes("deny")) return "🚫";
-  if (lowerMode.includes("default")) return "🔐";
+  if (lowerMode.includes("bypass") || lowerMode.includes("danger")) {
+    return "⚠️";
+  }
+  if (lowerMode.includes("plan")) {
+    return "📋";
+  }
+  if (lowerMode.includes("accept") || lowerMode.includes("auto")) {
+    return "⚡";
+  }
+  if (lowerMode.includes("delegate")) {
+    return "🤝";
+  }
+  if (lowerMode.includes("dont") || lowerMode.includes("deny")) {
+    return "🚫";
+  }
+  if (lowerMode.includes("default")) {
+    return "🔐";
+  }
 
   return "⚙️"; // Default gear icon for unknown modes
 }

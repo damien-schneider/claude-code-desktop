@@ -21,13 +21,13 @@ import { selectedProjectIdAtom } from "./atoms";
  */
 export type PermissionMode = string;
 
-export type ResumeSessionOptions = {
+export interface ResumeSessionOptions {
   sessionId: string;
   projectPath: string;
   permissionMode?: PermissionMode;
   agentName?: string;
   forkSession?: boolean;
-};
+}
 
 // =============================================================================
 // Zod Schemas for Type Safety
@@ -441,7 +441,7 @@ export const claudeAvailabilityAtom = atom<ClaudeAvailability>({
   checked: false,
 });
 
-export const checkClaudeAvailabilityAtom = atom(null, async (get, set) => {
+export const checkClaudeAvailabilityAtom = atom(null, async (_get, set) => {
   try {
     const { ipc } = await import("@/ipc/manager");
     const result = await ipc.client.claudeProcess.checkClaude();
@@ -503,8 +503,12 @@ export const filteredSessionsAtom = atom<SessionSummary[]>((get) => {
       (s) => s.sessionId === b.sessionId && s.isStreaming
     );
 
-    if (aStreaming && !bStreaming) return -1;
-    if (!aStreaming && bStreaming) return 1;
+    if (aStreaming && !bStreaming) {
+      return -1;
+    }
+    if (!aStreaming && bStreaming) {
+      return 1;
+    }
 
     return (
       new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
@@ -520,7 +524,7 @@ export const filteredSessionsAtom = atom<SessionSummary[]>((get) => {
  * Load all sessions from ~/.claude/projects/
  * Uses history.jsonl as the source of truth for project paths
  */
-export const loadSessionsAtom = atom(null, async (get, set) => {
+export const loadSessionsAtom = atom(null, async (_get, set) => {
   set(sessionsLoadingAtom, true);
   set(sessionsErrorAtom, null);
 
@@ -636,7 +640,7 @@ export const loadSessionDetailsAtom = atom(
  */
 export const startNewSessionAtom = atom(
   null,
-  async (get, set, projectPath: string, initialMessage?: string) => {
+  async (_get, set, projectPath: string, initialMessage?: string) => {
     try {
       const { ipc } = await import("@/ipc/manager");
 
@@ -715,7 +719,9 @@ export const sendMessageAtom = atom(
  */
 export const stopSessionAtom = atom(null, async (get, set) => {
   const processId = get(activeProcessIdAtom);
-  if (!processId) return;
+  if (!processId) {
+    return;
+  }
 
   try {
     const { ipc } = await import("@/ipc/manager");
@@ -736,7 +742,7 @@ export const stopSessionAtom = atom(null, async (get, set) => {
  */
 export const resumeSessionAtom = atom(
   null,
-  async (get, set, options: ResumeSessionOptions) => {
+  async (_get, set, options: ResumeSessionOptions) => {
     try {
       const { ipc } = await import("@/ipc/manager");
       const result = await ipc.client.claudeProcess.resumeSession({

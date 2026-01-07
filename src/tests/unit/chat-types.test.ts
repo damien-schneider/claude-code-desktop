@@ -440,8 +440,12 @@ describe("SDK Handlers Type Safety", () => {
       const extractTextContent = (
         content: string | SDKContentBlock[] | undefined
       ): string => {
-        if (!content) return "";
-        if (typeof content === "string") return content;
+        if (!content) {
+          return "";
+        }
+        if (typeof content === "string") {
+          return content;
+        }
         if (Array.isArray(content)) {
           return content
             .filter(

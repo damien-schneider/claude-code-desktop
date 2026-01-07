@@ -47,7 +47,7 @@ export const HooksEditor: React.FC<HooksEditorProps> = ({
   hooks,
   onChange,
 }) => {
-  const hookEvents = Object.keys(hooks || {});
+  const _hookEvents = Object.keys(hooks || {});
 
   const addHook = (eventName: string) => {
     const currentHooks = hooks[eventName] || [];

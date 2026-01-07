@@ -75,12 +75,11 @@ export function EnabledPluginsEditor({
             </p>
           </Card>
         ) : (
-          <ul className="space-y-2" role="list">
+          <ul className="space-y-2">
             {pluginEntries.map(([pluginId, enabled]) => (
               <li
                 className="flex items-center justify-between rounded-lg border bg-card p-3"
                 key={pluginId}
-                role="listitem"
               >
                 <div className="flex flex-1 items-center gap-3">
                   <Package

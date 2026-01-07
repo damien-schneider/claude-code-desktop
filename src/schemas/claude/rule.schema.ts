@@ -64,11 +64,18 @@ export function parseRuleContent(content: string): {
     const priorityMatch = yaml.match(/^priority:\s*(.+)$/m);
     const categoryMatch = yaml.match(/^category:\s*(.+)$/m);
 
-    if (nameMatch) frontmatter.name = nameMatch[1].trim();
-    if (descMatch)
+    if (nameMatch) {
+      frontmatter.name = nameMatch[1].trim();
+    }
+    if (descMatch) {
       frontmatter.description = descMatch[1].trim().replace(/^["']|["']$/g, "");
-    if (priorityMatch) frontmatter.priority = priorityMatch[1].trim();
-    if (categoryMatch) frontmatter.category = categoryMatch[1].trim();
+    }
+    if (priorityMatch) {
+      frontmatter.priority = priorityMatch[1].trim();
+    }
+    if (categoryMatch) {
+      frontmatter.category = categoryMatch[1].trim();
+    }
 
     return {
       frontmatter: frontmatter as any,

@@ -27,7 +27,7 @@ export const McpTab: React.FC = () => {
     null
   );
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [_saving, setSaving] = useState(false);
 
   // Load .mcp.json when activePath changes
   useEffect(() => {
@@ -55,7 +55,9 @@ export const McpTab: React.FC = () => {
   }, [activePath]);
 
   const handleSaveConfig = async () => {
-    if (!activePath) return;
+    if (!activePath) {
+      return;
+    }
 
     setSaving(true);
     try {

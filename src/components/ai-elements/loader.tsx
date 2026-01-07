@@ -1,9 +1,9 @@
 import type { HTMLAttributes } from "react";
 import { cn } from "@/utils/tailwind";
 
-type LoaderIconProps = {
+interface LoaderIconProps {
   size?: number;
-};
+}
 
 const LoaderIcon = ({ size = 16 }: LoaderIconProps) => (
   <svg

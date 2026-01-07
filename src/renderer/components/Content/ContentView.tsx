@@ -30,7 +30,7 @@ const VIEW_COMPONENTS: Record<NavigationView, React.ComponentType> = {
   mcp: McpTab,
 };
 
-const VIEW_TITLES: Record<NavigationView, string> = {
+const _VIEW_TITLES: Record<NavigationView, string> = {
   chat: "Chat",
   files: "File Explorer",
   claudemd: "CLAUDE.md",

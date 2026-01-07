@@ -105,15 +105,25 @@ interface IPCMessageWrapper {
  * Type guard to validate IPC message structure
  */
 function isValidIPCMessage(data: unknown): data is IPCMessageWrapper {
-  if (typeof data !== "object" || data === null) return false;
+  if (typeof data !== "object" || data === null) {
+    return false;
+  }
 
   const obj = data as Record<string, unknown>;
-  if (typeof obj.event !== "string") return false;
-  if (typeof obj.data !== "object" || obj.data === null) return false;
+  if (typeof obj.event !== "string") {
+    return false;
+  }
+  if (typeof obj.data !== "object" || obj.data === null) {
+    return false;
+  }
 
   const eventData = obj.data as Record<string, unknown>;
-  if (typeof eventData.processId !== "string") return false;
-  if (typeof eventData.type !== "string") return false;
+  if (typeof eventData.processId !== "string") {
+    return false;
+  }
+  if (typeof eventData.type !== "string") {
+    return false;
+  }
 
   return true;
 }
@@ -124,7 +134,9 @@ function isValidIPCMessage(data: unknown): data is IPCMessageWrapper {
 function extractAssistantContent(
   message: SDKMessageContent | undefined
 ): string {
-  if (!message?.content) return "";
+  if (!message?.content) {
+    return "";
+  }
 
   if (typeof message.content === "string") {
     return message.content;
@@ -181,7 +193,9 @@ export const useClaudeStream = (processId: string | null) => {
   const handleMessage = useCallback(
     (_event: unknown, data: IPCMessageWrapper) => {
       const eventData = data.data;
-      if (eventData.processId !== processId) return;
+      if (eventData.processId !== processId) {
+        return;
+      }
 
       // Update current session ID if not set (for new sessions)
       if (!currentSessionId && eventData.sessionId) {
@@ -456,7 +470,9 @@ export const useClaudeStream = (processId: string | null) => {
   );
 
   useEffect(() => {
-    if (!processId) return;
+    if (!processId) {
+      return;
+    }
 
     // Reset streaming state when processId changes
     streamingContentRef.current = "";

@@ -1,5 +1,17 @@
-import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+
+// Mock IPC before imports
+vi.mock("@/ipc/manager", () => ({
+  ipc: {
+    client: {
+      app: {
+        getHomePath: vi.fn().mockResolvedValue("/Users/test/home"),
+      },
+    },
+  },
+}));
+
+import { fireEvent, render, screen } from "@testing-library/react";
 import { JsonFieldRenderer } from "@/renderer/components/Settings/json-field-renderer";
 
 describe("JsonFieldRenderer", () => {

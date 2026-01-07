@@ -11,20 +11,6 @@ import {
 import { useAtom, useSetAtom } from "jotai";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
-import {
-  Sidebar as AppSidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuBadge,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarSeparator,
-} from "@/components/ui/app-sidebar";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -43,6 +29,7 @@ import {
   showWithClaudeOnlyAtom,
   sidebarCollapsedAtom,
 } from "@/renderer/stores";
+import { cn } from "@/utils/tailwind";
 
 export interface SidebarProps {
   className?: string;
@@ -66,7 +53,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [, selectGlobalSettings] = useAtom(selectGlobalSettingsAtom);
 
   const setShowWithClaudeOnlyAction = useSetAtom(setShowWithClaudeOnlyAtom);
-  const [sidebarCollapsed] = useAtom(sidebarCollapsedAtom);
+  const [sidebarCollapsed, setSidebarCollapsed] = useAtom(sidebarCollapsedAtom);
   const state = sidebarCollapsed ? "collapsed" : "expanded";
 
   // Collapsible sections state
@@ -76,12 +63,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Keyboard shortcuts handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd/Ctrl+B is handled by the sidebar component itself
+      if ((e.metaKey || e.ctrlKey) && e.key === "b") {
+        e.preventDefault();
+        setSidebarCollapsed((prev) => !prev);
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [setSidebarCollapsed]);
 
   const handleScan = useCallback(async () => {
     if (onScan) {
@@ -100,19 +90,48 @@ export const Sidebar: React.FC<SidebarProps> = ({
     selectGlobalSettings();
   }, [selectGlobalSettings]);
 
+  const MenuItem = ({
+    isActive,
+    onClick,
+    children,
+    title,
+    className: itemClassName,
+  }: {
+    isActive?: boolean;
+    onClick: () => void;
+    children: React.ReactNode;
+    title?: string;
+    className?: string;
+  }) => (
+    <button
+      className={cn(
+        "group flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
+        isActive
+          ? "bg-primary text-primary-foreground"
+          : "hover:bg-accent hover:text-accent-foreground",
+        state === "collapsed" && "justify-center px-1.5",
+        itemClassName
+      )}
+      onClick={onClick}
+      title={title}
+      type="button"
+    >
+      {children}
+    </button>
+  );
+
   return (
-    <AppSidebar className={className}>
+    <div className={cn("flex h-full flex-col", className)}>
       {state === "expanded" && (
-        <SidebarHeader>
+        <div className="flex flex-col gap-2 p-2">
           <div className="flex gap-2">
-            {/* Search */}
             <div className="relative flex-1">
               <MagnifyingGlass
                 className="absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                 weight="regular"
               />
               <Input
-                className="h-9 pl-8"
+                className="h-8 pl-8 text-xs"
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search..."
                 value={searchQuery}
@@ -120,190 +139,165 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
 
-          {/* Claude filter */}
           <Button
-            className="mt-2 w-full"
+            className="h-8 justify-start px-2 text-xs"
             onClick={() => setShowWithClaudeOnlyAction()}
-            size="sm"
             variant={showWithClaudeOnly ? "default" : "outline"}
           >
             <GitBranch className="mr-1 h-3 w-3" weight="regular" />
-            <span className="sidebar-label">Claude Projects Only</span>
+            <span>Claude Projects Only</span>
           </Button>
 
-          {/* Scan Button */}
           <Button
-            className="mt-2 w-full"
+            className="h-8 justify-start px-2 text-xs"
             disabled={scanningProp}
             onClick={handleScan}
-            size="sm"
             variant="default"
           >
             {scanningProp ? (
               <>
                 <Spinner
-                  className="mr-1 h-4 w-4 animate-spin"
+                  className="mr-1 h-3 w-3 animate-spin"
                   weight="regular"
                 />
-                <span className="sidebar-label">Scanning...</span>
+                <span>Scanning...</span>
               </>
             ) : (
               <>
-                <ArrowsClockwise className="mr-1 h-4 w-4" weight="regular" />
-                <span className="sidebar-label">Scan</span>
+                <ArrowsClockwise className="mr-1 h-3 w-3" weight="regular" />
+                <span>Scan</span>
               </>
             )}
           </Button>
-        </SidebarHeader>
+        </div>
       )}
 
-      <SidebarContent>
-        {/* When collapsed, show simplified list without collapsible sections */}
+      <div className="flex-1 overflow-y-auto px-2 pb-2">
         {state === "collapsed" ? (
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                isActive={isGlobalSettingsSelected}
-                onClick={handleGlobalSettingsClick}
-              >
-                <House className="h-4 w-4" weight="regular" />
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+          <div className="flex flex-col gap-1 py-2">
+            <MenuItem
+              isActive={isGlobalSettingsSelected}
+              onClick={handleGlobalSettingsClick}
+              title="Global Settings"
+            >
+              <House className="h-4 w-4" weight="regular" />
+            </MenuItem>
             {filteredProjects.map((project) => (
-              <SidebarMenuItem key={project.path}>
-                <SidebarMenuButton
-                  isActive={selectedProjectId === project.path}
-                  onClick={() => handleProjectClick(project.path)}
-                  title={project.name}
-                >
-                  <Folder className="h-4 w-4" weight="regular" />
-                  {project.hasClaudeConfig && (
-                    <GitBranch
-                      className="absolute right-2 h-3 w-3 opacity-70"
-                      weight="regular"
-                    />
-                  )}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              <MenuItem
+                isActive={selectedProjectId === project.path}
+                key={project.path}
+                onClick={() => handleProjectClick(project.path)}
+                title={project.name}
+              >
+                <Folder className="h-4 w-4" weight="regular" />
+              </MenuItem>
             ))}
-          </SidebarMenu>
+          </div>
         ) : (
-          <>
+          <div className="flex flex-col gap-4">
             {/* Global Settings */}
             <Collapsible onOpenChange={setSettingsOpen} open={settingsOpen}>
-              <SidebarGroup>
+              <div className="flex flex-col gap-1">
                 <CollapsibleTrigger asChild>
-                  <SidebarGroupLabel>
-                    <House className="mr-2 h-4 w-4" weight="regular" />
-                    <span className="sidebar-label">Global Settings</span>
+                  <button
+                    className="flex h-8 w-full cursor-pointer items-center px-2 font-semibold text-muted-foreground text-xs hover:text-foreground"
+                    type="button"
+                  >
+                    <House className="mr-2 h-3.5 w-3.5" weight="regular" />
+                    <span className="flex-1 text-left">Global Settings</span>
                     {settingsOpen ? (
-                      <CaretDown
-                        className="sidebar-label ml-auto h-4 w-4"
-                        weight="regular"
-                      />
+                      <CaretDown className="h-3 w-3" weight="regular" />
                     ) : (
-                      <CaretRight
-                        className="sidebar-label ml-auto h-4 w-4"
-                        weight="regular"
-                      />
+                      <CaretRight className="h-3 w-3" weight="regular" />
                     )}
-                  </SidebarGroupLabel>
+                  </button>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <SidebarGroupContent>
-                    <SidebarMenu>
-                      <SidebarMenuItem>
-                        <SidebarMenuButton
-                          isActive={isGlobalSettingsSelected}
-                          onClick={handleGlobalSettingsClick}
-                        >
-                          <Folder className="h-4 w-4" weight="regular" />
-                          <span className="sidebar-label">~/.claude/</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    </SidebarMenu>
-                  </SidebarGroupContent>
+                  <div className="flex flex-col gap-1 pt-1">
+                    <MenuItem
+                      isActive={isGlobalSettingsSelected}
+                      onClick={handleGlobalSettingsClick}
+                    >
+                      <Folder className="h-4 w-4" weight="regular" />
+                      <span className="truncate">~/.claude/</span>
+                    </MenuItem>
+                  </div>
                 </CollapsibleContent>
-              </SidebarGroup>
+              </div>
             </Collapsible>
-
-            <SidebarSeparator />
 
             {/* Projects */}
             <Collapsible onOpenChange={setProjectsOpen} open={projectsOpen}>
-              <SidebarGroup>
+              <div className="flex flex-col gap-1">
                 <CollapsibleTrigger asChild>
-                  <SidebarGroupLabel>
-                    <Folder className="mr-2 h-4 w-4" weight="regular" />
-                    <span className="sidebar-label">Projects</span>
-                    <SidebarMenuBadge className="sidebar-label ml-auto">
+                  <button
+                    className="flex h-8 w-full cursor-pointer items-center px-2 font-semibold text-muted-foreground text-xs hover:text-foreground"
+                    type="button"
+                  >
+                    <Folder className="mr-2 h-3.5 w-3.5" weight="regular" />
+                    <span className="flex-1 text-left">Projects</span>
+                    <span className="mr-2 text-[10px] tabular-nums opacity-70">
                       {filteredProjects.length}
-                    </SidebarMenuBadge>
+                    </span>
                     {projectsOpen ? (
-                      <CaretDown
-                        className="sidebar-label ml-auto h-4 w-4"
-                        weight="regular"
-                      />
+                      <CaretDown className="h-3 w-3" weight="regular" />
                     ) : (
-                      <CaretRight
-                        className="sidebar-label ml-auto h-4 w-4"
-                        weight="regular"
-                      />
+                      <CaretRight className="h-3 w-3" weight="regular" />
                     )}
-                  </SidebarGroupLabel>
+                  </button>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <SidebarGroupContent>
-                    <SidebarMenu>
-                      {filteredProjects.length === 0 ? (
-                        <div className="sidebar-label px-3 py-4 text-center text-muted-foreground text-sm">
-                          {searchQuery || showWithClaudeOnly
-                            ? "No projects match"
-                            : "No projects found"}
-                        </div>
-                      ) : (
-                        filteredProjects.map((project) => (
-                          <SidebarMenuItem key={project.path}>
-                            <SidebarMenuButton
-                              isActive={selectedProjectId === project.path}
-                              onClick={() => handleProjectClick(project.path)}
-                            >
-                              <Folder className="h-4 w-4" weight="regular" />
-                              <div className="sidebar-label min-w-0 flex-1">
-                                <div className="truncate font-medium">
-                                  {project.name}
-                                </div>
-                                <div className="truncate text-xs opacity-70">
-                                  {project.path}
-                                </div>
-                              </div>
-                              {project.hasClaudeConfig && (
-                                <GitBranch
-                                  className="sidebar-label h-3 w-3 flex-shrink-0 opacity-70"
-                                  weight="regular"
-                                />
-                              )}
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        ))
-                      )}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
+                  <div className="flex flex-col gap-1 pt-1">
+                    {filteredProjects.length === 0 ? (
+                      <div className="px-3 py-4 text-center text-muted-foreground text-xs italic">
+                        {searchQuery || showWithClaudeOnly
+                          ? "No projects match"
+                          : "No projects found"}
+                      </div>
+                    ) : (
+                      filteredProjects.map((project) => (
+                        <MenuItem
+                          isActive={selectedProjectId === project.path}
+                          key={project.path}
+                          onClick={() => handleProjectClick(project.path)}
+                        >
+                          <Folder
+                            className="h-4 w-4 shrink-0"
+                            weight="regular"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate font-medium leading-tight">
+                              {project.name}
+                            </div>
+                            <div className="truncate text-[10px] leading-tight opacity-60">
+                              {project.path}
+                            </div>
+                          </div>
+                          {project.hasClaudeConfig && (
+                            <GitBranch
+                              className="h-3 w-3 flex-shrink-0 opacity-60"
+                              weight="regular"
+                            />
+                          )}
+                        </MenuItem>
+                      ))
+                    )}
+                  </div>
                 </CollapsibleContent>
-              </SidebarGroup>
+              </div>
             </Collapsible>
-          </>
+          </div>
         )}
-      </SidebarContent>
+      </div>
 
       {state === "expanded" && (
-        <SidebarFooter>
-          <div className="sidebar-label text-center text-muted-foreground text-xs">
+        <div className="border-t p-2">
+          <div className="text-center text-[10px] text-muted-foreground">
             Press ⌘B to toggle
           </div>
-        </SidebarFooter>
+        </div>
       )}
-    </AppSidebar>
+    </div>
   );
 };
 

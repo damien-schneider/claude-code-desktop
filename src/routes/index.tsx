@@ -105,9 +105,14 @@ function ClaudeCodeManagerPage() {
         <div className="flex min-h-0 flex-1">
           <ResizablePanelGroup direction="horizontal">
             {/* Projects Sidebar */}
-            <ResizablePanel defaultSize={20} maxSize={40} minSize={15}>
+            <ResizablePanel
+              className="border-none p-1"
+              defaultSize={20}
+              maxSize={40}
+              minSize={15}
+            >
               <Sidebar
-                className="!border-r-0 w-full"
+                className="w-full rounded-xl border border-border bg-muted/40"
                 onScan={() => scanProjects()}
                 scanning={isScanning}
               />

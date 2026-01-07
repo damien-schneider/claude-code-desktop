@@ -1,29 +1,42 @@
 import { vi } from "vitest";
 import "@testing-library/jest-dom";
 
-// Mock window and document globals for tests that need them
-Object.defineProperty(global, "window", {
-  value: {
-    postMessage: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
+// Mock the IPC module to provide test doubles
+vi.mock("@/ipc/manager", () => ({
+  ipc: {
+    client: {
+      app: {
+        getHomePath: vi.fn().mockResolvedValue("/Users/test/home"),
+        getAppPath: vi.fn().mockResolvedValue("/app/path"),
+        getVersions: vi.fn().mockResolvedValue({
+          cli: "1.0.0",
+          desktop: "1.0.0",
+        }),
+      },
+      claude: {
+        readClaudeDirectory: vi.fn().mockResolvedValue({
+          files: [],
+        }),
+        readSessionFile: vi.fn().mockResolvedValue(null),
+      },
+      mcp: {
+        listServers: vi.fn().mockResolvedValue([]),
+      },
+      theme: {
+        getCurrentThemeMode: vi.fn().mockResolvedValue("light"),
+        setThemeMode: vi.fn().mockResolvedValue(undefined),
+        toggleThemeMode: vi.fn().mockResolvedValue(true),
+      },
+      scanner: {
+        scanProjects: vi.fn().mockResolvedValue({
+          projects: [],
+          scanned: 0,
+          errors: [],
+        }),
+      },
+      sessions: {
+        getProjectSessions: vi.fn().mockResolvedValue([]),
+      },
+    },
   },
-  writable: true,
-});
-
-// Mock MessageChannel for IPC tests
-class MockMessagePort {
-  onmessage = null;
-  start = vi.fn();
-  close = vi.fn();
-  postMessage = vi.fn();
-  addEventListener = vi.fn();
-  removeEventListener = vi.fn();
-}
-
-class MockMessageChannel {
-  port1 = new MockMessagePort();
-  port2 = new MockMessagePort();
-}
-
-global.MessageChannel = MockMessageChannel as any;
+}));

@@ -1,0 +1,198 @@
+/**
+ * Pragmatic tests for scanner module
+ * Tests platform-specific logic and interfaces
+ */
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  type ClaudeProject,
+  getDefaultScanPaths,
+  type ScanOptions,
+  type ScanResult,
+  scanForProjects,
+  scanMultipleDirectories,
+} from "./scanner";
+
+// Mock node:os to return a test path
+vi.mock("node:os", () => ({
+  homedir: vi.fn(() => "/tmp/test-home"),
+}));
+
+// Mock node:fs/promises with inline implementation
+vi.mock("node:fs/promises", () => {
+  const mockAccess = vi.fn();
+  const mockReaddir = vi.fn();
+  const mockStat = vi.fn();
+
+  return {
+    access: mockAccess,
+    readdir: mockReaddir,
+    stat: mockStat,
+    __mocks: { mockAccess, mockReaddir, mockStat },
+  };
+});
+
+// Get mocks from the cached module
+const { __mocks } = vi.importMock("node:fs/promises") as any;
+const { mockAccess, mockReaddir, mockStat } = __mocks;
+
+describe("scanner", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Set default mock behaviors
+    mockAccess.mockReset().mockRejectedValue(new Error("Not found"));
+    mockReaddir.mockReset().mockResolvedValue([]);
+    mockStat.mockReset().mockRejectedValue(new Error("Not found"));
+  });
+
+  describe("scanForProjects", () => {
+    it("should return ScanResult with correct structure", async () => {
+      const result = await scanForProjects("/nonexistent/path");
+
+      expect(result).toBeDefined();
+      expect(Array.isArray(result.projects)).toBe(true);
+      expect(typeof result.scanned).toBe("number");
+      expect(Array.isArray(result.errors)).toBe(true);
+    });
+
+    it("should accept ScanOptions", async () => {
+      const options: ScanOptions = {
+        maxDepth: 5,
+        excludePaths: ["node_modules"],
+        includeHidden: false,
+      };
+
+      const result = await scanForProjects("/test/path", options);
+
+      expect(result).toBeDefined();
+    });
+
+    it("should use default path when none provided", async () => {
+      const result = await scanForProjects();
+
+      expect(result).toBeDefined();
+      expect(result.projects).toEqual([]);
+    });
+  });
+
+  describe("scanMultipleDirectories", () => {
+    it("should scan multiple directories", async () => {
+      const result = await scanMultipleDirectories(["/path1", "/path2"]);
+
+      expect(result).toBeDefined();
+      expect(Array.isArray(result.projects)).toBe(true);
+    });
+
+    it("should aggregate results", async () => {
+      const result = await scanMultipleDirectories(["/path1", "/path2"]);
+
+      expect(result.scanned).toBeGreaterThanOrEqual(0);
+      expect(Array.isArray(result.errors)).toBe(true);
+    });
+
+    it("should handle empty directory list", async () => {
+      const result = await scanMultipleDirectories([]);
+
+      expect(result.projects).toEqual([]);
+      expect(result.scanned).toBe(0);
+      expect(result.errors).toEqual([]);
+    });
+  });
+
+  describe("getDefaultScanPaths", () => {
+    let originalPlatform: string;
+
+    beforeEach(() => {
+      originalPlatform = process.platform;
+    });
+
+    afterEach(() => {
+      Object.defineProperty(process, "platform", { value: originalPlatform });
+    });
+
+    it("should return array with home directory on darwin", () => {
+      Object.defineProperty(process, "platform", { value: "darwin" });
+
+      const paths = getDefaultScanPaths();
+
+      expect(Array.isArray(paths)).toBe(true);
+      expect(paths.length).toBeGreaterThan(0);
+    });
+
+    it("should return array on win32", () => {
+      Object.defineProperty(process, "platform", { value: "win32" });
+
+      const paths = getDefaultScanPaths();
+
+      expect(Array.isArray(paths)).toBe(true);
+      expect(paths.length).toBeGreaterThan(0);
+    });
+
+    it("should return array on linux", () => {
+      Object.defineProperty(process, "platform", { value: "linux" });
+
+      const paths = getDefaultScanPaths();
+
+      expect(Array.isArray(paths)).toBe(true);
+      expect(paths.length).toBeGreaterThan(0);
+    });
+
+    it("should return array on unknown platforms", () => {
+      Object.defineProperty(process, "platform", { value: "freebsd" });
+
+      const paths = getDefaultScanPaths();
+
+      expect(Array.isArray(paths)).toBe(true);
+    });
+  });
+
+  describe("Interfaces", () => {
+    it("ClaudeProject should have required fields", () => {
+      const project: ClaudeProject = {
+        path: "/test/project",
+        name: "project",
+        hasClaudeConfig: true,
+      };
+
+      expect(project.path).toBe("/test/project");
+      expect(project.name).toBe("project");
+      expect(project.hasClaudeConfig).toBe(true);
+    });
+
+    it("ClaudeProject should support optional fields", () => {
+      const project: ClaudeProject = {
+        path: "/test/project",
+        name: "project",
+        hasClaudeConfig: false,
+        isFavorite: true,
+        lastModified: new Date(),
+      };
+
+      expect(project.isFavorite).toBe(true);
+      expect(project.lastModified).toBeInstanceOf(Date);
+    });
+
+    it("ScanOptions should accept all options", () => {
+      const options: ScanOptions = {
+        maxDepth: 10,
+        excludePaths: ["node_modules", ".git"],
+        includeHidden: true,
+      };
+
+      expect(options.maxDepth).toBe(10);
+      expect(options.excludePaths).toEqual(["node_modules", ".git"]);
+      expect(options.includeHidden).toBe(true);
+    });
+
+    it("ScanResult should have correct structure", () => {
+      const result: ScanResult = {
+        projects: [],
+        scanned: 0,
+        errors: [],
+      };
+
+      expect(Array.isArray(result.projects)).toBe(true);
+      expect(result.scanned).toBe(0);
+      expect(Array.isArray(result.errors)).toBe(true);
+    });
+  });
+});

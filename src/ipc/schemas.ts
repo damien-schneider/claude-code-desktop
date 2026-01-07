@@ -204,7 +204,9 @@ export const parseFrontmatter = <T extends z.ZodType>(
   schema: T
 ): { frontmatter?: z.infer<T>; body: string } => {
   const yamlMatch = content.match(/^---\n([\s\S]*?)\n---/);
-  if (!yamlMatch) return { body: content };
+  if (!yamlMatch) {
+    return { body: content };
+  }
 
   try {
     const yaml = yamlMatch[1];
@@ -245,7 +247,9 @@ export const buildFrontmatter = (data: Record<string, unknown>): string => {
   let frontmatter = "---\n";
 
   for (const [key, value] of Object.entries(data)) {
-    if (value === undefined || value === null) continue;
+    if (value === undefined || value === null) {
+      continue;
+    }
 
     if (Array.isArray(value)) {
       frontmatter += `${key}: [${value.join(", ")}]\n`;
@@ -280,8 +284,12 @@ export const buildSkillContent = (
     description,
   };
 
-  if (license) frontmatterData.license = license;
-  if (compatibility) frontmatterData.compatibility = compatibility;
+  if (license) {
+    frontmatterData.license = license;
+  }
+  if (compatibility) {
+    frontmatterData.compatibility = compatibility;
+  }
 
   return `${buildFrontmatter(frontmatterData)}\n${body}`;
 };

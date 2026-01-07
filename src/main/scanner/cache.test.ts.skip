@@ -1,0 +1,256 @@
+/**
+ * Pragmatic tests for scanner cache module
+ * Tests caching, TTL, version checking, and error handling
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import * as fsPromises from "node:fs/promises";
+import {
+  clearProjectCache,
+  getCacheTimestamp,
+  isCacheValid,
+  loadCachedProjects,
+  saveProjectsToCache,
+} from "./cache";
+
+// Mock Electron app
+vi.mock("electron", () => ({
+  app: {
+    getPath: vi.fn(() => "/tmp/user-data"),
+  },
+}));
+
+// Mock node:fs/promises - use vi.mocked after mock is set up
+vi.mock("node:fs/promises", () => ({
+  readFile: vi.fn(),
+  writeFile: vi.fn(),
+  mkdir: vi.fn(),
+}));
+
+describe("scanner cache", () => {
+  const mockReadFile = vi.mocked(fsPromises.readFile);
+  const mockWriteFile = vi.mocked(fsPromises.writeFile);
+  const mockMkdir = vi.mocked(fsPromises.mkdir);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers().setSystemTime(1000000);
+    // Reset to default rejection state
+    mockReadFile.mockReset().mockRejectedValue(new Error("Not found"));
+    mockWriteFile.mockReset().mockResolvedValue(undefined);
+    mockMkdir.mockReset().mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  describe("loadCachedProjects", () => {
+    it("should return null when cache file does not exist", async () => {
+      const result = await loadCachedProjects();
+
+      expect(result).toBeNull();
+    });
+
+    it("should return null when cache version mismatch", async () => {
+      mockReadFile.mockResolvedValue(
+        JSON.stringify({
+          projects: [],
+          timestamp: Date.now(),
+          version: "0.5", // Wrong version
+        })
+      );
+
+      const result = await loadCachedProjects();
+
+      expect(result).toBeNull();
+    });
+
+    it("should return null when cache is expired", async () => {
+      const expiredTimestamp = Date.now() - 61 * 60 * 1000; // 61 minutes ago
+      mockReadFile.mockResolvedValue(
+        JSON.stringify({
+          projects: [],
+          timestamp: expiredTimestamp,
+          version: "1.0",
+        })
+      );
+
+      const result = await loadCachedProjects();
+
+      expect(result).toBeNull();
+    });
+
+    it("should return projects when cache is valid", async () => {
+      const projects = [
+        { path: "/test/project", name: "project", hasClaudeConfig: true },
+      ];
+      mockReadFile.mockResolvedValue(
+        JSON.stringify({
+          projects,
+          timestamp: Date.now(),
+          version: "1.0",
+        })
+      );
+
+      const result = await loadCachedProjects();
+
+      expect(result).toEqual(projects);
+    });
+
+    it("should handle invalid JSON gracefully", async () => {
+      mockReadFile.mockResolvedValue("invalid json");
+
+      const result = await loadCachedProjects();
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("saveProjectsToCache", () => {
+    it("should save projects to cache", async () => {
+      const projects = [
+        { path: "/test/project", name: "project", hasClaudeConfig: false },
+      ];
+
+      await saveProjectsToCache(projects);
+
+      expect(mockWriteFile).toHaveBeenCalled();
+      const callArgs = mockWriteFile.mock.calls[0];
+      expect(callArgs[0]).toContain("project-cache.json");
+      const writtenData = JSON.parse(callArgs[1]);
+      expect(writtenData.projects).toEqual(projects);
+      expect(writtenData.version).toBe("1.0");
+      expect(writtenData.timestamp).toBeDefined();
+    });
+
+    it("should handle write errors gracefully", async () => {
+      mockWriteFile.mockRejectedValue(new Error("Write failed"));
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      const projects = [
+        { path: "/test", name: "test", hasClaudeConfig: false },
+      ];
+
+      await expect(saveProjectsToCache(projects)).resolves.not.toThrow();
+      expect(consoleSpy).toHaveBeenCalled();
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe("clearProjectCache", () => {
+    it("should clear the cache by writing empty data", async () => {
+      await clearProjectCache();
+
+      expect(mockWriteFile).toHaveBeenCalled();
+      const callArgs = mockWriteFile.mock.calls[0];
+      const writtenData = JSON.parse(callArgs[1]);
+      expect(writtenData.projects).toEqual([]);
+      expect(writtenData.timestamp).toBe(0);
+    });
+
+    it("should handle clear errors gracefully", async () => {
+      mockWriteFile.mockRejectedValue(new Error("Clear failed"));
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      await expect(clearProjectCache()).resolves.not.toThrow();
+      expect(consoleSpy).toHaveBeenCalled();
+
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe("getCacheTimestamp", () => {
+    it("should return null when cache does not exist", async () => {
+      const result = await getCacheTimestamp();
+
+      expect(result).toBeNull();
+    });
+
+    it("should return cache timestamp when valid", async () => {
+      const timestamp = 1234567890;
+      mockReadFile.mockResolvedValue(
+        JSON.stringify({
+          projects: [],
+          timestamp,
+          version: "1.0",
+        })
+      );
+
+      const result = await getCacheTimestamp();
+
+      expect(result).toBe(timestamp);
+    });
+
+    it("should return null on invalid JSON", async () => {
+      mockReadFile.mockResolvedValue("invalid");
+
+      const result = await getCacheTimestamp();
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("isCacheValid", () => {
+    it("should return false when cache does not exist", async () => {
+      const result = await isCacheValid();
+
+      expect(result).toBe(false);
+    });
+
+    it("should return false when version mismatch", async () => {
+      mockReadFile.mockResolvedValue(
+        JSON.stringify({
+          projects: [],
+          timestamp: Date.now(),
+          version: "0.5",
+        })
+      );
+
+      const result = await isCacheValid();
+
+      expect(result).toBe(false);
+    });
+
+    it("should return false when cache is expired", async () => {
+      const expiredTimestamp = Date.now() - 61 * 60 * 1000;
+      mockReadFile.mockResolvedValue(
+        JSON.stringify({
+          projects: [],
+          timestamp: expiredTimestamp,
+          version: "1.0",
+        })
+      );
+
+      const result = await isCacheValid();
+
+      expect(result).toBe(false);
+    });
+
+    it("should return true when cache is valid and fresh", async () => {
+      mockReadFile.mockResolvedValue(
+        JSON.stringify({
+          projects: [],
+          timestamp: Date.now(),
+          version: "1.0",
+        })
+      );
+
+      const result = await isCacheValid();
+
+      expect(result).toBe(true);
+    });
+
+    it("should return false on invalid JSON", async () => {
+      mockReadFile.mockResolvedValue("invalid");
+
+      const result = await isCacheValid();
+
+      expect(result).toBe(false);
+    });
+  });
+});

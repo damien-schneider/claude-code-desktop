@@ -68,7 +68,9 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
 
   // Get current project name for the filter label
   const currentProjectName = useMemo(() => {
-    if (!selectedProjectId) return null;
+    if (!selectedProjectId) {
+      return null;
+    }
     return projects.find((p) => p.path === selectedProjectId)?.name;
   }, [projects, selectedProjectId]);
 
@@ -90,12 +92,19 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
 
     sessions.forEach((session) => {
       const date = new Date(session.lastMessageAt);
-      if (isNaN(date.getTime())) return; // Skip invalid dates
+      if (Number.isNaN(date.getTime())) {
+        return; // Skip invalid dates
+      }
 
-      if (date >= today) groups.Today.push(session);
-      else if (date >= yesterday) groups.Yesterday.push(session);
-      else if (date >= thisWeek) groups["This Week"].push(session);
-      else groups.Older.push(session);
+      if (date >= today) {
+        groups.Today.push(session);
+      } else if (date >= yesterday) {
+        groups.Yesterday.push(session);
+      } else if (date >= thisWeek) {
+        groups["This Week"].push(session);
+      } else {
+        groups.Older.push(session);
+      }
     });
 
     return groups;

@@ -1,8 +1,8 @@
+import { exec, spawn } from "node:child_process";
+import { EventEmitter } from "node:events";
+import { homedir } from "node:os";
+import { promisify } from "node:util";
 import { os } from "@orpc/server";
-import { exec, spawn } from "child_process";
-import { EventEmitter } from "events";
-import { homedir } from "os";
-import { promisify } from "util";
 import { z } from "zod";
 import { ipcContext } from "@/ipc/context";
 
@@ -126,7 +126,7 @@ export const getPermissionModes = os.handler(async () => {
     // Format: --permission-mode <mode> ... (choices: "mode1", "mode2", ...)
     const match = stdout.match(/--permission-mode.*?choices:\s*([^)]+)\)/);
 
-    if (match && match[1]) {
+    if (match?.[1]) {
       // Parse the choices and clean up quotes
       const modes = match[1]
         .split(",")
@@ -324,7 +324,7 @@ export const sendMessage = os
     console.log("[sendMessage] Sending message to process:", processId);
 
     try {
-      claude.stdin.write(message + "\n");
+      claude.stdin.write(`${message}\n`);
       return { success: true };
     } catch (error) {
       console.error("[sendMessage] Failed to write:", error);

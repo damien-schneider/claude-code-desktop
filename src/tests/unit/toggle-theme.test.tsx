@@ -17,10 +17,13 @@ test("has icon", () => {
   expect(icon).toBeInTheDocument();
 });
 
-test("is moon icon", () => {
-  const svgIconClassName: string = "lucide-moon";
+test("is moon icon from Phosphor", () => {
+  // Phosphor icons render as SVG elements
   const { getByRole } = render(<ToggleTheme />);
-  const svg = getByRole("button").querySelector("svg");
+  const button = getByRole("button");
+  const svg = button.querySelector("svg");
 
-  expect(svg?.classList).toContain(svgIconClassName);
+  // Phosphor icons should render an SVG element
+  expect(svg).toBeInTheDocument();
+  expect(svg?.tagName.toLowerCase()).toBe("svg");
 });

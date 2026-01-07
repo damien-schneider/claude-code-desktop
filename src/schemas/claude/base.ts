@@ -32,20 +32,28 @@ export const colorSchema = z
   .max(50, "Color must be 50 characters or less")
   .optional()
   .refine((val) => {
-    if (!val) return true;
+    if (!val) {
+      return true;
+    }
     // Allow named colors (blue, green, etc.)
-    if (/^[a-z]+$/.test(val)) return true;
+    if (/^[a-z]+$/.test(val)) {
+      return true;
+    }
     // Allow hex colors (#fff, #ffffff)
-    if (/^#[0-9a-f]{3,6}$/i.test(val)) return true;
+    if (/^#[0-9a-f]{3,6}$/i.test(val)) {
+      return true;
+    }
     // Allow rgb/hsl formats
     if (
       /^rgba?\(\s*\d+%?\s*,\s*\d+%?\s*,\s*\d+%?\s*(,\s*[\d.]+\s*)?\)$/.test(val)
-    )
+    ) {
       return true;
+    }
     if (
       /^hsla?\(\s*\d+%?\s*,\s*\d+%\s*,\s*\d+%\s*(,\s*[\d.]+\s*)?\)$/.test(val)
-    )
+    ) {
       return true;
+    }
     return false;
   }, "Invalid color format. Use a named color (blue), hex (#fff), or CSS color function (rgb(), hsl())");
 

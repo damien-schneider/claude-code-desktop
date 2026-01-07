@@ -1,6 +1,6 @@
+import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { os } from "@orpc/server";
-import { mkdir, readdir, readFile, stat, writeFile } from "fs/promises";
-import { join } from "path";
 import { z } from "zod";
 import { readClaudeDirectory as readClaudeDir } from "./directory-reader";
 
@@ -287,7 +287,7 @@ export const deleteClaudeItem = os
   .input(z.object({ itemPath: z.string() }))
   .handler(async ({ input: { itemPath } }) => {
     // Handle recursively
-    const { rm } = await import("fs/promises");
+    const { rm } = await import("node:fs/promises");
     await rm(itemPath, { recursive: true, force: true });
     return { success: true, path: itemPath };
   });
@@ -549,7 +549,7 @@ export const deleteItem = os
   .input(z.object({ itemPath: z.string() }))
   .handler(async ({ input: { itemPath } }) => {
     try {
-      const { rm } = await import("fs/promises");
+      const { rm } = await import("node:fs/promises");
       await rm(itemPath, { recursive: true, force: true });
       return { path: itemPath, success: true };
     } catch (error) {

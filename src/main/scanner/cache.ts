@@ -1,6 +1,6 @@
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { app } from "electron";
-import { mkdir, readFile, writeFile } from "fs/promises";
-import { join } from "path";
 import type { ClaudeProject } from "./scanner";
 
 export interface CacheData {

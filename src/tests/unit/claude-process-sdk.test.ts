@@ -301,12 +301,18 @@ describe("useClaudeStream Hook Integration", () => {
 describe("Chat Atoms Integration", () => {
   it("should properly format message content from strings", () => {
     const formatMessageContent = (content: unknown): string => {
-      if (!content) return "";
-      if (typeof content === "string") return content;
+      if (!content) {
+        return "";
+      }
+      if (typeof content === "string") {
+        return content;
+      }
       if (Array.isArray(content)) {
         return content
           .map((block: any) => {
-            if (block.type === "text" && block.text) return block.text;
+            if (block.type === "text" && block.text) {
+              return block.text;
+            }
             if (block.type === "tool_use") {
               return `[Tool: ${block.name}]`;
             }
@@ -328,12 +334,18 @@ describe("Chat Atoms Integration", () => {
 
   it("should properly format message content from content blocks", () => {
     const formatMessageContent = (content: unknown): string => {
-      if (!content) return "";
-      if (typeof content === "string") return content;
+      if (!content) {
+        return "";
+      }
+      if (typeof content === "string") {
+        return content;
+      }
       if (Array.isArray(content)) {
         return content
           .map((block: any) => {
-            if (block.type === "text" && block.text) return block.text;
+            if (block.type === "text" && block.text) {
+              return block.text;
+            }
             if (block.type === "tool_use") {
               return `[Tool: ${block.name}]`;
             }
