@@ -11,7 +11,7 @@ import {
   FieldType,
   getFieldDescription,
   getFieldLabel,
-} from "./json-field-detector.ts";
+} from "./json-field-detector";
 
 const CLAUDE_MODEL_OPTIONS = [
   "claude-3-5-sonnet-20241022",
@@ -281,6 +281,23 @@ export function JsonFieldRenderer({
     const arrayType =
       arrayValue.length > 0 ? detectFieldType(arrayValue[0]) : FieldType.STRING;
 
+    // Extract nested ternary into separate variable
+    const getNewItem = (): unknown => {
+      if (arrayType === FieldType.NUMBER) {
+        return 0;
+      }
+      if (arrayType === FieldType.BOOLEAN) {
+        return false;
+      }
+      if (arrayType === FieldType.ARRAY) {
+        return [];
+      }
+      if (arrayType === FieldType.OBJECT) {
+        return {};
+      }
+      return "";
+    };
+
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -288,16 +305,7 @@ export function JsonFieldRenderer({
           <Button
             className="gap-1"
             onClick={() => {
-              const newItem =
-                arrayType === FieldType.NUMBER
-                  ? 0
-                  : arrayType === FieldType.BOOLEAN
-                    ? false
-                    : arrayType === FieldType.ARRAY
-                      ? []
-                      : arrayType === FieldType.OBJECT
-                        ? {}
-                        : "";
+              const newItem = getNewItem();
               onChange([...arrayValue, newItem]);
             }}
             size="sm"

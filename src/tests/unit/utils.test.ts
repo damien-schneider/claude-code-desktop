@@ -3,6 +3,11 @@
  */
 import { describe, expect, it } from "vitest";
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const URL_REGEX = /^https?:\/\/.+/;
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 describe("Utility Functions", () => {
   describe("cn (className utility)", () => {
     it("should merge class names correctly", () => {
@@ -12,7 +17,13 @@ describe("Utility Functions", () => {
     });
 
     it("should handle conditional classes", () => {
-      const classes = ["base", true ? "active" : "", false ? "hidden" : ""]
+      const showActive = true;
+      const showHidden = false;
+      const classes = [
+        "base",
+        showActive ? "active" : "",
+        showHidden ? "hidden" : "",
+      ]
         .filter(Boolean)
         .join(" ");
       expect(classes).toBe("base active");
@@ -176,22 +187,19 @@ describe("Utility Functions", () => {
   describe("Validation utilities", () => {
     it("should validate email addresses", () => {
       const email = "test@example.com";
-      const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      const isValid = EMAIL_REGEX.test(email);
       expect(isValid).toBe(true);
     });
 
     it("should validate URLs", () => {
       const url = "https://example.com";
-      const isValid = /^https?:\/\/.+/.test(url);
+      const isValid = URL_REGEX.test(url);
       expect(isValid).toBe(true);
     });
 
     it("should validate UUIDs", () => {
       const uuid = "550e8400-e29b-41d4-a716-446655440000";
-      const isValid =
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-          uuid
-        );
+      const isValid = UUID_REGEX.test(uuid);
       expect(isValid).toBe(true);
     });
   });
@@ -214,25 +222,27 @@ describe("Utility Functions", () => {
   });
 
   describe("Debounce/throttle patterns", () => {
-    it("should limit function calls", (done) => {
-      let count = 0;
-      const fn = () => count++;
+    it("should limit function calls", () => {
+      return new Promise<void>((resolve) => {
+        let count = 0;
+        const fn = () => count++;
 
-      // Simulate debounce
-      let timeout: NodeJS.Timeout;
-      const debounced = () => {
-        clearTimeout(timeout);
-        timeout = setTimeout(fn, 10);
-      };
+        // Simulate debounce
+        let timeout: NodeJS.Timeout;
+        const debounced = () => {
+          clearTimeout(timeout);
+          timeout = setTimeout(fn, 10);
+        };
 
-      debounced();
-      debounced();
-      debounced();
+        debounced();
+        debounced();
+        debounced();
 
-      setTimeout(() => {
-        expect(count).toBe(1);
-        done();
-      }, 50);
+        setTimeout(() => {
+          expect(count).toBe(1);
+          resolve();
+        }, 50);
+      });
     });
   });
 });

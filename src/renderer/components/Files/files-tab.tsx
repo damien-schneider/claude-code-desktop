@@ -18,11 +18,11 @@ import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
+  Panel,
+  PanelGroup,
+  PanelResizeHandle,
 } from "@/components/ui/resizable";
-import type { ExplorerItem } from "@/ipc/claude";
+import type { ExplorerItem } from "@/ipc/claude/handlers";
 import { ipc } from "@/ipc/manager";
 import { TipTapEditor } from "@/renderer/components/tip-tap-editor";
 import {
@@ -92,10 +92,7 @@ const getFileIcon = (item: FileNode) => {
   return File;
 };
 
-const formatFileSize = (size?: number) => {
-  if (size === undefined) {
-    return null;
-  }
+const formatFileSize = (size: number): string => {
   if (size < 1024) {
     return `${size}B`;
   }
@@ -103,6 +100,94 @@ const formatFileSize = (size?: number) => {
     return `${Math.round(size / 1024)}KB`;
   }
   return `${Math.round(size / (1024 * 1024))}MB`;
+};
+
+interface FileListContentProps {
+  fileTree: FileNode[];
+  loading: boolean;
+  renderFileTree: (nodes: FileNode[], level?: number) => React.ReactNode;
+}
+
+const FileListContent: React.FC<FileListContentProps> = ({
+  fileTree,
+  loading,
+  renderFileTree,
+}) => {
+  if (loading && fileTree.length === 0) {
+    return (
+      <div className="py-8 text-center text-muted-foreground text-sm">
+        Loading...
+      </div>
+    );
+  }
+
+  if (fileTree.length === 0) {
+    return (
+      <div className="flex h-full items-center justify-center text-muted-foreground">
+        <div className="text-center">
+          <Folder
+            className="mx-auto mb-2 h-8 w-8 opacity-50"
+            weight="regular"
+          />
+          <p className="text-sm">This folder is empty</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <>{renderFileTree(fileTree)}</>;
+};
+
+interface FileContentProps {
+  selectedFile: FileNode | null;
+  loading: boolean;
+  fileContent: string;
+  isEditableFile: (item: FileNode | null) => boolean;
+  onContentChange: (content: string) => void;
+}
+
+const FileContent: React.FC<FileContentProps> = ({
+  selectedFile,
+  loading,
+  fileContent,
+  isEditableFile,
+  onContentChange,
+}) => {
+  if (!selectedFile) {
+    return null;
+  }
+
+  if (!isEditableFile(selectedFile)) {
+    return (
+      <div className="flex h-full items-center justify-center text-muted-foreground">
+        <div className="text-center">
+          <File
+            className="mx-auto mb-3 h-12 w-12 opacity-50"
+            weight="regular"
+          />
+          <p className="text-sm">This file type cannot be edited</p>
+          <p className="mt-1 text-xs">Use an external editor for this file</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="py-8 text-center text-muted-foreground text-sm">
+        Loading file...
+      </div>
+    );
+  }
+
+  return (
+    <TipTapEditor
+      className="min-h-full"
+      content={fileContent}
+      onChange={onContentChange}
+      placeholder="File content..."
+    />
+  );
 };
 
 export const FilesTab: React.FC = () => {
@@ -148,11 +233,13 @@ export const FilesTab: React.FC = () => {
   // Load a directory's contents
   const loadDirectoryContents = useCallback(
     async (dirPath: string): Promise<FileNode[]> => {
+      console.log("Loading directory contents for:", dirPath);
       try {
         const result = await ipc.client.claude.readDirectory({
           dirPath,
           includeHidden: true,
         });
+        console.log("Directory result:", result);
         return result.items.map((item) => ({
           ...item,
           level: 0,
@@ -236,7 +323,8 @@ export const FilesTab: React.FC = () => {
           const isExpanded = !item.isExpanded;
           if (isExpanded && !item.loaded && item.type === "directory") {
             // Load children
-            loadDirectoryContents(item.path).then((children) => {
+            // biome-ignore lint/complexity/noVoid: Fire and forget async operation
+            void loadDirectoryContents(item.path).then((children) => {
               setFileTree((prev) =>
                 updateNodeWithChildren(prev, node.path, children)
               );
@@ -276,7 +364,7 @@ export const FilesTab: React.FC = () => {
 
   const handleFileClick = async (node: FileNode) => {
     if (node.type === "directory") {
-      setFileTree(toggleDirectory(node, fileTree));
+      setFileTree(await toggleDirectory(node, fileTree));
     } else {
       setSelectedFile(node);
       await loadFileContent(node.path);
@@ -290,10 +378,15 @@ export const FilesTab: React.FC = () => {
 
     setSaving(true);
     try {
-      await ipc.client.claude.writeFileContent({
+      const result = await ipc.client.claude.writeFileContent({
         filePath: selectedFile.path,
         content: fileContent,
       });
+      if (result.success) {
+        console.log("File saved successfully");
+      } else {
+        console.error("Failed to save file:", result.error);
+      }
     } catch (error) {
       console.error("Failed to save file:", error);
     } finally {
@@ -306,8 +399,8 @@ export const FilesTab: React.FC = () => {
       return;
     }
 
-    // biome-ignore lint/suspicious/noAlert: Legacy prompt usage
-    const fileName = window.prompt("Enter file name:");
+    // biome-ignore lint/suspicious/noAlert: Replacing with modal is out of scope
+    const fileName = prompt("Enter file name:");
     if (!fileName) {
       return;
     }
@@ -319,8 +412,8 @@ export const FilesTab: React.FC = () => {
         content: "",
       });
       if (result.success) {
-        const tree = await buildTree(rootPath);
-        setFileTree(tree);
+        // biome-ignore lint/complexity/noVoid: Fire and forget async operation
+        void buildTree(rootPath).then(setFileTree);
       }
     } catch (error) {
       console.error("Failed to create file:", error);
@@ -332,8 +425,8 @@ export const FilesTab: React.FC = () => {
       return;
     }
 
-    // biome-ignore lint/suspicious/noAlert: Legacy prompt usage
-    const folderName = window.prompt("Enter folder name:");
+    // biome-ignore lint/suspicious/noAlert: Replacing with modal is out of scope
+    const folderName = prompt("Enter folder name:");
     if (!folderName) {
       return;
     }
@@ -344,8 +437,7 @@ export const FilesTab: React.FC = () => {
         dirPath: folderPath,
       });
       if (result.success) {
-        const tree = await buildTree(rootPath);
-        setFileTree(tree);
+        buildTree(rootPath).then(setFileTree);
       }
     } catch (error) {
       console.error("Failed to create folder:", error);
@@ -357,26 +449,21 @@ export const FilesTab: React.FC = () => {
       return;
     }
 
-    // biome-ignore lint/suspicious/noAlert: confirm is used for deletion
-    const isConfirmed = window.confirm(
-      `Are you sure you want to delete ${selectedFile.name}?`
-    );
-    if (!isConfirmed) {
-      return;
-    }
-
-    try {
-      const result = await ipc.client.claude.deleteItem({
-        itemPath: selectedFile.path,
-      });
-      if (result.success) {
-        setSelectedFile(null);
-        setFileContent("");
-        const tree = await buildTree(rootPath);
-        setFileTree(tree);
+    // biome-ignore lint/suspicious/noAlert: Replacing with modal is out of scope
+    if (confirm(`Are you sure you want to delete ${selectedFile.name}?`)) {
+      try {
+        const result = await ipc.client.claude.deleteItem({
+          itemPath: selectedFile.path,
+        });
+        if (result.success) {
+          setSelectedFile(null);
+          setFileContent("");
+          // biome-ignore lint/complexity/noVoid: Fire and forget async operation
+          void buildTree(rootPath).then(setFileTree);
+        }
+      } catch (error) {
+        console.error("Failed to delete item:", error);
       }
-    } catch (error) {
-      console.error("Failed to delete item:", error);
     }
   };
 
@@ -436,33 +523,39 @@ export const FilesTab: React.FC = () => {
 
       return (
         <div key={node.path}>
-          <button
+          <div
             className={cn(
-              "flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1 text-sm transition-colors hover:bg-muted/50",
+              "flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1 text-sm transition-colors hover:bg-muted/50",
               isSelected && "bg-accent"
             )}
             onClick={() => handleFileClick(node)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                handleFileClick(node);
+              }
+            }}
+            role="button"
             style={{ paddingLeft: `${8 + level * 16}px` }}
-            type="button"
+            tabIndex={0}
           >
             {hasChildren && (
               <CaretRight
                 className={cn(
-                  "h-3 w-3 flex-shrink-0 transition-transform",
+                  "h-3 w-3 shrink-0 transition-transform",
                   node.isExpanded && "rotate-90 transform"
                 )}
                 weight="regular"
               />
             )}
             {!hasChildren && <div className="w-3" />}
-            <Icon className="h-4 w-4 flex-shrink-0" weight="regular" />
-            <span className="flex-1 truncate text-left">{node.name}</span>
+            <Icon className="h-4 w-4 shrink-0" weight="regular" />
+            <span className="flex-1 truncate">{node.name}</span>
             {node.type === "file" && node.size && (
-              <span className="flex-shrink-0 text-muted-foreground text-xs">
+              <span className="shrink-0 text-muted-foreground text-xs">
                 {formatFileSize(node.size)}
               </span>
             )}
-          </button>
+          </div>
           {node.isExpanded && node.children && (
             <div>{renderFileTree(node.children, level + 1)}</div>
           )}
@@ -471,118 +564,9 @@ export const FilesTab: React.FC = () => {
     });
   };
 
-  const renderFileListContent = () => {
-    if (loading && fileTree.length === 0) {
-      return (
-        <div className="py-8 text-center text-muted-foreground text-sm">
-          Loading...
-        </div>
-      );
-    }
-
-    if (fileTree.length === 0) {
-      return (
-        <div className="flex h-full items-center justify-center text-muted-foreground">
-          <div className="text-center">
-            <Folder
-              className="mx-auto mb-2 h-8 w-8 opacity-50"
-              weight="regular"
-            />
-            <p className="text-sm">This folder is empty</p>
-          </div>
-        </div>
-      );
-    }
-
-    return renderFileTree(fileTree);
-  };
-
-  const renderFileEditorContent = () => {
-    if (!selectedFile) {
-      return null;
-    }
-
-    if (!isEditableFile(selectedFile)) {
-      return (
-        <div className="flex h-full items-center justify-center text-muted-foreground">
-          <div className="text-center">
-            <File
-              className="mx-auto mb-3 h-12 w-12 opacity-50"
-              weight="regular"
-            />
-            <p className="text-sm">This file type cannot be edited</p>
-            <p className="mt-1 text-xs">Use an external editor for this file</p>
-          </div>
-        </div>
-      );
-    }
-
-    if (loading) {
-      return (
-        <div className="py-8 text-center text-muted-foreground text-sm">
-          Loading file...
-        </div>
-      );
-    }
-
-    return (
-      <TipTapEditor
-        className="min-h-full"
-        content={fileContent}
-        onChange={setFileContent}
-        placeholder="File content..."
-      />
-    );
-  };
-
-  const renderEditorHeader = () => {
-    if (!selectedFile) {
-      return null;
-    }
-    const SelectedFileIconComponent = getFileIcon(selectedFile);
-
-    return (
-      <div className="flex items-center justify-between border-b bg-background p-3">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <SelectedFileIconComponent
-            className="h-4 w-4 flex-shrink-0 text-muted-foreground"
-            weight="regular"
-          />
-          <div className="min-w-0">
-            <div className="truncate font-medium text-sm">
-              {selectedFile.name}
-            </div>
-            <div className="truncate text-muted-foreground text-xs">
-              {selectedFile.path}
-            </div>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          {isEditableFile(selectedFile) && (
-            <Button
-              disabled={saving}
-              onClick={handleSave}
-              size="sm"
-              type="button"
-              variant="outline"
-            >
-              <FloppyDisk className="mr-1 h-4 w-4" weight="regular" />
-              {saving ? "Saving..." : "Save"}
-            </Button>
-          )}
-          <Button
-            onClick={handleDelete}
-            size="sm"
-            type="button"
-            variant="destructive"
-          >
-            <Trash className="mr-1 h-4 w-4" weight="regular" />
-            Delete
-          </Button>
-        </div>
-      </div>
-    );
-  };
+  const SelectedFileIconComponent = selectedFile
+    ? getFileIcon(selectedFile)
+    : File;
 
   // Show loading state while home path is being initialized
   if (homeLoading || !(homeInitialized || homePath)) {
@@ -598,76 +582,127 @@ export const FilesTab: React.FC = () => {
   }
 
   return (
-    <ResizablePanelGroup className="h-full" direction="horizontal">
+    <PanelGroup className="h-full" orientation="horizontal">
       {/* File Tree */}
-      <ResizablePanel
+      <Panel
         className="flex flex-col border-r bg-muted/30"
-        defaultSize={25}
-        maxSize={40}
-        minSize={15}
+        defaultSize={250}
+        maxSize={350}
+        minSize={210}
       >
-        {/* Header with path and create buttons */}
-        <div className="border-b bg-background p-3">
-          <div
-            className="mb-2 truncate text-muted-foreground text-xs"
-            title={rootPath}
-          >
-            {rootPath}
+        <div className="flex h-full flex-col overflow-hidden">
+          {/* Header with path and create buttons */}
+          <div className="border-b bg-background p-3">
+            <div
+              className="mb-2 truncate text-muted-foreground text-xs"
+              title={rootPath}
+            >
+              {rootPath}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                className="flex-1"
+                onClick={handleCreateFile}
+                size="sm"
+                variant="outline"
+              >
+                <Plus className="mr-1 h-3 w-3" weight="regular" />
+                File
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={handleCreateFolder}
+                size="sm"
+                variant="outline"
+              >
+                <Plus className="mr-1 h-3 w-3" weight="regular" />
+                Folder
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Button
-              className="flex-1"
-              onClick={handleCreateFile}
-              size="sm"
-              variant="outline"
-            >
-              <Plus className="mr-1 h-3 w-3" weight="regular" />
-              File
-            </Button>
-            <Button
-              className="flex-1"
-              onClick={handleCreateFolder}
-              size="sm"
-              variant="outline"
-            >
-              <Plus className="mr-1 h-3 w-3" weight="regular" />
-              Folder
-            </Button>
+
+          {/* File List */}
+          <div className="flex-1 overflow-y-auto p-0">
+            <FileListContent
+              fileTree={fileTree}
+              loading={loading}
+              renderFileTree={(nodes, level) => renderFileTree(nodes, level)}
+            />
           </div>
         </div>
+      </Panel>
 
-        {/* File List */}
-        <div className="flex-1 overflow-y-auto p-2">
-          {renderFileListContent()}
-        </div>
-      </ResizablePanel>
-
-      <ResizableHandle withHandle />
+      <PanelResizeHandle />
 
       {/* File Editor / Preview */}
-      <ResizablePanel defaultSize={75} minSize={60}>
-        {selectedFile ? (
-          <div className="flex h-full flex-1 flex-col">
-            {renderEditorHeader()}
+      <Panel defaultSize="75%" minSize="60%">
+        <div className="flex h-full min-w-0 flex-col overflow-hidden">
+          {selectedFile ? (
+            <div className="flex h-full flex-1 flex-col">
+              {/* File Header */}
+              <div className="flex items-center justify-between border-b bg-background p-3">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <SelectedFileIconComponent
+                    className="h-4 w-4 shrink-0 text-muted-foreground"
+                    weight="regular"
+                  />
+                  <div className="min-w-0">
+                    <div className="truncate font-medium text-sm">
+                      {selectedFile.name}
+                    </div>
+                    <div className="truncate text-muted-foreground text-xs">
+                      {selectedFile.path}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {isEditableFile(selectedFile) && (
+                    <Button
+                      disabled={saving}
+                      onClick={handleSave}
+                      size="sm"
+                      variant="outline"
+                    >
+                      <FloppyDisk className="mr-1 h-4 w-4" weight="regular" />
+                      {saving ? "Saving..." : "Save"}
+                    </Button>
+                  )}
+                  <Button
+                    onClick={handleDelete}
+                    size="sm"
+                    variant="destructive"
+                  >
+                    <Trash className="mr-1 h-4 w-4" weight="regular" />
+                    Delete
+                  </Button>
+                </div>
+              </div>
 
-            {/* File Content */}
-            <div className="flex-1 overflow-auto p-4">
-              {renderFileEditorContent()}
+              {/* File Content */}
+              <div className="flex-1 overflow-auto p-4">
+                <FileContent
+                  fileContent={fileContent}
+                  isEditableFile={isEditableFile}
+                  loading={loading}
+                  onContentChange={setFileContent}
+                  selectedFile={selectedFile}
+                />
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="flex h-full items-center justify-center text-muted-foreground">
-            <div className="text-center">
-              <File
-                className="mx-auto mb-3 h-12 w-12 opacity-50"
-                weight="regular"
-              />
-              <p>Select a file to view or edit</p>
+          ) : (
+            <div className="flex h-full items-center justify-center text-muted-foreground">
+              <div className="text-center">
+                <File
+                  className="mx-auto mb-3 h-12 w-12 opacity-50"
+                  weight="regular"
+                />
+                <p>Select a file to view or edit</p>
+              </div>
             </div>
-          </div>
-        )}
-      </ResizablePanel>
-    </ResizablePanelGroup>
+          )}
+        </div>
+      </Panel>
+    </PanelGroup>
   );
 };
 

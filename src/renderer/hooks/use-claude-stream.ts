@@ -8,7 +8,6 @@ import {
   isStreamingAtom,
   isThinkingAtom,
   lastQueryCostAtom,
-  type SessionMessage,
   streamingErrorAtom,
   streamingMessageAtom,
   thinkingStartTimeAtom,
@@ -188,291 +187,8 @@ export const useClaudeStream = (processId: string | null) => {
 
   // Use ref to track current streaming content without stale closure issues
   const streamingContentRef = useRef<string>("");
-  // Track pending update to debounce rapid consecutive updates
-  const pendingUpdateRef = useRef<NodeJS.Timeout | null>(null);
-
-  const handleSessionCreated = useCallback(
-    (eventData: SDKEventData) => {
-      console.log("[useClaudeStream] Session created:", eventData);
-      setActiveSessions((prev) => {
-        const newMap = new Map(prev);
-        newMap.set(eventData.processId, {
-          processId: eventData.processId,
-          sessionId: eventData.sessionId || null,
-          projectPath: eventData.projectPath || "",
-          projectName: eventData.projectName || "",
-          createdAt: eventData.createdAt || new Date().toISOString(),
-          isStreaming: true,
-        });
-        return newMap;
-      });
-    },
-    [setActiveSessions]
-  );
-
-  const handleSessionReady = useCallback(
-    (eventData: SDKEventData) => {
-      console.log("[useClaudeStream] Session ready:", eventData);
-      setActiveSessions((prev) => {
-        const newMap = new Map(prev);
-        const existing = newMap.get(eventData.processId);
-        if (existing) {
-          newMap.set(eventData.processId, {
-            ...existing,
-            sessionId: eventData.sessionId || null,
-          });
-        }
-        return newMap;
-      });
-
-      // Update current session ID if this is the active process
-      if (eventData.processId === processId) {
-        setCurrentSessionId(eventData.sessionId || null);
-      }
-    },
-    [processId, setActiveSessions, setCurrentSessionId]
-  );
-
-  const handleChunk = useCallback(
-    (eventData: SDKEventData) => {
-      const content = eventData.content || "";
-      if (content) {
-        // We have text content - we're no longer just "thinking"
-        setIsThinking(false);
-        streamingContentRef.current += content;
-
-        // Update immediately for real-time streaming feel
-        if (pendingUpdateRef.current) {
-          clearTimeout(pendingUpdateRef.current);
-        }
-        pendingUpdateRef.current = setTimeout(() => {
-          setStreamingMessage(streamingContentRef.current);
-          pendingUpdateRef.current = null;
-        }, 8);
-
-        setIsStreaming(true);
-      }
-    },
-    [setIsThinking, setStreamingMessage, setIsStreaming]
-  );
-
-  const handleAssistant = useCallback(
-    (eventData: SDKEventData) => {
-      console.log(
-        "[useClaudeStream] Assistant message received:",
-        eventData.message
-      );
-      setIsThinking(false);
-      const content = extractAssistantContent(eventData.message);
-      console.log("[useClaudeStream] Extracted content:", content);
-      if (content) {
-        // Finalize streaming content first if there is any
-        if (streamingContentRef.current) {
-          streamingContentRef.current = "";
-          setStreamingMessage("");
-        }
-        setMessages((prev) => [
-          ...prev,
-          {
-            type: "assistant",
-            content,
-            messageId: eventData.uuid || `msg-${Date.now()}`,
-            timestamp: new Date().toISOString(),
-            status: "complete",
-          } as SessionMessage,
-        ]);
-      }
-    },
-    [setIsThinking, setStreamingMessage, setMessages]
-  );
-
-  const handleResult = useCallback(
-    (eventData: SDKEventData) => {
-      console.log("[useClaudeStream] Result received:", {
-        subtype: eventData.subtype,
-        isError: eventData.isError,
-        result: eventData.result,
-        errors: eventData.errors,
-      });
-
-      // Clear thinking state
-      setIsThinking(false);
-      setThinkingStartTime(null);
-
-      // Track cost if available
-      if (eventData.totalCostUsd !== undefined) {
-        setLastQueryCost(eventData.totalCostUsd);
-      }
-
-      // Finalize any remaining streaming content
-      if (streamingContentRef.current) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            type: "assistant",
-            content: streamingContentRef.current,
-            messageId: eventData.uuid || `msg-${Date.now()}`,
-            timestamp: new Date().toISOString(),
-            status: "complete",
-          } as SessionMessage,
-        ]);
-        streamingContentRef.current = "";
-        setStreamingMessage("");
-      }
-
-      // Handle errors from result
-      if (eventData.isError && eventData.errors?.length) {
-        const errorText = eventData.errors?.join("\n") || "Unknown error";
-        setStreamingError(errorText);
-        setCompletionStatus("error");
-        setMessages((prev) => [
-          ...prev,
-          {
-            type: "system",
-            content: `Error: ${errorText}`,
-            messageId: `error-${Date.now()}`,
-            timestamp: new Date().toISOString(),
-            status: "error",
-          } as SessionMessage,
-        ]);
-      } else if (eventData.subtype === "success") {
-        // Successful completion
-        setCompletionStatus("success");
-        setStreamingError(null);
-      }
-
-      setIsStreaming(false);
-
-      // Update active session streaming state
-      if (processId) {
-        setActiveSessions((prev) => {
-          const newMap = new Map(prev);
-          const existing = newMap.get(processId);
-          if (existing) {
-            newMap.set(processId, { ...existing, isStreaming: false });
-          }
-          return newMap;
-        });
-      }
-    },
-    [
-      processId,
-      setIsThinking,
-      setThinkingStartTime,
-      setLastQueryCost,
-      setMessages,
-      setStreamingMessage,
-      setStreamingError,
-      setCompletionStatus,
-      setIsStreaming,
-      setActiveSessions,
-    ]
-  );
-
-  const handleSystem = useCallback(
-    (eventData: SDKEventData) => {
-      if (eventData.subtype === "init") {
-        // Starting a new query - set thinking state
-        setIsStreaming(true);
-        setIsThinking(true);
-        setThinkingStartTime(Date.now());
-        setStreamingError(null);
-        setCompletionStatus("idle");
-        streamingContentRef.current = "";
-        setStreamingMessage("");
-
-        // Update active session streaming state
-        if (processId) {
-          setActiveSessions((prev) => {
-            const newMap = new Map(prev);
-            const existing = newMap.get(processId);
-            if (existing) {
-              newMap.set(processId, { ...existing, isStreaming: true });
-            }
-            return newMap;
-          });
-        }
-      }
-    },
-    [
-      processId,
-      setIsStreaming,
-      setIsThinking,
-      setThinkingStartTime,
-      setStreamingError,
-      setCompletionStatus,
-      setStreamingMessage,
-      setActiveSessions,
-    ]
-  );
-
-  const handleComplete = useCallback(
-    (eventData: SDKEventData) => {
-      setIsThinking(false);
-      setThinkingStartTime(null);
-
-      // Finalize any remaining streaming content
-      if (streamingContentRef.current) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            type: "assistant",
-            content: streamingContentRef.current,
-            messageId: `msg-${Date.now()}`,
-            timestamp: new Date().toISOString(),
-            status: "complete",
-          } as SessionMessage,
-        ]);
-        streamingContentRef.current = "";
-        setStreamingMessage("");
-      }
-      setIsStreaming(false);
-
-      // If code is non-zero, mark as partial/error completion
-      const code = eventData.code as number | undefined;
-      if (code && code !== 0) {
-        setCompletionStatus("partial");
-      }
-    },
-    [
-      setIsThinking,
-      setThinkingStartTime,
-      setMessages,
-      setStreamingMessage,
-      setIsStreaming,
-      setCompletionStatus,
-    ]
-  );
-
-  const handleError = useCallback(
-    (eventData: SDKEventData) => {
-      const errorContent = eventData.content || "Unknown error";
-      console.error("[useClaudeStream] Claude process error:", errorContent);
-      setIsStreaming(false);
-      setIsThinking(false);
-      setThinkingStartTime(null);
-      setStreamingError(errorContent);
-      setCompletionStatus("error");
-      setMessages((prev) => [
-        ...prev,
-        {
-          type: "system",
-          content: `Error: ${errorContent}`,
-          messageId: `error-${Date.now()}`,
-          timestamp: new Date().toISOString(),
-          status: "error",
-        } as SessionMessage,
-      ]);
-    },
-    [
-      setIsStreaming,
-      setIsThinking,
-      setThinkingStartTime,
-      setStreamingError,
-      setCompletionStatus,
-      setMessages,
-    ]
-  );
+  // Use ref to track RAF for smooth updates
+  const rafRef = useRef<number | null>(null);
 
   const handleMessage = useCallback(
     (_event: unknown, data: IPCMessageWrapper) => {
@@ -489,25 +205,91 @@ export const useClaudeStream = (processId: string | null) => {
       switch (eventData.type) {
         // Session created event
         case "session_created": {
-          handleSessionCreated(eventData);
+          console.log("[useClaudeStream] Session created:", eventData);
+          setActiveSessions((prev) => {
+            const newMap = new Map(prev);
+            newMap.set(eventData.processId, {
+              processId: eventData.processId,
+              sessionId: eventData.sessionId || null,
+              projectPath: eventData.projectPath || "",
+              projectName: eventData.projectName || "",
+              createdAt: eventData.createdAt || new Date().toISOString(),
+              isStreaming: true,
+            });
+            return newMap;
+          });
           break;
         }
 
         // Session ready event (when we have the session ID)
         case "session_ready": {
-          handleSessionReady(eventData);
+          console.log("[useClaudeStream] Session ready:", eventData);
+          setActiveSessions((prev) => {
+            const newMap = new Map(prev);
+            const existing = newMap.get(eventData.processId);
+            if (existing) {
+              newMap.set(eventData.processId, {
+                ...existing,
+                sessionId: eventData.sessionId || null,
+              });
+            }
+            return newMap;
+          });
+
+          // Update current session ID if this is the active process
+          if (eventData.processId === processId) {
+            setCurrentSessionId(eventData.sessionId || null);
+          }
           break;
         }
 
         // Legacy chunk events (for backwards compatibility)
         case "chunk": {
-          handleChunk(eventData);
+          const content = eventData.content || "";
+          if (content) {
+            // We have text content - we're no longer just "thinking"
+            setIsThinking(false);
+            streamingContentRef.current += content;
+
+            // Use requestAnimationFrame for smooth UI updates
+            if (rafRef.current === null) {
+              rafRef.current = requestAnimationFrame(() => {
+                setStreamingMessage(streamingContentRef.current);
+                rafRef.current = null;
+              });
+            }
+
+            setIsStreaming(true);
+          }
           break;
         }
 
         // SDK assistant message (complete message with content blocks)
         case "assistant": {
-          handleAssistant(eventData);
+          console.log(
+            "[useClaudeStream] Assistant message received:",
+            eventData.message
+          );
+          setIsThinking(false);
+          const content = extractAssistantContent(eventData.message);
+          console.log("[useClaudeStream] Extracted content:", content);
+          if (content) {
+            // Finalize streaming content first if there is any
+            if (streamingContentRef.current) {
+              streamingContentRef.current = "";
+              setStreamingMessage("");
+            }
+            setMessages((prev) => [
+              ...prev,
+              {
+                type: "assistant",
+                content,
+                messageId: eventData.uuid || `msg-${Date.now()}`,
+                timestamp: new Date().toISOString(),
+                status: "complete",
+              },
+            ]);
+          }
           break;
         }
 
@@ -519,48 +301,176 @@ export const useClaudeStream = (processId: string | null) => {
 
         // SDK result message (session complete)
         case "result": {
-          handleResult(eventData);
+          console.log("[useClaudeStream] Result received:", {
+            subtype: eventData.subtype,
+            isError: eventData.isError,
+            result: eventData.result,
+            errors: eventData.errors,
+          });
+
+          // Clear thinking state
+          setIsThinking(false);
+          setThinkingStartTime(null);
+
+          // Track cost if available
+          if (eventData.totalCostUsd !== undefined) {
+            setLastQueryCost(eventData.totalCostUsd);
+          }
+
+          // Finalize any remaining streaming content
+          if (streamingContentRef.current) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                type: "assistant",
+                content: streamingContentRef.current,
+                messageId: eventData.uuid || `msg-${Date.now()}`,
+                timestamp: new Date().toISOString(),
+                status: "complete",
+              },
+            ]);
+            streamingContentRef.current = "";
+            setStreamingMessage("");
+          }
+
+          // Handle errors from result
+          if (eventData.isError && eventData.errors?.length) {
+            const errorText = eventData.errors?.join("\n") || "Unknown error";
+            setStreamingError(errorText);
+            setCompletionStatus("error");
+            setMessages((prev) => [
+              ...prev,
+              {
+                type: "system",
+                content: `Error: ${errorText}`,
+                messageId: `error-${Date.now()}`,
+                timestamp: new Date().toISOString(),
+                status: "error",
+              },
+            ]);
+          } else if (eventData.subtype === "success") {
+            // Successful completion
+            setCompletionStatus("success");
+            setStreamingError(null);
+          }
+
+          setIsStreaming(false);
+
+          // Update active session streaming state
+          if (processId) {
+            setActiveSessions((prev) => {
+              const newMap = new Map(prev);
+              const existing = newMap.get(processId);
+              if (existing) {
+                newMap.set(processId, { ...existing, isStreaming: false });
+              }
+              return newMap;
+            });
+          }
           break;
         }
 
         // SDK system message (init, etc.)
         case "system": {
-          handleSystem(eventData);
+          if (eventData.subtype === "init") {
+            // Starting a new query - set thinking state
+            setIsStreaming(true);
+            setIsThinking(true);
+            setThinkingStartTime(Date.now());
+            setStreamingError(null);
+            setCompletionStatus("idle");
+            streamingContentRef.current = "";
+            setStreamingMessage("");
+
+            // Update active session streaming state
+            if (processId) {
+              setActiveSessions((prev) => {
+                const newMap = new Map(prev);
+                const existing = newMap.get(processId);
+                if (existing) {
+                  newMap.set(processId, { ...existing, isStreaming: true });
+                }
+                return newMap;
+              });
+            }
+          }
           break;
         }
 
         // Process complete
         case "complete": {
-          handleComplete(eventData);
+          setIsThinking(false);
+          setThinkingStartTime(null);
+
+          // Finalize any remaining streaming content
+          if (streamingContentRef.current) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                type: "assistant",
+                content: streamingContentRef.current,
+                messageId: `msg-${Date.now()}`,
+                timestamp: new Date().toISOString(),
+                status: "complete",
+              },
+            ]);
+            streamingContentRef.current = "";
+            setStreamingMessage("");
+          }
+          setIsStreaming(false);
+
+          // If code is non-zero, mark as partial/error completion
+          const code = eventData.code as number | undefined;
+          if (code && code !== 0) {
+            setCompletionStatus("partial");
+          }
           break;
         }
 
         // Error handling
         case "error": {
-          handleError(eventData);
+          const errorContent = eventData.content || "Unknown error";
+          console.error(
+            "[useClaudeStream] Claude process error:",
+            errorContent
+          );
+          setIsStreaming(false);
+          setIsThinking(false);
+          setThinkingStartTime(null);
+          setStreamingError(errorContent);
+          setCompletionStatus("error");
+          setMessages((prev) => [
+            ...prev,
+            {
+              type: "system",
+              content: `Error: ${errorContent}`,
+              messageId: `error-${Date.now()}`,
+              timestamp: new Date().toISOString(),
+              status: "error",
+            },
+          ]);
           break;
         }
 
         default: {
-          console.warn(
-            `[useClaudeStream] Unhandled event type: ${eventData.type}`
-          );
+          // Ignore unhandled event types
           break;
         }
       }
     },
     [
       processId,
-      handleSessionCreated,
-      handleSessionReady,
-      handleChunk,
-      handleAssistant,
-      handleResult,
-      handleSystem,
-      handleComplete,
-      handleError,
+      setMessages,
+      setStreamingMessage,
+      setIsStreaming,
+      setStreamingError,
+      setIsThinking,
+      setThinkingStartTime,
+      setCompletionStatus,
+      setLastQueryCost,
       currentSessionId,
       setCurrentSessionId,
+      setActiveSessions,
     ]
   );
 
@@ -603,10 +513,10 @@ export const useClaudeStream = (processId: string | null) => {
 
     // Cleanup listener on unmount or processId change
     return () => {
-      // Cancel any pending update
-      if (pendingUpdateRef.current !== null) {
-        clearTimeout(pendingUpdateRef.current);
-        pendingUpdateRef.current = null;
+      // Cancel any pending RAF
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
       }
 
       // Remove active session tracking

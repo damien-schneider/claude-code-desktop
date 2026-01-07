@@ -286,7 +286,7 @@ export const QuickOpenDialog: React.FC<QuickOpenDialogProps> = ({
                       onMouseEnter={() => setSelectedIndex(index)}
                       type="button"
                     >
-                      <Icon className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                      <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
                       <div className="min-w-0 flex-1">
                         <div className="truncate font-medium text-sm">
                           {item.label}

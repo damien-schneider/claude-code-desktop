@@ -1,11 +1,11 @@
 import { CaretLeft, ChatCircle } from "@phosphor-icons/react";
 import { useAtom, useSetAtom } from "jotai";
-import React from "react";
+import { type FC, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
+  Panel,
+  PanelGroup,
+  PanelResizeHandle,
 } from "@/components/ui/resizable";
 import {
   activeProcessIdAtom,
@@ -22,38 +22,39 @@ export interface ChatLayoutProps {
   className?: string;
 }
 
-export const ChatLayout: React.FC<ChatLayoutProps> = ({ className }) => {
+export const ChatLayout: FC<ChatLayoutProps> = ({ className }) => {
   const [currentSessionId] = useAtom(currentSessionIdAtom);
   const [activeProcessId] = useAtom(activeProcessIdAtom);
   const loadSessions = useSetAtom(loadSessionsAtom);
 
   // Load sessions on mount
-  React.useEffect(() => {
+  useEffect(() => {
     loadSessions();
   }, [loadSessions]);
 
   return (
-    <ResizablePanelGroup
-      className={cn("h-full", className)}
-      direction="horizontal"
-    >
+    <PanelGroup className={cn("h-full", className)} orientation="horizontal">
       {/* Chat Area (Left/Center) */}
-      <ResizablePanel defaultSize={70} minSize={30}>
-        {currentSessionId || activeProcessId ? <ChatArea /> : <EmptyState />}
-      </ResizablePanel>
+      <Panel defaultSize="70%" minSize="30%">
+        <div className="h-full min-w-0 overflow-hidden">
+          {currentSessionId || activeProcessId ? <ChatArea /> : <EmptyState />}
+        </div>
+      </Panel>
 
-      <ResizableHandle withHandle />
+      <PanelResizeHandle />
 
       {/* Session Sidebar (Right) */}
-      <ResizablePanel defaultSize={30} maxSize={40} minSize={15}>
-        <SessionSidebar className="w-full" />
-      </ResizablePanel>
-    </ResizablePanelGroup>
+      <Panel defaultSize={250} maxSize={350} minSize={210}>
+        <div className="h-full min-w-0 overflow-hidden">
+          <SessionSidebar className="w-full" />
+        </div>
+      </Panel>
+    </PanelGroup>
   );
 };
 
 // Empty State Component
-const EmptyState: React.FC = () => {
+const EmptyState: FC = () => {
   const [selectedProjectId] = useAtom(selectedProjectIdAtom);
   const startNewSession = useSetAtom(startNewSessionAtom);
 

@@ -1,9 +1,9 @@
-export { ChatArea } from "./ChatArea";
-export type { ChatLayoutProps } from "./ChatLayout";
-export { ChatLayout } from "./ChatLayout";
+export { ChatArea } from "./chat-area";
+export type { ChatLayoutProps } from "./chat-layout";
+export { ChatLayout } from "./chat-layout";
 export type {
   PermissionMode,
   PermissionModeSelectorProps,
-} from "./PermissionModeSelector";
-export { PermissionModeSelector } from "./PermissionModeSelector";
-export { SessionSidebar } from "./SessionSidebar";
+} from "./permission-mode-selector";
+export { PermissionModeSelector } from "./permission-mode-selector";
+export { SessionSidebar } from "./session-sidebar";

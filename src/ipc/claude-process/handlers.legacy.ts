@@ -8,10 +8,12 @@ import { ipcContext } from "@/ipc/context";
 
 const execAsync = promisify(exec);
 
+const PERMISSION_MODE_REGEX = /--permission-mode.*?choices:\s*([^)]+)\)/;
+
 /**
  * Send event to renderer process via webContents
  */
-function sendToRenderer(event: string, data: any) {
+function sendToRenderer(event: string, data: unknown) {
   // Get the main window from the IPC context
   const window = ipcContext.mainWindow;
   if (window?.webContents) {
@@ -88,7 +90,7 @@ async function getClaudePath(): Promise<string> {
  * Store active claude CLI processes
  * Key: processId, Value: ChildProcess
  */
-const activeProcesses = new Map<string, any>();
+const activeProcesses = new Map<string, ReturnType<typeof spawn>>();
 
 /**
  * Permission modes for Claude Code sessions
@@ -124,7 +126,7 @@ export const getPermissionModes = os.handler(async () => {
 
     // Parse the permission mode choices from help output
     // Format: --permission-mode <mode> ... (choices: "mode1", "mode2", ...)
-    const match = stdout.match(/--permission-mode.*?choices:\s*([^)]+)\)/);
+    const match = stdout.match(PERMISSION_MODE_REGEX);
 
     if (match?.[1]) {
       // Parse the choices and clean up quotes
@@ -169,16 +171,6 @@ export const getPermissionModes = os.handler(async () => {
  * Event emitter for streaming messages to renderer
  */
 export const processEvents = new EventEmitter();
-
-/**
- * Permission modes for Claude Code sessions
- * Reference: https://github.com/anthropics/claude-code/issues/6227
- */
-export type PermissionMode =
-  | "default"
-  | "plan"
-  | "acceptEdits"
-  | "bypassPermissions";
 
 /**
  * Start a new Claude CLI session
@@ -310,14 +302,14 @@ export const sendMessage = os
       message: z.string(),
     })
   )
-  .handler(async ({ input: { processId, message } }) => {
+  .handler(({ input: { processId, message } }) => {
     const claude = activeProcesses.get(processId);
 
     if (!claude) {
       throw new Error(`Process not found: ${processId}`);
     }
 
-    if (!claude.stdin.writable) {
+    if (!claude.stdin?.writable) {
       throw new Error(`Process stdin is not writable: ${processId}`);
     }
 
@@ -342,7 +334,7 @@ export const stopClaudeSession = os
       processId: z.string(),
     })
   )
-  .handler(async ({ input: { processId } }) => {
+  .handler(({ input: { processId } }) => {
     const claude = activeProcesses.get(processId);
 
     if (claude) {

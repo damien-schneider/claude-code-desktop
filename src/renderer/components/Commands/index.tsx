@@ -613,7 +613,7 @@ Add your command instructions here.
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
                               <Code
-                                className="h-3 w-3 flex-shrink-0"
+                                className="h-3 w-3 shrink-0"
                                 weight="regular"
                               />
                               <span className="truncate font-medium text-sm">
@@ -621,12 +621,12 @@ Add your command instructions here.
                               </span>
                               {isValid ? (
                                 <CheckCircle
-                                  className="h-3 w-3 flex-shrink-0 text-green-500"
+                                  className="h-3 w-3 shrink-0 text-green-500"
                                   weight="regular"
                                 />
                               ) : (
                                 <WarningCircle
-                                  className="h-3 w-3 flex-shrink-0 text-red-500"
+                                  className="h-3 w-3 shrink-0 text-red-500"
                                   weight="regular"
                                 />
                               )}
@@ -822,7 +822,7 @@ Add your command instructions here.
       {error && (
         <div className="mx-4 mt-4 flex items-start gap-3 rounded-md border border-red-500/20 bg-red-500/10 p-3">
           <WarningCircle
-            className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600"
+            className="mt-0.5 h-5 w-5 shrink-0 text-red-600"
             weight="regular"
           />
           <p className="text-red-700 text-sm">{error}</p>

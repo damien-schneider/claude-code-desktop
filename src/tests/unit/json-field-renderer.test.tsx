@@ -12,7 +12,7 @@ vi.mock("@/ipc/manager", () => ({
 }));
 
 import { fireEvent, render, screen } from "@testing-library/react";
-import { JsonFieldRenderer } from "@/renderer/components/Settings/json-field-renderer";
+import { JsonFieldRenderer } from "@/renderer/components/settings/json-field-renderer";
 
 describe("JsonFieldRenderer", () => {
   it("should render string field with input", () => {

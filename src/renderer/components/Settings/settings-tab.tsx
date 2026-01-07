@@ -1,156 +1,147 @@
-import { FloppyDisk, Gear, Spinner } from "@phosphor-icons/react";
-import { useAtom } from "jotai";
-import type React from "react";
-import { useEffect, useState } from "react";
+import { ArrowsClockwise, FloppyDisk } from "@phosphor-icons/react";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { ipc } from "@/ipc/manager";
-import { activePathAtom } from "@/renderer/stores";
-import { ModeToggle } from "./mode-toggle";
-import { SettingsForm } from "./settings-form";
-import { SettingsJSONEditor } from "./settings-json-editor";
-import type { ClaudeSettings, EditorMode } from "./settings-types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CodeEditor } from "@/renderer/components/code-editor";
 
-/**
- * Settings Tab - Form and JSON editors for settings.json
- */
 export const SettingsTab: React.FC = () => {
-  const [activePath] = useAtom(activePathAtom);
-  const [mode, setMode] = useState<EditorMode>("form");
-  const [settings, setSettings] = useState<ClaudeSettings>({});
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [activeSection, setActiveSection] = useState<
-    "permissions" | "mcp" | "hooks" | "env" | "plugins" | "advanced"
-  >("permissions");
+  const [settings, setSettings] = React.useState<{
+    allowedTools: string[];
+    modelPreferences: Record<string, string>;
+    theme: "light" | "dark" | "system";
+  }>({
+    allowedTools: [],
+    modelPreferences: {},
+    theme: "system",
+  });
 
-  // Load settings.json when activePath changes
-  useEffect(() => {
-    if (!activePath) {
-      setSettings({});
-      return;
-    }
+  const [settingsJson, setSettingsJson] = React.useState(
+    '{\n  "allowedTools": [],\n  "modelPreferences": {},\n  "theme": "system"\n}'
+  );
 
-    const loadSettings = async () => {
-      setLoading(true);
-      try {
-        const settingsPath = `${activePath}/.claude/settings.json`;
-        const result = await ipc.client.claude.readFileContent({
-          filePath: settingsPath,
-        });
-        if (result.exists && result.content) {
-          const parsed = JSON.parse(result.content);
-          setSettings(parsed);
-        }
-      } catch (error) {
-        console.error("Failed to load settings:", error);
-        setSettings({});
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadSettings();
-  }, [activePath]);
-
-  const handleSave = async () => {
-    if (!activePath) {
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const settingsPath = `${activePath}/.claude/settings.json`;
-      const result = await ipc.client.claude.writeFileContent({
-        filePath: settingsPath,
-        content: JSON.stringify(settings, null, 2),
-      });
-
-      if (result.success) {
-        console.log("Settings saved successfully");
-      } else {
-        console.error("Failed to save settings:", result.error);
-      }
-    } catch (error) {
-      console.error("Failed to save settings:", error);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <Spinner
-            className="mx-auto mb-2 h-8 w-8 animate-spin"
-            weight="regular"
-          />
-          <p className="text-muted-foreground text-sm">Loading settings...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!activePath) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <Gear
-            className="mx-auto mb-3 h-12 w-12 opacity-50"
-            weight="regular"
-          />
-          <p className="text-muted-foreground">
-            Select a project or workspace to edit settings
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const handleSave = () => console.log("Saving settings...");
+  const handleReload = () => console.log("Reloading settings...");
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b bg-background p-4">
-        <div className="flex items-center gap-2">
-          <Gear className="h-5 w-5" weight="regular" />
-          <div>
-            <h3 className="font-semibold">Settings</h3>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <ModeToggle mode={mode} onChange={setMode} />
-          <Button disabled={saving} onClick={handleSave} size="sm">
-            {saving ? (
-              <>
-                <Spinner
-                  className="mr-1 h-4 w-4 animate-spin"
-                  weight="regular"
-                />
-                Saving...
-              </>
-            ) : (
-              <>
-                <FloppyDisk className="mr-1 h-4 w-4" weight="regular" />
-                Save
-              </>
-            )}
+    <div className="p-4">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="font-semibold text-lg">Settings</h3>
+        <div className="flex gap-2">
+          <Button onClick={handleReload} size="sm" variant="outline">
+            <ArrowsClockwise className="mr-1 h-4 w-4" weight="regular" />
+            Reload
+          </Button>
+          <Button onClick={handleSave} size="sm">
+            <FloppyDisk className="mr-1 h-4 w-4" weight="regular" />
+            Save
           </Button>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-auto p-4">
-        {mode === "form" ? (
-          <SettingsForm
-            activeSection={activeSection}
-            onChange={setSettings}
-            onSectionChange={setActiveSection}
-            settings={settings}
-          />
-        ) : (
-          <SettingsJSONEditor onChange={setSettings} settings={settings} />
-        )}
+      <div className="grid h-[calc(100vh-200px)] grid-cols-1 gap-6 lg:grid-cols-2">
+        <Card className="flex flex-col">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">settings.json</CardTitle>
+          </CardHeader>
+          <CardContent className="flex-1">
+            <CodeEditor
+              height="100%"
+              language="json"
+              onChange={(value) => setSettingsJson(value || "")}
+              value={settingsJson}
+            />
+          </CardContent>
+        </Card>
+
+        <Card className="overflow-y-auto">
+          <CardHeader>
+            <CardTitle className="text-base">Configuration</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div>
+                <label
+                  className="mb-2 block font-medium text-sm"
+                  htmlFor="theme-select"
+                >
+                  Theme
+                </label>
+                <select
+                  className="w-full rounded-md border bg-background px-3 py-2"
+                  id="theme-select"
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      theme: e.target.value as "light" | "dark" | "system",
+                    })
+                  }
+                  value={settings.theme}
+                >
+                  <option value="system">System</option>
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                </select>
+              </div>
+
+              <div>
+                <span className="mb-2 block font-medium text-sm">
+                  Allowed Tools
+                </span>
+                <Card>
+                  <CardContent className="min-h-[100px] p-3">
+                    {settings.allowedTools.length === 0 ? (
+                      <p className="text-muted-foreground text-sm">
+                        No tools specified (all tools allowed)
+                      </p>
+                    ) : (
+                      <div className="space-y-1">
+                        {settings.allowedTools.map((tool) => (
+                          <div
+                            className="flex items-center gap-2 text-sm"
+                            key={tool}
+                          >
+                            <span className="rounded bg-muted px-2 py-1 font-mono text-xs">
+                              {tool}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div>
+                <span className="mb-2 block font-medium text-sm">
+                  Model Preferences
+                </span>
+                <Card>
+                  <CardContent className="min-h-[100px] p-3">
+                    {Object.keys(settings.modelPreferences).length === 0 ? (
+                      <p className="text-muted-foreground text-sm">
+                        No model preferences set
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {Object.entries(settings.modelPreferences).map(
+                          ([key, value]) => (
+                            <div className="text-sm" key={key}>
+                              <span className="font-medium">{key}:</span>{" "}
+                              {value}
+                            </div>
+                          )
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 };
+
+export default SettingsTab;

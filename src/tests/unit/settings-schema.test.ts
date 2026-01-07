@@ -89,10 +89,10 @@ describe("modelIdentifierSchema", () => {
       "a".repeat(200),
     ];
 
-    validModels.forEach((model) => {
+    for (const model of validModels) {
       const result = modelIdentifierSchema.safeParse(model);
       expect(result.success).toBe(true);
-    });
+    }
   });
 
   it("should reject empty string", () => {
@@ -164,10 +164,10 @@ describe("envVarValueSchema", () => {
       "special!@#$%^&*()",
     ];
 
-    values.forEach((value) => {
+    for (const value of values) {
       const result = envVarValueSchema.safeParse(value);
       expect(result.success).toBe(true);
-    });
+    }
   });
 });
 
@@ -175,10 +175,10 @@ describe("themeSchema", () => {
   it("should accept all valid theme values", () => {
     const themes = ["light", "dark", "system"] as const;
 
-    themes.forEach((theme) => {
+    for (const theme of themes) {
       const result = themeSchema.safeParse(theme);
       expect(result.success).toBe(true);
-    });
+    }
   });
 
   it("should reject invalid theme values", () => {
@@ -191,10 +191,10 @@ describe("mcpServerTypeSchema", () => {
   it("should accept all valid MCP server types", () => {
     const types = ["stdio", "sse"] as const;
 
-    types.forEach((type) => {
+    for (const type of types) {
       const result = mcpServerTypeSchema.safeParse(type);
       expect(result.success).toBe(true);
-    });
+    }
   });
 
   it("should reject invalid server types", () => {

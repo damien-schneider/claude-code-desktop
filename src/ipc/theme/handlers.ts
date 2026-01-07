@@ -29,6 +29,10 @@ export const setThemeMode = os
       case "system":
         nativeTheme.themeSource = "system";
         break;
+      default: {
+        const exhaustiveCheck: never = mode;
+        throw new Error(`Unhandled theme mode: ${exhaustiveCheck}`);
+      }
     }
 
     return nativeTheme.themeSource;

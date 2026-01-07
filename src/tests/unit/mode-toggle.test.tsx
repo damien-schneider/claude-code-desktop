@@ -35,8 +35,8 @@ describe("ModeToggle", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useSetAtom).mockReturnValue(mockSetAppMode);
-    vi.mocked(useAtom).mockReturnValue(["settings", mockSetAppMode]);
+    (useSetAtom as any).mockReturnValue(mockSetAppMode);
+    (useAtom as any).mockReturnValue(["settings", mockSetAppMode]);
   });
 
   it("should render settings and chat buttons", () => {
@@ -54,7 +54,7 @@ describe("ModeToggle", () => {
   });
 
   it("should highlight settings mode when active", () => {
-    vi.mocked(useAtom).mockReturnValue(["settings", mockSetAppMode]);
+    (useAtom as any).mockReturnValue(["settings", mockSetAppMode]);
 
     const { container } = render(<ModeToggle />);
 
@@ -64,7 +64,7 @@ describe("ModeToggle", () => {
   });
 
   it("should highlight chat mode when active", () => {
-    vi.mocked(useAtom).mockReturnValue(["chat", mockSetAppMode]);
+    (useAtom as any).mockReturnValue(["chat", mockSetAppMode]);
 
     const { container } = render(<ModeToggle />);
 
@@ -129,7 +129,7 @@ describe("ModeToggle", () => {
   });
 
   it("should render both buttons with correct variants in settings mode", () => {
-    vi.mocked(useAtom).mockReturnValue(["settings", mockSetAppMode]);
+    (useAtom as any).mockReturnValue(["settings", mockSetAppMode]);
 
     const { container } = render(<ModeToggle />);
 
@@ -139,7 +139,7 @@ describe("ModeToggle", () => {
   });
 
   it("should render both buttons with correct variants in chat mode", () => {
-    vi.mocked(useAtom).mockReturnValue(["chat", mockSetAppMode]);
+    (useAtom as any).mockReturnValue(["chat", mockSetAppMode]);
 
     const { container } = render(<ModeToggle />);
 

@@ -114,44 +114,12 @@ async function readCommandsDirectory(
     const fullPath = join(claudePath, entry.name);
 
     if (entry.isDirectory()) {
-      // Recurse into subdirectory (e.g., 'git', 'testing')
-      try {
-        const subEntries = await readdir(fullPath, { withFileTypes: true });
-        for (const subEntry of subEntries) {
-          if (subEntry.isFile() && subEntry.name.endsWith(".md")) {
-            const subFilePath = join(fullPath, subEntry.name);
-            try {
-              const content = await readFile(subFilePath, "utf-8");
-              // Command name: "category/command-name"
-              const commandName = `${entry.name}/${subEntry.name.replace(".md", "")}`;
-              files.push({
-                name: commandName,
-                path: subFilePath,
-                type: "file",
-                content,
-                category: entry.name,
-              });
-            } catch {
-              // Skip files that can't be read
-            }
-          }
-        }
-      } catch {
-        // Skip subdirectories that can't be read
-      }
+      const subdirFiles = await readCommandSubdirectory(fullPath, entry.name);
+      files.push(...subdirFiles);
     } else if (entry.isFile() && entry.name.endsWith(".md")) {
-      // Root-level command files (without subfolder)
-      try {
-        const content = await readFile(fullPath, "utf-8");
-        files.push({
-          name: entry.name.replace(".md", ""),
-          path: fullPath,
-          type: "file",
-          content,
-          category: undefined, // No category for root-level commands
-        });
-      } catch {
-        // Skip files that can't be read
+      const rootFile = await readRootCommandFile(fullPath, entry.name);
+      if (rootFile) {
+        files.push(rootFile);
       }
     }
   }
@@ -167,6 +135,64 @@ async function readCommandsDirectory(
     );
   }
   return files;
+}
+
+/**
+ * Read command files from a subdirectory (category)
+ */
+async function readCommandSubdirectory(
+  subdirPath: string,
+  category: string
+): Promise<ClaudeFile[]> {
+  const files: ClaudeFile[] = [];
+
+  try {
+    const subEntries = await readdir(subdirPath, { withFileTypes: true });
+    for (const subEntry of subEntries) {
+      if (subEntry.isFile() && subEntry.name.endsWith(".md")) {
+        const subFilePath = join(subdirPath, subEntry.name);
+        try {
+          const content = await readFile(subFilePath, "utf-8");
+          const commandName = `${category}/${subEntry.name.replace(".md", "")}`;
+          files.push({
+            name: commandName,
+            path: subFilePath,
+            type: "file",
+            content,
+            category,
+          });
+        } catch {
+          // Skip files that can't be read
+        }
+      }
+    }
+  } catch {
+    // Skip subdirectories that can't be read
+  }
+
+  return files;
+}
+
+/**
+ * Read a root-level command file (without category)
+ */
+async function readRootCommandFile(
+  filePath: string,
+  fileName: string
+): Promise<ClaudeFile | null> {
+  try {
+    const content = await readFile(filePath, "utf-8");
+    return {
+      name: fileName.replace(".md", ""),
+      path: filePath,
+      type: "file",
+      content,
+      category: undefined,
+    };
+  } catch {
+    // Skip files that can't be read
+    return null;
+  }
 }
 
 /**
@@ -276,7 +302,13 @@ export async function readClaudeDirectory(
     files = await readCommandsDirectory(claudePath);
   } else if (config.directoryAsItem) {
     // Skills and Agents
-    files = await readItemBasedDirectory(claudePath, config.defaultFileName!);
+    const defaultFileName = config.defaultFileName;
+    if (!defaultFileName) {
+      throw new Error(
+        `Directory type ${type} has directoryAsItem=true but no defaultFileName`
+      );
+    }
+    files = await readItemBasedDirectory(claudePath, defaultFileName);
   } else {
     // Rules and Hooks (flat directories)
     files = await readFlatDirectory(claudePath, config.fileExtensions);

@@ -1,1 +1,1 @@
-export { CommandsTab } from "./CommandsTab";
+export { CommandsTab } from "./commands-tab";

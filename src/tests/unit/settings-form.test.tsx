@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { SettingsForm } from "@/renderer/components/Settings/settings-form";
-import type { ClaudeSettings } from "@/renderer/components/Settings/settings-types";
+import { SettingsForm } from "@/renderer/components/settings/settings-form";
+import type { ClaudeSettings } from "@/renderer/components/settings/settings-types";
 
 describe("SettingsForm", () => {
   const mockSettings: ClaudeSettings = {
@@ -31,8 +31,12 @@ describe("SettingsForm", () => {
     alwaysThinkingEnabled: true,
   };
 
-  const mockOnChange = () => {};
-  const mockOnSectionChange = () => {};
+  const mockOnChange = () => {
+    // Mock function
+  };
+  const mockOnSectionChange = () => {
+    // Mock function
+  };
 
   describe("tab configuration", () => {
     it("should render all 6 tabs", () => {

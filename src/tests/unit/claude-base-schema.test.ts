@@ -53,12 +53,10 @@ describe("Claude Base Schemas", () => {
         if (!result.success) {
           // Check if error exists and has issues
           const hasError =
-            result.error &&
-            ((result.error.issues && result.error.issues.length > 0) ||
-              (result.error.errors && result.error.errors.length > 0));
+            result.error?.issues && result.error.issues.length > 0;
 
           if (hasError) {
-            const issues = result.error.issues || result.error.errors || [];
+            const issues = result.error.issues;
             const errorMessage = issues[0]?.message || "";
             expect(errorMessage).toMatch(new RegExp(expectedError, "i"));
           }
@@ -146,13 +144,13 @@ describe("Claude Base Schemas", () => {
     ];
 
     it("should accept all valid model names", () => {
-      validModels.forEach((model) => {
+      for (const model of validModels) {
         const result = claudeModelSchema.safeParse(model);
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.data).toBe(model);
         }
-      });
+      }
     });
 
     it("should reject invalid model names", () => {
@@ -164,10 +162,10 @@ describe("Claude Base Schemas", () => {
         "",
       ];
 
-      invalidModels.forEach((model) => {
+      for (const model of invalidModels) {
         const result = claudeModelSchema.safeParse(model);
         expect(result.success).toBe(false);
-      });
+      }
     });
   });
 

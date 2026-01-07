@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import type {
   SessionMessage,
   SessionSummary,
-} from "@/renderer/stores/chatAtoms";
+} from "@/renderer/stores/chat-atoms";
 import {
   isSessionMessage,
   isSessionSummary,

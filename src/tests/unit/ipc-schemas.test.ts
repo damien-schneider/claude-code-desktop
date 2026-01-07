@@ -32,10 +32,10 @@ describe("skillNameSchema", () => {
       "test-skill-name",
     ];
 
-    validNames.forEach((name) => {
+    for (const name of validNames) {
       const result = skillNameSchema.safeParse(name);
       expect(result.success).toBe(true);
-    });
+    }
   });
 
   it("should reject names with uppercase letters", () => {
@@ -279,10 +279,10 @@ describe("hookTypeSchema", () => {
       "PostResponse",
     ];
 
-    validTypes.forEach((type) => {
+    for (const type of validTypes) {
       const result = hookTypeSchema.safeParse(type);
       expect(result.success).toBe(true);
-    });
+    }
   });
 
   it("should reject invalid hook types", () => {
@@ -384,10 +384,10 @@ describe("mcpTransportTypeSchema", () => {
   it("should accept all transport types", () => {
     const types = ["stdio", "sse", "websocket"] as const;
 
-    types.forEach((type) => {
+    for (const type of types) {
       const result = mcpTransportTypeSchema.safeParse(type);
       expect(result.success).toBe(true);
-    });
+    }
   });
 
   it("should reject invalid transport types", () => {

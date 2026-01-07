@@ -124,7 +124,7 @@ export const QuickOpenDialog: React.FC<QuickOpenDialogProps> = ({
     const result: QuickOpenItem[] = [];
 
     // Add view navigation items
-    VIEW_ITEMS.forEach((view) => {
+    for (const view of VIEW_ITEMS) {
       if (view.id !== currentView) {
         result.push({
           id: `view-${view.id}`,
@@ -136,7 +136,7 @@ export const QuickOpenDialog: React.FC<QuickOpenDialogProps> = ({
           action: () => setCurrentView(view.id as NavigationView),
         });
       }
-    });
+    }
 
     // Add Global Settings
     if (!isGlobalSettingsSelected) {
@@ -152,7 +152,7 @@ export const QuickOpenDialog: React.FC<QuickOpenDialogProps> = ({
     }
 
     // Add projects
-    projects.forEach((project) => {
+    for (const project of projects) {
       result.push({
         id: `project-${project.path}`,
         type: "project",
@@ -166,7 +166,7 @@ export const QuickOpenDialog: React.FC<QuickOpenDialogProps> = ({
         ],
         action: () => selectProject(project.path),
       });
-    });
+    }
 
     return result;
   }, [
@@ -284,8 +284,9 @@ export const QuickOpenDialog: React.FC<QuickOpenDialogProps> = ({
                         onOpenChange(false);
                       }}
                       onMouseEnter={() => setSelectedIndex(index)}
+                      type="button"
                     >
-                      <Icon className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                      <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
                       <div className="min-w-0 flex-1">
                         <div className="truncate font-medium text-sm">
                           {item.label}

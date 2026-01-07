@@ -114,6 +114,7 @@ export function parseSkillContent(content: string): {
   const body = content.replace(/^---\n[\s\S]*?\n---\n?/, "");
 
   // Simple YAML parser
+  // biome-ignore lint/suspicious/noExplicitAny: Required for JSON schema validation
   const frontmatter: Record<string, any> = {};
 
   const nameMatch = rawFrontmatter.match(/^name:\s*(.+)$/m);
@@ -134,7 +135,12 @@ export function parseSkillContent(content: string): {
     frontmatter.compatibility = compatMatch[1].trim();
   }
 
-  return { frontmatter: frontmatter as any, body, rawFrontmatter };
+  return {
+    // biome-ignore lint/suspicious/noExplicitAny: Required for JSON schema validation
+    frontmatter: frontmatter as any,
+    body,
+    rawFrontmatter,
+  };
 }
 
 /**

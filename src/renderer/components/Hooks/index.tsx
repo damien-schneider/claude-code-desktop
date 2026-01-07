@@ -26,9 +26,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
+  Panel,
+  PanelGroup,
+  PanelResizeHandle,
 } from "@/components/ui/resizable";
 import {
   Select,
@@ -487,7 +487,7 @@ console.log('${hookType} hook executed:', {
       {error && (
         <div className="mx-4 mt-4 flex items-start gap-3 rounded-md border border-red-500/20 bg-red-500/10 p-3">
           <WarningCircle
-            className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600"
+            className="mt-0.5 h-5 w-5 shrink-0 text-red-600"
             weight="regular"
           />
           <p className="text-red-700 text-sm">{error}</p>
@@ -505,12 +505,9 @@ console.log('${hookType} hook executed:', {
 
       {/* Main content */}
       {activePath && (
-        <ResizablePanelGroup
-          className="flex-1 overflow-hidden"
-          direction="horizontal"
-        >
+        <PanelGroup className="flex-1 overflow-hidden" direction="horizontal">
           {/* Hooks List */}
-          <ResizablePanel
+          <Panel
             className="min-w-[200px] border-r bg-muted/30"
             defaultSize={25}
             maxSize={40}
@@ -525,7 +522,7 @@ console.log('${hookType} hook executed:', {
               </div>
             ) : (
               <div className="flex h-full flex-col overflow-hidden">
-                <div className="flex-shrink-0 space-y-1 p-2">
+                <div className="shrink-0 space-y-1 p-2">
                   {/* Add Hook Button / Form */}
                   {isAdding ? (
                     <div className="rounded-md border border-primary/20 bg-primary/10 p-3">
@@ -652,12 +649,12 @@ console.log('${hookType} hook executed:', {
                                 </span>
                                 {isValid ? (
                                   <CheckCircle
-                                    className="h-3 w-3 flex-shrink-0 text-green-500"
+                                    className="h-3 w-3 shrink-0 text-green-500"
                                     weight="regular"
                                   />
                                 ) : (
                                   <WarningCircle
-                                    className="h-3 w-3 flex-shrink-0 text-red-500"
+                                    className="h-3 w-3 shrink-0 text-red-500"
                                     weight="regular"
                                   />
                                 )}
@@ -667,7 +664,7 @@ console.log('${hookType} hook executed:', {
                               </span>
                             </div>
                             <button
-                              className="flex-shrink-0 rounded p-1 hover:bg-background/20"
+                              className="shrink-0 rounded p-1 hover:bg-background/20"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleToggleEnabled(hook.name);
@@ -700,12 +697,12 @@ console.log('${hookType} hook executed:', {
                 )}
               </div>
             )}
-          </ResizablePanel>
+          </Panel>
 
-          <ResizableHandle withHandle />
+          <PanelResizeHandle />
 
           {/* Hook Editor */}
-          <ResizablePanel defaultSize={75} minSize={60}>
+          <Panel defaultSize={75} minSize={60}>
             {selectedHookData ? (
               <div className="flex h-full flex-1 flex-col overflow-hidden">
                 {/* Toolbar */}
@@ -816,8 +813,8 @@ console.log('${hookType} hook executed:', {
                 </div>
               </div>
             )}
-          </ResizablePanel>
-        </ResizablePanelGroup>
+          </Panel>
+        </PanelGroup>
       )}
     </div>
   );

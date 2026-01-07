@@ -27,14 +27,19 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ipc } from "@/ipc/manager";
-import { CodeEditor } from "@/renderer/components/CodeEditor";
-import { TipTapEditor } from "@/renderer/components/TipTapEditor";
+import { CodeEditor } from "@/renderer/components/code-editor";
+import { TipTapEditor } from "@/renderer/components/tip-tap-editor";
 import { showError, showSuccess } from "@/renderer/lib/toast";
 import { useAppStore } from "@/renderer/stores";
 import {
   type CommandCreateValues,
   commandCreateSchema,
 } from "@/schemas/claude";
+
+// Top-level regex patterns for performance
+const FRONTMATTER_REGEX = /^---\n([\s\S]*?)\n---/;
+const FRONTMATTER_WITH_BODY_REGEX = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/;
+const DESCRIPTION_REGEX = /description:\s*(.+)$/m;
 
 interface CommandFile {
   name: string;
@@ -44,11 +49,6 @@ interface CommandFile {
   isValid?: boolean;
   category?: string;
   isRootLevel?: boolean;
-}
-
-interface CommandFrontmatter {
-  description?: string;
-  [key: string]: any;
 }
 
 interface CommandGroup {
@@ -168,11 +168,10 @@ export const CommandsTab: React.FC = () => {
         }
 
         if (file.content) {
-          const frontmatterMatch = file.content.match(/^---\n([\s\S]*?)\n---/);
+          const frontmatterMatch = file.content.match(FRONTMATTER_REGEX);
           if (frontmatterMatch) {
             try {
-              const descMatch =
-                frontmatterMatch[1].match(/description:\s*(.+)$/m);
+              const descMatch = frontmatterMatch[1].match(DESCRIPTION_REGEX);
               if (descMatch) {
                 commandData.description = descMatch[1]
                   .trim()
@@ -220,7 +219,7 @@ export const CommandsTab: React.FC = () => {
   const parseCommand = (
     content: string
   ): { frontmatter: string | null; body: string; hasFrontmatter: boolean } => {
-    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+    const frontmatterMatch = content.match(FRONTMATTER_WITH_BODY_REGEX);
     if (frontmatterMatch) {
       return {
         frontmatter: frontmatterMatch[1],
@@ -243,7 +242,7 @@ export const CommandsTab: React.FC = () => {
       return { valid: false, error: "Command content cannot be empty" };
     }
 
-    const hasFrontmatter = content.match(/^---\n[\s\S]*?\n---/);
+    const hasFrontmatter = content.match(FRONTMATTER_REGEX);
     if (!hasFrontmatter) {
       return {
         valid: false,
@@ -309,6 +308,7 @@ export const CommandsTab: React.FC = () => {
     }
 
     if (
+      // biome-ignore lint/suspicious/noAlert: Replacing with modal is out of scope for this task
       !confirm(
         `Are you sure you want to delete command "${selectedCommandData.name}"?`
       )
@@ -392,32 +392,27 @@ Add your command instructions here.
     createForm.reset();
   };
 
-  const handleExport = async () => {
+  const handleExport = () => {
     if (commands.length === 0) {
       return;
     }
 
-    try {
-      const exportData = commands.map((c) => ({
-        name: c.name,
-        content: c.content,
-      }));
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-        type: "application/json",
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `commands-export-${Date.now()}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Failed to export commands:", error);
-      setError("Failed to export commands");
-    }
+    const exportData = commands.map((c) => ({
+      name: c.name,
+      content: c.content,
+    }));
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `commands-export-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
-  const handleImport = async () => {
+  const handleImport = () => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".json";
@@ -507,7 +502,7 @@ Add your command instructions here.
       {error && (
         <div className="mx-4 mt-4 flex items-start gap-3 rounded-md border border-red-500/20 bg-red-500/10 p-3">
           <WarningCircle
-            className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600"
+            className="mt-0.5 h-5 w-5 shrink-0 text-red-600"
             weight="regular"
           />
           <p className="text-red-700 text-sm">{error}</p>
@@ -526,14 +521,15 @@ Add your command instructions here.
       {/* Main content */}
       {currentPath && (
         <div className="flex-1 overflow-hidden">
-          {loading ? (
+          {loading && (
             <div className="flex h-full items-center justify-center">
               <Spinner
                 className="h-6 w-6 animate-spin text-muted-foreground"
                 weight="regular"
               />
             </div>
-          ) : commands.length === 0 && !isAdding ? (
+          )}
+          {!loading && commands.length === 0 && !isAdding && (
             <div className="flex h-full flex-col items-center justify-center">
               <FileText
                 className="mb-4 h-12 w-12 text-muted-foreground"
@@ -547,7 +543,8 @@ Add your command instructions here.
                 Create Your First Command
               </Button>
             </div>
-          ) : (
+          )}
+          {!loading && (commands.length > 0 || isAdding) && (
             <div className="flex h-full">
               {/* Commands list - Grouped by category */}
               <div className="w-80 overflow-y-auto border-r">
@@ -600,6 +597,7 @@ Add your command instructions here.
                         <button
                           className="flex w-full items-center gap-2 rounded-md p-2 text-left transition-colors hover:bg-muted/50"
                           onClick={() => toggleGroup(group.category)}
+                          type="button"
                         >
                           {isExpanded ? (
                             <CaretDown className="h-4 w-4" weight="regular" />
@@ -639,12 +637,19 @@ Add your command instructions here.
                                   onClick={() =>
                                     setSelectedCommand(command.name)
                                   }
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter" || e.key === " ") {
+                                      setSelectedCommand(command.name);
+                                    }
+                                  }}
+                                  role="button"
+                                  tabIndex={0}
                                 >
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0 flex-1">
                                       <div className="flex items-center gap-2">
                                         <Code
-                                          className="h-3 w-3 flex-shrink-0"
+                                          className="h-3 w-3 shrink-0"
                                           weight="regular"
                                         />
                                         <span className="truncate font-medium text-sm">
@@ -652,12 +657,12 @@ Add your command instructions here.
                                         </span>
                                         {isValid ? (
                                           <CheckCircle
-                                            className="h-3 w-3 flex-shrink-0 text-green-500"
+                                            className="h-3 w-3 shrink-0 text-green-500"
                                             weight="regular"
                                           />
                                         ) : (
                                           <WarningCircle
-                                            className="h-3 w-3 flex-shrink-0 text-red-500"
+                                            className="h-3 w-3 shrink-0 text-red-500"
                                             weight="regular"
                                           />
                                         )}

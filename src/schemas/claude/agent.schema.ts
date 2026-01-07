@@ -149,6 +149,7 @@ export function parseAgentContent(content: string): {
   const body = content.replace(/^---\n[\s\S]*?\n---\n?/, "");
 
   // Simple YAML parser for the frontmatter
+  // biome-ignore lint/suspicious/noExplicitAny: Required for JSON schema validation
   const frontmatter: Record<string, any> = {};
   const lines = rawFrontmatter.split("\n");
 
@@ -170,7 +171,12 @@ export function parseAgentContent(content: string): {
     }
   }
 
-  return { frontmatter: frontmatter as any, body, rawFrontmatter };
+  return {
+    // biome-ignore lint/suspicious/noExplicitAny: Required for JSON schema validation
+    frontmatter: frontmatter as any,
+    body,
+    rawFrontmatter,
+  };
 }
 
 /**

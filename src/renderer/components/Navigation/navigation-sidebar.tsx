@@ -88,7 +88,7 @@ export const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
                   onClick={() => handleNavClick(item.id)}
                   type="button"
                 >
-                  <Icon className="h-5 w-5 flex-shrink-0" weight="regular" />
+                  <Icon className="h-5 w-5 shrink-0" weight="regular" />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right">

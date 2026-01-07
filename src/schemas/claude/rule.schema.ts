@@ -56,6 +56,7 @@ export function parseRuleContent(content: string): {
   const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
   if (frontmatterMatch) {
     // Simple YAML parser
+    // biome-ignore lint/suspicious/noExplicitAny: Required for JSON schema validation
     const frontmatter: Record<string, any> = {};
     const yaml = frontmatterMatch[1];
 
@@ -78,6 +79,7 @@ export function parseRuleContent(content: string): {
     }
 
     return {
+      // biome-ignore lint/suspicious/noExplicitAny: Required for JSON schema validation
       frontmatter: frontmatter as any,
       body: frontmatterMatch[2],
       hasFrontmatter: true,

@@ -21,9 +21,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
+  Panel,
+  PanelGroup,
+  PanelResizeHandle,
 } from "@/components/ui/resizable";
 import {
   Tooltip,
@@ -208,12 +208,9 @@ export const RulesTab: React.FC = () => {
     <TooltipProvider>
       <div className="flex h-full flex-col">
         {/* Main Content */}
-        <ResizablePanelGroup
-          className="flex-1 overflow-hidden"
-          direction="horizontal"
-        >
+        <PanelGroup className="flex-1 overflow-hidden" direction="horizontal">
           {/* Rules List */}
-          <ResizablePanel
+          <Panel
             className="border-r bg-muted/30"
             defaultSize={25}
             maxSize={40}
@@ -225,7 +222,7 @@ export const RulesTab: React.FC = () => {
               </div>
             ) : (
               <div className="flex h-full flex-col overflow-hidden">
-                <div className="flex-shrink-0 space-y-1 p-2">
+                <div className="shrink-0 space-y-1 p-2">
                   {/* Add Rule Button / Form */}
                   {isAdding ? (
                     <div className="rounded-md border border-primary/20 bg-primary/10 p-2">
@@ -322,7 +319,7 @@ export const RulesTab: React.FC = () => {
                         type="button"
                       >
                         <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 flex-shrink-0" />
+                          <FileText className="h-4 w-4 shrink-0" />
                           <span className="truncate font-medium text-sm">
                             {rule.name}
                           </span>
@@ -333,12 +330,12 @@ export const RulesTab: React.FC = () => {
                 )}
               </div>
             )}
-          </ResizablePanel>
+          </Panel>
 
-          <ResizableHandle withHandle />
+          <PanelResizeHandle />
 
           {/* Rule Editor */}
-          <ResizablePanel defaultSize={75} minSize={60}>
+          <Panel defaultSize={75} minSize={60}>
             <div className="flex h-full flex-1 flex-col overflow-hidden">
               {selectedRuleData ? (
                 <div className="relative flex-1 overflow-auto p-4">
@@ -422,8 +419,8 @@ export const RulesTab: React.FC = () => {
                 </div>
               )}
             </div>
-          </ResizablePanel>
-        </ResizablePanelGroup>
+          </Panel>
+        </PanelGroup>
       </div>
     </TooltipProvider>
   );

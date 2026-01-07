@@ -363,6 +363,10 @@ Add your agent instructions here.
           "test-server": {
             command: "npx",
             args: ["-y", "test-package"],
+          } as {
+            command: string;
+            args: string[];
+            env?: Record<string, string>;
           },
         },
       };

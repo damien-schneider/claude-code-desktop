@@ -1,2 +1,2 @@
-export type { BreadcrumbBarProps } from "./BreadcrumbBar";
-export { BreadcrumbBar } from "./BreadcrumbBar";
+export type { BreadcrumbBarProps } from "./breadcrumb-bar";
+export { BreadcrumbBar } from "./breadcrumb-bar";

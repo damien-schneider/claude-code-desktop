@@ -1,2 +1,2 @@
-export type { QuickOpenDialogProps } from "./QuickOpenDialog";
-export { QuickOpenDialog } from "./QuickOpenDialog";
+export type { QuickOpenDialogProps } from "./quick-open-dialog";
+export { QuickOpenDialog } from "./quick-open-dialog";

@@ -1,3 +1,4 @@
+// biome-ignore lint/style/noEnum: Enum provides type-safe field constants
 export enum FieldType {
   STRING = "string",
   NUMBER = "number",

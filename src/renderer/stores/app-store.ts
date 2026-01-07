@@ -45,7 +45,6 @@ interface AppState {
   sidebarCollapsed: boolean;
   searchQuery: string;
   showFavoritesOnly: boolean;
-  showWithClaudeOnly: boolean;
 
   // Navigation (replaces tabs)
   currentView: NavigationView;
@@ -59,7 +58,6 @@ interface AppState {
   setSidebarCollapsed: (collapsed: boolean) => void;
   setSearchQuery: (query: string) => void;
   setShowFavoritesOnly: (show: boolean) => void;
-  setShowWithClaudeOnly: (show: boolean) => void;
 
   setCurrentView: (view: NavigationView) => void;
 
@@ -77,7 +75,6 @@ export const useAppStore = create<AppState>()(
       sidebarCollapsed: false,
       searchQuery: "",
       showFavoritesOnly: false,
-      showWithClaudeOnly: false,
       currentView: "files",
 
       // Computed getter
@@ -98,11 +95,6 @@ export const useAppStore = create<AppState>()(
         // Favorites filter
         if (state.showFavoritesOnly) {
           filtered = filtered.filter((p) => p.isFavorite);
-        }
-
-        // Claude config filter
-        if (state.showWithClaudeOnly) {
-          filtered = filtered.filter((p) => p.hasClaudeConfig);
         }
 
         return filtered;
@@ -138,8 +130,6 @@ export const useAppStore = create<AppState>()(
       setSearchQuery: (query) => set({ searchQuery: query }),
 
       setShowFavoritesOnly: (show) => set({ showFavoritesOnly: show }),
-
-      setShowWithClaudeOnly: (show) => set({ showWithClaudeOnly: show }),
 
       setCurrentView: (view) => set({ currentView: view }),
     }),

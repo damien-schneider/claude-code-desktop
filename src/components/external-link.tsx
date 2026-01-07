@@ -8,7 +8,8 @@ export default function ExternalLink({
   href,
   ...props
 }: ComponentProps<"a">) {
-  function open() {
+  function open(event: React.MouseEvent) {
+    event.preventDefault();
     if (!href) {
       return;
     }
@@ -16,9 +17,16 @@ export default function ExternalLink({
     openExternalLink(href);
   }
 
+  if (!href) {
+    return <span className={className}>{children}</span>;
+  }
+
   return (
     <a
       className={cn("cursor-pointer underline", className)}
+      href={href}
+      rel="noopener noreferrer"
+      target="_blank"
       {...props}
       onClick={open}
     >

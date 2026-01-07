@@ -10,7 +10,7 @@ import {
   type SettingsConfig,
   type SkillConfig,
   useConfigStore,
-} from "@/renderer/stores/configStore";
+} from "@/renderer/stores/config-store";
 
 describe("ConfigStore", () => {
   beforeEach(() => {

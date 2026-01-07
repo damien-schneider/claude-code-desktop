@@ -103,7 +103,7 @@ describe("TabPanel", () => {
   });
 
   it("should handle all tab types", () => {
-    const tabTypes: Array<{ type: TabPanelProps["openTabs"][0]["type"] }> = [
+    const tabTypes: Array<{ type: string }> = [
       { type: "claudemd" },
       { type: "files" },
       { type: "hooks" },
@@ -114,14 +114,14 @@ describe("TabPanel", () => {
       { type: "commands" },
     ];
 
-    tabTypes.forEach(({ type }) => {
-      const tabs = [{ id: "1", title: `${type} tab`, type }];
+    for (const { type } of tabTypes) {
+      const tabs = [{ id: "1", title: `${type} tab`, type }] as any;
 
       const { unmount } = render(<TabPanel activeTabId="1" openTabs={tabs} />);
 
       expect(screen.getByText(`Tab content: ${type}`)).toBeInTheDocument();
       unmount();
-    });
+    }
   });
 
   it("should apply custom className", () => {
@@ -184,11 +184,3 @@ describe("TabPanel", () => {
     expect(content).toBeInTheDocument();
   });
 });
-
-interface TabPanelProps {
-  openTabs?: Array<{ id: string; title: string; type: string }>;
-  activeTabId?: string;
-  className?: string;
-  selectedProjectId?: string | null;
-  isMainConfigSelected?: boolean;
-}

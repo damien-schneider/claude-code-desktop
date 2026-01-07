@@ -82,6 +82,7 @@ export function parseClaudeMd(content: string): {
 } {
   const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
 
+  // biome-ignore lint/suspicious/noExplicitAny: Required for JSON schema validation
   const frontmatter: Record<string, any> = {};
   let rawContent = content;
   let hasFrontmatter = false;
@@ -285,10 +286,11 @@ export function validateClaudeMd(content: string): {
 export function extractClaudeMdImports(content: string): string[] {
   const importRegex = /@([^\s\n]+\.md)/g;
   const imports: string[] = [];
-  let match;
+  let match: RegExpExecArray | null = importRegex.exec(content);
 
-  while ((match = importRegex.exec(content)) !== null) {
+  while (match !== null) {
     imports.push(match[1]);
+    match = importRegex.exec(content);
   }
 
   return imports;

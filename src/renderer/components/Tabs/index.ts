@@ -1,4 +1,4 @@
-export type { TabBarProps } from "./TabBar";
-export { TabBar } from "./TabBar";
-export type { TabPanelProps } from "./TabPanel";
-export { TabPanel } from "./TabPanel";
+export type { TabBarProps } from "./tab-bar";
+export { TabBar } from "./tab-bar";
+export type { TabPanelProps } from "./tab-panel";
+export { TabPanel } from "./tab-panel";

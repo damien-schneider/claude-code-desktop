@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { mkdir, readdir, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -7,8 +8,9 @@ describe("readDirectory IPC handler behavior", () => {
   let testDir: string;
 
   beforeEach(async () => {
-    // Create a unique test directory
-    testDir = join(tmpdir(), `test-read-directory-${Date.now()}`);
+    // Create a unique test directory with a random suffix to avoid collisions
+    const randomId = randomBytes(8).toString("hex");
+    testDir = join(tmpdir(), `test-read-directory-${randomId}`);
     await mkdir(testDir, { recursive: true });
   });
 
@@ -16,7 +18,7 @@ describe("readDirectory IPC handler behavior", () => {
     // Setup: Create test files
     await writeFile(join(testDir, "test1.txt"), "content1");
     await writeFile(join(testDir, "test2.md"), "content2");
-    await mkdir(join(testDir, "subdir"));
+    await mkdir(join(testDir, "subdir"), { recursive: true });
 
     // Exercise: Read directory
     const entries = await readdir(testDir, { withFileTypes: true });

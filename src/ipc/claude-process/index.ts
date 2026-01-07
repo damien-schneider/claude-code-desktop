@@ -3,7 +3,6 @@ import {
   checkClaude,
   getActiveSessions,
   getPermissionModes,
-  processEvents,
   queryOnce,
   resumeSession,
   sendMessage,
@@ -14,6 +13,7 @@ import {
 // Re-export SDK message types for consumers
 export type {
   PermissionMode,
+  processEvents,
   SDKAssistantMessage,
   SDKMessage,
   SDKPartialAssistantMessage,
@@ -39,5 +39,3 @@ export const claudeProcess = {
   // One-shot queries
   queryOnce,
 };
-
-export { processEvents };

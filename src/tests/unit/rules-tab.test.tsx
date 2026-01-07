@@ -1,6 +1,9 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import { Provider } from "jotai";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { RulesTab } from "@/renderer/components/rules/rules-tab";
 
-// Mock IPC - must be hoisted before imports
+// Mock IPC
 vi.mock("@/ipc/manager", () => ({
   ipc: {
     client: {
@@ -15,10 +18,6 @@ vi.mock("@/ipc/manager", () => ({
     },
   },
 }));
-
-import { fireEvent, render, screen } from "@testing-library/react";
-import { Provider } from "jotai";
-import { RulesTab } from "@/renderer/components/rules/index";
 
 describe("RulesTab - Add Rule button", () => {
   const Wrapper = ({ children }: { children: React.ReactNode }) => (

@@ -1,7 +1,7 @@
 import {
   detectFieldType,
   FieldType,
-} from "@/renderer/components/Settings/json-field-detector";
+} from "@/renderer/components/settings/json-field-detector";
 
 describe("JSON Field Type Detector", () => {
   it("should detect string fields", () => {

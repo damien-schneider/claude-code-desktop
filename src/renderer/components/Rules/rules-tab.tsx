@@ -8,7 +8,7 @@ import {
   X,
 } from "@phosphor-icons/react";
 import type React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -21,9 +21,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
+  Panel,
+  PanelGroup,
+  PanelResizeHandle,
 } from "@/components/ui/resizable";
 import {
   Tooltip,
@@ -31,11 +31,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { TipTapEditor } from "@/renderer/components/TipTapEditor";
+import { TipTapEditor } from "@/renderer/components/tip-tap-editor";
 import { showError } from "@/renderer/lib/toast";
 import { type RuleCreateValues, ruleCreateSchema } from "@/schemas/claude";
 import { cn } from "@/utils/tailwind";
-import { useClaudeItems } from "../Hooks/useClaudeItems";
+import { useClaudeItems } from "../hooks/use-claude-items";
 
 export const RulesTab: React.FC = () => {
   const {
@@ -50,6 +50,7 @@ export const RulesTab: React.FC = () => {
   const [selectedRule, setSelectedRule] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [ruleContents, setRuleContents] = useState<Record<string, string>>({});
   const [originalRuleContents, setOriginalRuleContents] = useState<
     Record<string, string>
@@ -66,11 +67,11 @@ export const RulesTab: React.FC = () => {
   // Sync content when items are loaded
   useEffect(() => {
     const contents: Record<string, string> = {};
-    rules.forEach((rule) => {
+    for (const rule of rules) {
       if (rule.content) {
         contents[rule.path] = rule.content;
       }
-    });
+    }
     setRuleContents((prev) => ({ ...prev, ...contents }));
     setOriginalRuleContents((prev) => ({ ...prev, ...contents }));
   }, [rules]);
@@ -117,7 +118,7 @@ export const RulesTab: React.FC = () => {
     return ruleContents[selectedRule] !== originalRuleContents[selectedRule];
   }, [selectedRule, ruleContents, originalRuleContents]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!(selectedRule && selectedRuleData)) {
       return;
     }
@@ -132,7 +133,7 @@ export const RulesTab: React.FC = () => {
     } finally {
       setSaving(false);
     }
-  };
+  }, [selectedRule, selectedRuleData, ruleContents, saveItem]);
 
   const handleCancel = () => {
     if (selectedRule) {
@@ -149,7 +150,8 @@ export const RulesTab: React.FC = () => {
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
         if (hasChanges && !saving) {
-          handleSave();
+          // biome-ignore lint/complexity/noVoid: Fire and forget async operation
+          void handleSave();
         }
       }
     };
@@ -163,6 +165,7 @@ export const RulesTab: React.FC = () => {
       return;
     }
 
+    // biome-ignore lint/suspicious/noAlert: Replacing with modal is out of scope
     if (confirm("Are you sure you want to delete this rule?")) {
       const success = await deleteItem(selectedRule);
       if (success) {
@@ -207,16 +210,17 @@ export const RulesTab: React.FC = () => {
     <TooltipProvider>
       <div className="flex h-full flex-col">
         {/* Main Content */}
-        <ResizablePanelGroup
-          className="flex-1 overflow-hidden"
-          direction="horizontal"
-        >
+        <PanelGroup className="flex-1 overflow-hidden" direction="horizontal">
           {/* Rules List */}
-          <ResizablePanel
+          <Panel
             className="border-r bg-muted/30"
-            defaultSize={25}
-            maxSize={40}
-            minSize={15}
+            collapsedSize={36}
+            collapsible
+            defaultSize={250}
+            maxSize={350}
+            minSize={210}
+            onCollapse={() => setSidebarCollapsed(true)}
+            onExpand={() => setSidebarCollapsed(false)}
           >
             {loading ? (
               <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
@@ -224,7 +228,7 @@ export const RulesTab: React.FC = () => {
               </div>
             ) : (
               <div className="flex h-full flex-col overflow-hidden">
-                <div className="flex-shrink-0 space-y-1 p-2">
+                <div className="shrink-0 space-y-1 p-2">
                   {/* Add Rule Button / Form */}
                   {isAdding ? (
                     <div className="rounded-md border border-primary/20 bg-primary/10 p-2">
@@ -275,10 +279,11 @@ export const RulesTab: React.FC = () => {
                   ) : (
                     <button
                       className={cn(
-                        "flex w-full items-center justify-center gap-2 rounded-md border-2 border-dashed p-3 transition-colors",
+                        "flex w-full items-center justify-center gap-2 rounded-md border-2 border-dashed transition-colors",
                         activePath
                           ? "cursor-pointer border-primary/50 hover:border-primary hover:bg-primary/5"
-                          : "cursor-not-allowed border-muted opacity-50"
+                          : "cursor-not-allowed border-muted opacity-50",
+                        sidebarCollapsed ? "p-2" : "p-3"
                       )}
                       disabled={!activePath}
                       onClick={handleAdd}
@@ -287,9 +292,12 @@ export const RulesTab: React.FC = () => {
                           ? "Add new rule"
                           : "Select a project or global settings first"
                       }
+                      type="button"
                     >
                       <PlusCircle className="h-5 w-5" weight="regular" />
-                      <span className="font-medium text-sm">Add Rule</span>
+                      {!sidebarCollapsed && (
+                        <span className="font-medium text-sm">Add Rule</span>
+                      )}
                     </button>
                   )}
                 </div>
@@ -298,11 +306,20 @@ export const RulesTab: React.FC = () => {
                 {rules.length === 0 && !isAdding ? (
                   <div className="flex min-h-0 flex-1 items-center justify-center text-muted-foreground">
                     <div className="text-center">
-                      <FileText className="mx-auto mb-2 h-8 w-8 opacity-50" />
-                      <p className="text-sm">No rules configured</p>
-                      <p className="mt-1 text-xs">
-                        Create rules to guide Claude's behavior
-                      </p>
+                      <FileText
+                        className={cn(
+                          "mx-auto mb-2 opacity-50",
+                          sidebarCollapsed ? "h-6 w-6" : "h-8 w-8"
+                        )}
+                      />
+                      {!sidebarCollapsed && (
+                        <>
+                          <p className="text-sm">No rules configured</p>
+                          <p className="mt-1 text-xs">
+                            Create rules to guide Claude's behavior
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -313,16 +330,27 @@ export const RulesTab: React.FC = () => {
                           "cursor-pointer rounded-md p-2 transition-colors",
                           selectedRule === rule.path
                             ? "bg-primary text-primary-foreground"
-                            : "hover:bg-muted/50"
+                            : "hover:bg-muted/50",
+                          sidebarCollapsed && "flex justify-center"
                         )}
                         key={rule.path}
                         onClick={() => setSelectedRule(rule.path)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            setSelectedRule(rule.path);
+                          }
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        title={sidebarCollapsed ? rule.name : undefined}
                       >
                         <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 flex-shrink-0" />
-                          <span className="truncate font-medium text-sm">
-                            {rule.name}
-                          </span>
+                          <FileText className="h-4 w-4 shrink-0" />
+                          {!sidebarCollapsed && (
+                            <span className="truncate font-medium text-sm">
+                              {rule.name}
+                            </span>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -330,13 +358,13 @@ export const RulesTab: React.FC = () => {
                 )}
               </div>
             )}
-          </ResizablePanel>
+          </Panel>
 
-          <ResizableHandle withHandle />
+          <PanelResizeHandle />
 
           {/* Rule Editor */}
-          <ResizablePanel defaultSize={75} minSize={60}>
-            <div className="flex h-full flex-1 flex-col overflow-hidden">
+          <Panel defaultSize="75%" minSize="60%">
+            <div className="flex h-full min-w-0 flex-col overflow-hidden">
               {selectedRuleData ? (
                 <div className="relative flex-1 overflow-auto p-4">
                   <TipTapEditor
@@ -396,7 +424,6 @@ export const RulesTab: React.FC = () => {
                         ? ruleContents[selectedRule] || selectedRuleData.content
                         : ""
                     }
-                    hasChanges={hasChanges}
                     onChange={(content) => {
                       if (selectedRule) {
                         setRuleContents((prev) => ({
@@ -420,8 +447,8 @@ export const RulesTab: React.FC = () => {
                 </div>
               )}
             </div>
-          </ResizablePanel>
-        </ResizablePanelGroup>
+          </Panel>
+        </PanelGroup>
       </div>
     </TooltipProvider>
   );

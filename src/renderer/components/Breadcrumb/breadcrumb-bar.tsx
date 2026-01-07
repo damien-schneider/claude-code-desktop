@@ -1,16 +1,12 @@
-import {
-  CaretRight,
-  MagnifyingGlass,
-  Sidebar as SidebarIcon,
-} from "@phosphor-icons/react";
+import { CaretRight, MagnifyingGlass } from "@phosphor-icons/react";
 import { useAtom } from "jotai";
 import React from "react";
+import ToggleTheme from "@/components/toggle-theme";
 import { Button } from "@/components/ui/button";
 import {
   currentViewAtom,
   isGlobalSettingsSelectedAtom,
   selectedProjectIdAtom,
-  sidebarCollapsedAtom,
 } from "@/renderer/stores";
 import { cn } from "@/utils/tailwind";
 
@@ -40,7 +36,6 @@ export const BreadcrumbBar: React.FC<BreadcrumbBarProps> = ({
   const [currentView] = useAtom(currentViewAtom);
   const [selectedProjectId] = useAtom(selectedProjectIdAtom);
   const [isGlobalSettingsSelected] = useAtom(isGlobalSettingsSelectedAtom);
-  const [sidebarCollapsed, setSidebarCollapsed] = useAtom(sidebarCollapsedAtom);
 
   // Build breadcrumb segments
   const segments = React.useMemo(() => {
@@ -63,36 +58,19 @@ export const BreadcrumbBar: React.FC<BreadcrumbBarProps> = ({
     return result;
   }, [currentView, selectedProjectId, isGlobalSettingsSelected]);
 
-  const handleToggleSidebar = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
-  };
-
   return (
     <div
       className={cn(
-        "flex min-h-11 select-none items-center gap-2 border-b bg-background px-4 py-2",
+        "flex min-h-11 select-none items-center gap-2 border-b px-4 py-2",
         className
       )}
-      style={{ WebkitAppRegion: "drag" as any }}
+      style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
     >
-      {/* Sidebar Trigger - not draggable */}
-      <Button
-        className="h-7 w-7"
-        data-sidebar="trigger"
-        onClick={handleToggleSidebar}
-        size="icon"
-        style={{ WebkitAppRegion: "no-drag" as any }}
-        variant="ghost"
-      >
-        <SidebarIcon className="h-4 w-4" weight="regular" />
-        <span className="sr-only">Toggle Sidebar</span>
-      </Button>
-
       {/* Breadcrumb - draggable for window movement */}
       <nav
         aria-label="Breadcrumb"
         className="flex items-center gap-1 text-sm"
-        style={{ WebkitAppRegion: "drag" as any }}
+        style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
       >
         {segments.map((segment, index) => (
           <React.Fragment key={segment.key}>
@@ -117,21 +95,26 @@ export const BreadcrumbBar: React.FC<BreadcrumbBarProps> = ({
 
       <div className="flex-1" />
 
-      {/* Quick Open Button - not draggable */}
-      {onQuickOpen && (
-        <Button
-          className="h-7 gap-1.5 px-2"
-          onClick={onQuickOpen}
-          size="sm"
-          style={{ WebkitAppRegion: "no-drag" as any }}
-          variant="ghost"
-        >
-          <MagnifyingGlass className="h-3.5 w-3.5" weight="regular" />
-          <kbd className="min-w-[1rem] rounded bg-muted/50 px-1 py-0.5 font-mono text-[10px] text-muted-foreground/70">
-            ⌘P
-          </kbd>
-        </Button>
-      )}
+      <div className="flex items-center gap-1">
+        <ToggleTheme />
+
+        {/* Quick Open Button - not draggable */}
+        {onQuickOpen && (
+          <Button
+            className="h-7 gap-1.5 px-2"
+            onClick={onQuickOpen}
+            size="sm"
+            style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+            type="button"
+            variant="ghost"
+          >
+            <MagnifyingGlass className="h-3.5 w-3.5" weight="regular" />
+            <kbd className="min-w-[1rem] rounded bg-muted/50 px-1 py-0.5 font-mono text-[10px] text-muted-foreground/70">
+              ⌘P
+            </kbd>
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

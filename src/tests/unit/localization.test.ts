@@ -52,14 +52,14 @@ describe("langs default export", () => {
   });
 
   it("should have all required properties for each language", () => {
-    langs.forEach((lang) => {
+    for (const lang of langs) {
       expect(lang.key).toBeDefined();
       expect(typeof lang.key).toBe("string");
       expect(lang.nativeName).toBeDefined();
       expect(typeof lang.nativeName).toBe("string");
       expect(lang.prefix).toBeDefined();
       expect(typeof lang.prefix).toBe("string");
-    });
+    }
   });
 
   it("should have unique keys", () => {
@@ -77,22 +77,22 @@ describe("langs default export", () => {
 
 describe("Language format validation", () => {
   it("should have language keys in valid format", () => {
-    langs.forEach((lang) => {
+    for (const lang of langs) {
       // Language keys should be ISO 639-1 codes possibly with region
       expect(lang.key).toMatch(/^[a-z]{2}(-[A-Z]{2})?$/);
-    });
+    }
   });
 
   it("should have prefixes in uppercase with hyphen", () => {
-    langs.forEach((lang) => {
+    for (const lang of langs) {
       expect(lang.prefix).toMatch(/^[A-Z]{2}-[A-Z]{2}$/);
-    });
+    }
   });
 
   it("should have non-empty native names", () => {
-    langs.forEach((lang) => {
+    for (const lang of langs) {
       expect(lang.nativeName.length).toBeGreaterThan(0);
-    });
+    }
   });
 });
 

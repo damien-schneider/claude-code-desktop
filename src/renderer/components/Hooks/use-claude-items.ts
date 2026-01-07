@@ -77,13 +77,13 @@ export function useClaudeItems({
         (file: {
           name: string;
           path: string;
-          type: "file" | "directory";
           content?: string;
+          type: string;
         }) => ({
           name: file.name,
           path: file.path,
           content: file.content || "",
-          type: file.type,
+          type: file.type as ClaudeItem["type"],
         })
       );
 

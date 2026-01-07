@@ -36,19 +36,39 @@ async function directoryExists(dirPath: string): Promise<boolean> {
 }
 
 /**
+ * Check if a file exists and is accessible
+ */
+async function fileExists(filePath: string): Promise<boolean> {
+  try {
+    await access(filePath);
+    const stats = await stat(filePath);
+    return stats.isFile();
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Check if a directory contains a .git subdirectory
  */
-async function isGitRepository(dirPath: string): Promise<boolean> {
+function isGitRepository(dirPath: string): Promise<boolean> {
   const gitPath = join(dirPath, ".git");
   return directoryExists(gitPath);
 }
 
 /**
- * Check if a directory contains a .claude subdirectory
+ * Check if a directory contains a .claude subdirectory or a CLAUDE.md file
  */
 async function hasClaudeConfig(dirPath: string): Promise<boolean> {
-  const claudePath = join(dirPath, ".claude");
-  return directoryExists(claudePath);
+  const claudeDirPath = join(dirPath, ".claude");
+  const claudeMdPath = join(dirPath, "CLAUDE.md");
+
+  const [hasDir, hasFile] = await Promise.all([
+    directoryExists(claudeDirPath),
+    fileExists(claudeMdPath),
+  ]);
+
+  return hasDir || hasFile;
 }
 
 /**

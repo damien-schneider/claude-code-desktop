@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { AdvancedSettingsEditor } from "@/renderer/components/Settings/advanced-settings-editor";
+import { AdvancedSettingsEditor } from "@/renderer/components/settings/advanced-settings-editor";
 
 describe("AdvancedSettingsEditor", () => {
   it("should render AI behavior settings with Brain icon", () => {

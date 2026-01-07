@@ -57,7 +57,7 @@ import {
   streamingMessageAtom,
 } from "@/renderer/stores/chatAtoms";
 import { cn } from "@/utils/tailwind";
-import { ThinkingIndicator } from "./ThinkingIndicator";
+import { ThinkingIndicator } from "./thinking-indicator";
 
 export const ChatArea: React.FC = () => {
   const [messages] = useAtom(currentSessionMessagesAtom);
@@ -288,7 +288,7 @@ export const ChatArea: React.FC = () => {
       <div className="border-t bg-background p-4">
         {sendError && (
           <div className="mb-4 flex items-start gap-2 rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm">
-            <WarningCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-destructive" />
+            <WarningCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
             <div className="flex-1">
               <div className="font-medium text-destructive">
                 Failed to send message
@@ -298,6 +298,7 @@ export const ChatArea: React.FC = () => {
             <button
               className="text-destructive/60 hover:text-destructive"
               onClick={() => setSendError(null)}
+              type="button"
             >
               ×
             </button>
@@ -306,9 +307,9 @@ export const ChatArea: React.FC = () => {
 
         {/* Permission Mode Selector - always visible at top of input area */}
         <div className="mb-3 flex items-center gap-3">
-          <label className="whitespace-nowrap font-medium text-muted-foreground text-xs">
+          <span className="whitespace-nowrap font-medium text-muted-foreground text-xs">
             Permission Mode
-          </label>
+          </span>
           <Select
             disabled={!!activeProcessId || isResuming}
             onValueChange={(value) =>

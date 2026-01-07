@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { EnvVarsEditor } from "@/renderer/components/Settings/env-vars-editor";
-import type { EnvVars } from "@/renderer/components/Settings/settings-types";
+import { EnvVarsEditor } from "@/renderer/components/settings/env-vars-editor";
+import type { EnvVars } from "@/renderer/components/settings/settings-types";
 
 describe("EnvVarsEditor", () => {
   it("should render all environment variables", () => {

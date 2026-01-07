@@ -61,9 +61,12 @@ export const McpServerConfig: React.FC<McpServerConfigProps> = ({
         </div>
 
         <div>
-          <label className="font-medium text-sm">Command</label>
+          <label className="font-medium text-sm" htmlFor="mcp-command">
+            Command
+          </label>
           <Input
             className="mt-1 font-mono text-sm"
+            id="mcp-command"
             onChange={(e) => handleCommandChange(e.target.value)}
             placeholder="npx"
             value={config.command}
@@ -71,9 +74,12 @@ export const McpServerConfig: React.FC<McpServerConfigProps> = ({
         </div>
 
         <div>
-          <label className="font-medium text-sm">Arguments</label>
+          <label className="font-medium text-sm" htmlFor="mcp-args">
+            Arguments
+          </label>
           <Input
             className="mt-1 font-mono text-sm"
+            id="mcp-args"
             onChange={(e) => handleArgsChange(e.target.value)}
             placeholder="-y package-name"
             value={(config.args ?? []).join(" ")}
@@ -85,8 +91,13 @@ export const McpServerConfig: React.FC<McpServerConfigProps> = ({
 
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <label className="font-medium text-sm">Environment Variables</label>
-            <Button onClick={handleAddEnvVar} size="sm" variant="outline">
+            <span className="font-medium text-sm">Environment Variables</span>
+            <Button
+              onClick={handleAddEnvVar}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
               <Plus className="mr-1 h-3 w-3" weight="regular" />
               Add Variable
             </Button>

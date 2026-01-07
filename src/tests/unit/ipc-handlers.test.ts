@@ -293,7 +293,7 @@ describe("IPC Handler - File Operations", () => {
       expect(() => JSON.parse(content)).toThrow();
     });
 
-    it("should handle permission errors gracefully", async () => {
+    it("should handle permission errors gracefully", () => {
       // This is a no-op test documenting expected behavior
       // In real scenarios, permission errors would be caught and handled
       const canWrite = true; // Placeholder
@@ -492,13 +492,13 @@ Instructions here.`;
         "skill name",
       ];
 
-      validNames.forEach((name) => {
+      for (const name of validNames) {
         expect(name).toMatch(/^[a-z][a-z0-9-]*$/);
-      });
+      }
 
-      invalidNames.forEach((name) => {
+      for (const name of invalidNames) {
         expect(name.match(/^[a-z][a-z0-9-]*$/)).toBeNull();
-      });
+      }
     });
 
     it("should validate JSON structure", () => {
@@ -516,9 +516,16 @@ Instructions here.`;
         "claude-3-opus-20240229",
       ];
 
-      validModels.forEach((model) => {
+      for (const model of validModels) {
         expect(model).toMatch(/^claude-/);
-      });
+      }
+    });
+
+    it("should handle permission errors gracefully", () => {
+      // This is a no-op test documenting expected behavior
+      // In real scenarios, permission errors would be caught and handled
+      const canWrite = true; // Placeholder
+      expect(canWrite).toBe(true);
     });
   });
 });

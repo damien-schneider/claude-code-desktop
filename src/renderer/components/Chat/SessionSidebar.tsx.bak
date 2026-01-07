@@ -90,10 +90,10 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
     const thisWeek = new Date(today);
     thisWeek.setDate(thisWeek.getDate() - 7);
 
-    sessions.forEach((session) => {
+    for (const session of sessions) {
       const date = new Date(session.lastMessageAt);
       if (Number.isNaN(date.getTime())) {
-        return; // Skip invalid dates
+        continue; // Skip invalid dates
       }
 
       if (date >= today) {
@@ -105,7 +105,7 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
       } else {
         groups.Older.push(session);
       }
-    });
+    }
 
     return groups;
   }, [sessions]);
@@ -213,18 +213,18 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
                             </span>
                             {isSessionStreaming(session.sessionId) && (
                               <Spinner
-                                className="h-3 w-3 flex-shrink-0 animate-spin text-primary"
+                                className="h-3 w-3 shrink-0 animate-spin text-primary"
                                 weight="bold"
                               />
                             )}
                           </div>
                           <div className="flex items-center gap-1 text-muted-foreground text-xs">
-                            <Folder className="h-3 w-3 flex-shrink-0" />
+                            <Folder className="h-3 w-3 shrink-0" />
                             <span className="truncate">
                               {session.projectName}
                             </span>
-                            <span className="flex-shrink-0">•</span>
-                            <span className="flex-shrink-0">
+                            <span className="shrink-0">•</span>
+                            <span className="shrink-0">
                               {formatDistanceToNow(
                                 new Date(session.lastMessageAt),
                                 { addSuffix: true }

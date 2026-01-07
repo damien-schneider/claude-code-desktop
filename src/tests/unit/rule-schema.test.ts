@@ -48,10 +48,10 @@ describe("ruleFrontmatterSchema", () => {
   it("should accept valid priority values", () => {
     const priorities = ["low", "medium", "high"] as const;
 
-    priorities.forEach((priority) => {
+    for (const priority of priorities) {
       const result = ruleFrontmatterSchema.safeParse({ priority });
       expect(result.success).toBe(true);
-    });
+    }
   });
 
   it("should reject invalid priority values", () => {

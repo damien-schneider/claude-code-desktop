@@ -47,12 +47,18 @@ export const TabPanel: React.FC<TabPanelProps> = ({
     );
   }
 
-  let contextName = "Unknown";
-  if (isMainConfigSelected) {
-    contextName = "Main Config (~/.claude/)";
-  } else if (selectedProjectId) {
-    contextName = selectedProjectId.split("/").pop() || "Project";
-  }
+  // Extract nested ternary into separate variable
+  const getContextName = (): string => {
+    if (isMainConfigSelected) {
+      return "Main Config (~/.claude/)";
+    }
+    if (selectedProjectId) {
+      return selectedProjectId.split("/").pop() || "Project";
+    }
+    return "Unknown";
+  };
+
+  const contextName = getContextName();
 
   return (
     <div className={cn("flex h-full flex-col", className)}>

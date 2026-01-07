@@ -17,7 +17,7 @@ test.beforeAll(async () => {
   electronApp = await electron.launch({
     args: [appInfo.main],
   });
-  electronApp.on("window", async (page) => {
+  electronApp.on("window", (page) => {
     const filename = page.url()?.split("/").pop();
     console.log(`Window opened: ${filename}`);
 
@@ -150,7 +150,9 @@ test.describe("Add Rule Button", () => {
     // Check for activePath logs
     const activePathLogs = logs.filter((log) => log.includes("activePath"));
     console.log("=== Console logs containing 'activePath': ===");
-    activePathLogs.forEach((log) => console.log(log));
+    for (const log of activePathLogs) {
+      console.log(log);
+    }
 
     expect(activePathLogs.length).toBeGreaterThan(0);
   });

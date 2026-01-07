@@ -42,7 +42,7 @@ export const setCurrentViewAtom = atom(
 
 // Home path from main process (with setter)
 export const homePathAtom = atom<string>("");
-export const setHomePathAtom = atom(null, async (_get, set, path: string) => {
+export const setHomePathAtom = atom(null, (_get, set, path: string) => {
   set(homePathAtom, path);
 });
 
@@ -121,19 +121,11 @@ export const projectsAtom = atom<ClaudeProject[]>([]);
 // UI State
 // =============================================================================
 
-export const leftSidebarCollapsedAtom = atom<boolean>(false);
-export const rightSidebarCollapsedAtom = atom<boolean>(false);
-
-// Re-export for compatibility
-export const sidebarCollapsedAtom = leftSidebarCollapsedAtom;
-
 export const isScanningAtom = atom<boolean>(false);
 
 export const searchQueryAtom = atom<string>("");
 
 export const showFavoritesOnlyAtom = atom<boolean>(false);
-
-export const showWithClaudeOnlyAtom = atom<boolean>(false);
 
 // =============================================================================
 // Computed: Filtered Projects
@@ -147,7 +139,6 @@ export const filteredProjectsAtom = atom<ClaudeProject[]>((get) => {
   const projects = get(projectsAtom);
   const searchQuery = get(searchQueryAtom);
   const showFavoritesOnly = get(showFavoritesOnlyAtom);
-  const showWithClaudeOnly = get(showWithClaudeOnlyAtom);
 
   let filtered = projects;
 
@@ -164,11 +155,6 @@ export const filteredProjectsAtom = atom<ClaudeProject[]>((get) => {
   // Favorites filter
   if (showFavoritesOnly) {
     filtered = filtered.filter((p) => p.isFavorite);
-  }
-
-  // Claude config filter
-  if (showWithClaudeOnly) {
-    filtered = filtered.filter((p) => p.hasClaudeConfig);
   }
 
   return filtered;
@@ -260,12 +246,6 @@ export const setShowFavoritesOnlyAtom = atom(null, (get, set) => {
   set(showFavoritesOnlyAtom, !current);
 });
 
-// Toggle Claude filter
-export const setShowWithClaudeOnlyAtom = atom(null, (get, set) => {
-  const current = get(showWithClaudeOnlyAtom);
-  set(showWithClaudeOnlyAtom, !current);
-});
-
 // Scan projects
 export const scanProjectsAtom = atom(
   null,
@@ -273,10 +253,8 @@ export const scanProjectsAtom = atom(
     set(isScanningAtom, true);
     try {
       const { ipc } = await import("@/ipc/manager");
-      const { deduplicateProjects } = await import("./appStore");
-      const { showWarning, showSuccess, showError } = await import(
-        "@/renderer/lib/toast"
-      );
+      const { deduplicateProjects } = await import("./app-store");
+      const { showWarning, showSuccess } = await import("@/renderer/lib/toast");
 
       // Call the scanner IPC
       const result = await ipc.client.scanner.scanProjects(

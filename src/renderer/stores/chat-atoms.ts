@@ -336,7 +336,7 @@ export const allSessionsAtom = atom<SessionSummary[]>((get) => {
     activeSessions.values()
   )
     .filter(
-      (active): active is typeof active & { sessionId: string } =>
+      (active): active is ActiveSession & { sessionId: string } =>
         active.sessionId !== null
     ) // Only include sessions with IDs
     .map((active) => ({
@@ -571,7 +571,56 @@ export const loadSessionDetailsAtom = atom(
 
       // Normalize messages to our format with proper type handling
       const normalizedMessages: SessionMessage[] = details.messages.map(
-        (msg: Record<string, unknown>) => normalizeSessionMessage(msg)
+        (msg: Record<string, unknown>): SessionMessage => {
+          // Determine message type
+          let messageType: "user" | "assistant" | "system" = "assistant";
+          if (
+            typeof msg.type === "string" &&
+            (msg.type === "user" ||
+              msg.type === "assistant" ||
+              msg.type === "system")
+          ) {
+            messageType = msg.type;
+          } else if (
+            typeof msg.message === "object" &&
+            msg.message !== null &&
+            "role" in msg.message
+          ) {
+            const role = (msg.message as Record<string, unknown>).role;
+            messageType = role === "user" ? "user" : "assistant";
+          }
+
+          // Extract content safely
+          let content: string | ContentBlock[] | undefined;
+          if (typeof msg.content === "string") {
+            content = msg.content;
+          } else if (Array.isArray(msg.content)) {
+            content = msg.content as ContentBlock[];
+          } else if (
+            typeof msg.message === "object" &&
+            msg.message !== null &&
+            "content" in msg.message
+          ) {
+            const msgContent = (msg.message as Record<string, unknown>).content;
+            if (typeof msgContent === "string") {
+              content = msgContent;
+            } else if (Array.isArray(msgContent)) {
+              content = msgContent as ContentBlock[];
+            }
+          }
+
+          return {
+            type: messageType,
+            messageId:
+              typeof msg.messageId === "string" ? msg.messageId : undefined,
+            timestamp:
+              typeof msg.timestamp === "string"
+                ? msg.timestamp
+                : new Date().toISOString(),
+            content,
+            status: "complete",
+          };
+        }
       );
 
       set(currentSessionIdAtom, sessionId);
@@ -720,56 +769,3 @@ export const resumeSessionAtom = atom(
     }
   }
 );
-
-/**
- * Normalizes messages from the sessions IPC to our SessionMessage format
- */
-const normalizeSessionMessage = (
-  msg: Record<string, unknown>
-): SessionMessage => {
-  // Determine message type
-  let messageType: "user" | "assistant" | "system" = "assistant";
-  if (
-    typeof msg.type === "string" &&
-    (msg.type === "user" || msg.type === "assistant" || msg.type === "system")
-  ) {
-    messageType = msg.type as "user" | "assistant" | "system";
-  } else if (
-    typeof msg.message === "object" &&
-    msg.message !== null &&
-    "role" in msg.message
-  ) {
-    const role = (msg.message as Record<string, unknown>).role;
-    messageType = role === "user" ? "user" : "assistant";
-  }
-
-  // Extract content safely
-  let content: SessionMessageContent | undefined;
-  if (typeof msg.content === "string") {
-    content = msg.content;
-  } else if (Array.isArray(msg.content)) {
-    content = msg.content as ContentBlock[];
-  } else if (
-    typeof msg.message === "object" &&
-    msg.message !== null &&
-    "content" in msg.message
-  ) {
-    const msgContent = (msg.message as Record<string, unknown>).content;
-    if (typeof msgContent === "string") {
-      content = msgContent;
-    } else if (Array.isArray(msgContent)) {
-      content = msgContent as ContentBlock[];
-    }
-  }
-
-  return {
-    type: messageType,
-    messageId: typeof msg.messageId === "string" ? msg.messageId : undefined,
-    timestamp:
-      typeof msg.timestamp === "string"
-        ? msg.timestamp
-        : new Date().toISOString(),
-    content,
-    status: "complete",
-  };
-};

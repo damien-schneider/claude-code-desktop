@@ -21,9 +21,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
+  Panel,
+  PanelGroup,
+  PanelResizeHandle,
 } from "@/components/ui/resizable";
 import {
   Select,
@@ -369,7 +369,7 @@ export const AgentsTab: React.FC = () => {
               onClick={() => setSelectedAgent(agent.path)}
               type="button"
             >
-              <FileText className="mt-0.5 h-4 w-4 flex-shrink-0" />
+              <FileText className="mt-0.5 h-4 w-4 shrink-0" />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-medium text-sm">
                   {agent.displayName || agent.name}
@@ -639,27 +639,24 @@ You are a specialist agent for...
   return (
     <div className="flex h-full flex-col">
       {/* Main Content */}
-      <ResizablePanelGroup
-        className="flex-1 overflow-hidden"
-        direction="horizontal"
-      >
+      <PanelGroup className="flex-1 overflow-hidden" direction="horizontal">
         {/* Agents List */}
-        <ResizablePanel
+        <Panel
           className="border-r bg-muted/30"
           defaultSize={25}
           maxSize={40}
           minSize={15}
         >
           {renderAgentsList()}
-        </ResizablePanel>
+        </Panel>
 
-        <ResizableHandle withHandle />
+        <PanelResizeHandle />
 
         {/* Agent Editor */}
-        <ResizablePanel defaultSize={75} minSize={60}>
+        <Panel defaultSize={75} minSize={60}>
           {renderAgentEditor()}
-        </ResizablePanel>
-      </ResizablePanelGroup>
+        </Panel>
+      </PanelGroup>
     </div>
   );
 };

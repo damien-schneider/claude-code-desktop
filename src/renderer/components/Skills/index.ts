@@ -1,1 +1,1 @@
-export { SkillsTab } from "./SkillsTab";
+export { SkillsTab } from "./skills-tab";

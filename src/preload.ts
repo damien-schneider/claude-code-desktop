@@ -3,17 +3,20 @@ import { IPC_CHANNELS } from "./constants";
 
 // Expose IPC methods to renderer process
 contextBridge.exposeInMainWorld("electron", {
-  on: (channel: string, callback: (...args: any[]) => void) => {
+  on: (channel: string, callback: (...args: unknown[]) => void) => {
     // Deliberately strip event as it includes `sender`
     const validChannels = ["claude-process-event"];
     if (validChannels.includes(channel)) {
       ipcRenderer.on(channel, (_event, ...args) => callback(...args));
     }
   },
-  removeListener: (channel: string, callback: (...args: any[]) => void) => {
+  removeListener: (channel: string, callback: (...args: unknown[]) => void) => {
     const validChannels = ["claude-process-event"];
     if (validChannels.includes(channel)) {
-      ipcRenderer.removeListener(channel, callback as any);
+      ipcRenderer.removeListener(
+        channel,
+        callback as (...args: unknown[]) => void
+      );
     }
   },
 });

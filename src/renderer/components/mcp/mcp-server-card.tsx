@@ -26,7 +26,7 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
         <div className="flex items-start justify-between">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <HardDrives
-              className="h-4 w-4 flex-shrink-0 text-muted-foreground"
+              className="h-4 w-4 shrink-0 text-muted-foreground"
               weight="regular"
             />
             <div className="min-w-0 flex-1">
@@ -41,7 +41,7 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
               )}
             </div>
           </div>
-          <div className="flex flex-shrink-0 gap-2">
+          <div className="flex shrink-0 gap-2">
             <Button onClick={onEdit} size="sm" variant="outline">
               <Pencil className="h-3 w-3" weight="regular" />
             </Button>

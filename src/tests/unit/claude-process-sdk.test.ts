@@ -65,24 +65,24 @@ describe("Claude Process SDK Handlers", () => {
     it("should properly type SDKAssistantMessage", () => {
       const message: SDKAssistantMessage = {
         type: "assistant",
-        uuid: "test-uuid",
+        uuid: "550e8400-e29b-41d4-a716-446655440000",
         session_id: "test-session",
         message: {
           role: "assistant",
-          content: [{ type: "text", text: "Hello" }],
-        },
+          content: [{ type: "text", text: "Hello", citations: null }],
+        } as any,
         parent_tool_use_id: null,
       };
 
       expect(message.type).toBe("assistant");
-      expect(message.uuid).toBe("test-uuid");
+      expect(message.uuid).toBe("550e8400-e29b-41d4-a716-446655440000");
     });
 
     it("should properly type SDKResultMessage", () => {
       const message: SDKResultMessage = {
         type: "result",
         subtype: "success",
-        uuid: "test-uuid",
+        uuid: "550e8400-e29b-41d4-a716-446655440001",
         session_id: "test-session",
         duration_ms: 1000,
         duration_api_ms: 800,
@@ -95,7 +95,7 @@ describe("Claude Process SDK Handlers", () => {
           output_tokens: 50,
           cache_creation_input_tokens: 0,
           cache_read_input_tokens: 0,
-        },
+        } as any,
         modelUsage: {},
         permission_denials: [],
       };
@@ -109,7 +109,7 @@ describe("Claude Process SDK Handlers", () => {
       const message: SDKSystemMessage = {
         type: "system",
         subtype: "init",
-        uuid: "test-uuid",
+        uuid: "550e8400-e29b-41d4-a716-446655440002",
         session_id: "test-session",
         apiKeySource: "user",
         cwd: "/test/path",
@@ -119,6 +119,9 @@ describe("Claude Process SDK Handlers", () => {
         permissionMode: "default",
         slash_commands: [],
         output_style: "text",
+        claude_code_version: "1.0.0",
+        skills: [],
+        plugins: [],
       };
 
       expect(message.type).toBe("system");
@@ -128,7 +131,7 @@ describe("Claude Process SDK Handlers", () => {
   });
 
   describe("Process State Management", () => {
-    it("should generate unique process IDs", async () => {
+    it("should generate unique process IDs", () => {
       const ids = new Set<string>();
 
       // Generate multiple IDs
@@ -234,12 +237,14 @@ describe("useClaudeStream Hook Integration", () => {
 
     handleAssistantMessage({
       type: "assistant",
-      uuid: "test-uuid",
+      uuid: "550e8400-e29b-41d4-a716-446655440003",
       session_id: "test-session",
       message: {
         role: "assistant",
-        content: [{ type: "text", text: "Hello from Claude!" }],
-      },
+        content: [
+          { type: "text", text: "Hello from Claude!", citations: null },
+        ],
+      } as any,
       parent_tool_use_id: null,
     });
 
@@ -273,7 +278,7 @@ describe("useClaudeStream Hook Integration", () => {
     handleResult({
       type: "result",
       subtype: "success",
-      uuid: "test-uuid",
+      uuid: "550e8400-e29b-41d4-a716-446655440004",
       session_id: "test-session",
       duration_ms: 1000,
       duration_api_ms: 800,
@@ -286,7 +291,7 @@ describe("useClaudeStream Hook Integration", () => {
         output_tokens: 50,
         cache_creation_input_tokens: 0,
         cache_read_input_tokens: 0,
-      },
+      } as any,
       modelUsage: {},
       permission_denials: [],
     });

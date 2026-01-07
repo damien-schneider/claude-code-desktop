@@ -4,12 +4,16 @@ import { cn } from "@/utils/tailwind";
 export type ImageProps = Experimental_GeneratedImage & {
   className?: string;
   alt?: string;
+  height?: number;
+  width?: number;
 };
 
 export const Image = ({
   base64,
   uint8Array,
   mediaType,
+  height,
+  width,
   ...props
 }: ImageProps) => (
   <img
@@ -19,6 +23,8 @@ export const Image = ({
       "h-auto max-w-full overflow-hidden rounded-md",
       props.className
     )}
+    height={height}
     src={`data:${mediaType};base64,${base64}`}
+    width={width}
   />
 );

@@ -5,7 +5,8 @@ import { readdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import type {
+
+export type {
   Query,
   SDKAssistantMessage,
   SDKMessage,
@@ -14,7 +15,17 @@ import type {
   SDKSystemMessage,
   SDKUserMessage,
 } from "@anthropic-ai/claude-agent-sdk";
-import { query as sdkQuery } from "@anthropic-ai/claude-agent-sdk";
+
+import {
+  type Query,
+  type SDKAssistantMessage,
+  type SDKMessage,
+  type SDKPartialAssistantMessage,
+  type SDKResultMessage,
+  type SDKSystemMessage,
+  type SDKUserMessage,
+  query as sdkQuery,
+} from "@anthropic-ai/claude-agent-sdk";
 import { os } from "@orpc/server";
 import { z } from "zod";
 import { ipcContext } from "@/ipc/context";
@@ -100,16 +111,6 @@ export type PermissionMode =
   | "bypassPermissions"
   | "delegate"
   | "dontAsk";
-
-// Re-export SDK types for consumers
-export type {
-  SDKMessage,
-  SDKAssistantMessage,
-  SDKUserMessage,
-  SDKResultMessage,
-  SDKSystemMessage,
-  SDKPartialAssistantMessage,
-};
 
 // =============================================================================
 // Event Emitter
@@ -209,14 +210,14 @@ export async function checkClaudeAvailability(): Promise<{
 /**
  * Check if Claude CLI is available
  */
-export const checkClaude = os.handler(async () => {
+export const checkClaude = os.handler(() => {
   return checkClaudeAvailability();
 });
 
 /**
  * Get available permission modes
  */
-export const getPermissionModes = os.handler(async () => {
+export const getPermissionModes = os.handler(() => {
   // These are the standard permission modes from Claude Code
   const modes: PermissionMode[] = [
     "default",
@@ -244,13 +245,13 @@ export const startClaudeSession = os
     })
   )
   .handler(
-    async ({
+    ({
       input: {
         projectPath,
         sessionId,
         continueLast,
         permissionMode,
-        agentName,
+        agentName: _agentName,
         initialMessage,
       },
     }) => {
@@ -313,7 +314,7 @@ export const sendMessage = os
       projectPath: z.string().optional(),
     })
   )
-  .handler(async ({ input: { processId, message, projectPath } }) => {
+  .handler(({ input: { processId, message, projectPath } }) => {
     const state = activeProcesses.get(processId);
 
     if (!state) {
@@ -333,12 +334,197 @@ export const sendMessage = os
     console.log("[SDK:sendMessage] Resume session:", state.sessionId);
 
     // Process the message
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     processMessage(processId, cwd, message, {
       resume: state.sessionId,
     });
 
     return { success: true };
   });
+
+/**
+ * Verify session file exists when resuming
+ */
+async function verifySessionFileExists(
+  projectPath: string,
+  sessionId: string,
+  processId: string
+): Promise<boolean> {
+  const sanitizedPath = projectPath.replace(/\//g, "-").replace(/\\/g, "-");
+  const sessionDir = join(homedir(), ".claude", "projects", sanitizedPath);
+  const sessionFile = join(sessionDir, `${sessionId}.jsonl`);
+
+  console.log("[SDK:processMessage] Looking for session file:", sessionFile);
+
+  if (!existsSync(sessionFile)) {
+    // List available session files for debugging
+    try {
+      const files = await readdir(sessionDir);
+      console.log("[SDK:processMessage] Available session files:", files);
+    } catch (_e) {
+      console.log(
+        "[SDK:processMessage] Session directory doesn't exist:",
+        sessionDir
+      );
+    }
+
+    const error =
+      `Session file not found: ${sessionFile}\n\n` +
+      `The session ${sessionId} doesn't exist at the expected location.\n` +
+      "This can happen if:\n" +
+      "1. The session was deleted\n" +
+      "2. The project path changed\n" +
+      "3. The session was never saved\n\n" +
+      `Expected path: ${sessionFile}`;
+
+    console.error("[SDK:processMessage]", error);
+
+    sendToRenderer("message", {
+      processId,
+      type: "error",
+      content: error,
+    });
+
+    processEvents.emit("message", {
+      processId,
+      type: "error",
+      content: error,
+    });
+    return false;
+  }
+
+  console.log(
+    "[SDK:processMessage] Session file exists, proceeding with resume"
+  );
+  return true;
+}
+
+/**
+ * Build enhanced environment for Claude CLI
+ */
+function buildEnhancedEnv(): NodeJS.ProcessEnv {
+  const homeDir = homedir();
+  return {
+    ...process.env,
+    // Ensure common bin paths are in PATH
+    PATH: [
+      process.env.PATH,
+      join(homeDir, ".local", "bin"),
+      "/usr/local/bin",
+      "/opt/homebrew/bin",
+      join(homeDir, ".volta", "bin"),
+      join(homeDir, ".nvm", "versions", "node", "current", "bin"),
+    ]
+      .filter(Boolean)
+      .join(":"),
+    // Ensure HOME is set (needed for ~/.claude credentials)
+    HOME: homeDir,
+  };
+}
+
+/**
+ * Build query options for SDK
+ */
+function buildQueryOptions(
+  projectPath: string,
+  executablePath: string,
+  abortController: AbortController,
+  options: {
+    continue?: boolean;
+    resume?: string;
+    permissionMode?: PermissionMode;
+  }
+): Parameters<typeof sdkQuery>[0]["options"] {
+  const queryOptions: Parameters<typeof sdkQuery>[0]["options"] = {
+    cwd: projectPath,
+    pathToClaudeCodeExecutable: executablePath,
+    abortController,
+    permissionMode: options.permissionMode || "default",
+    model: "claude-sonnet-4-20250514",
+    settingSources: ["user", "project"], // Load user settings (auth) and project settings (CLAUDE.md)
+    includePartialMessages: true, // Enable streaming partial messages
+    env: buildEnhancedEnv(), // Pass enhanced environment with proper PATH and HOME
+  };
+
+  // Add resume or continue option (they are mutually exclusive)
+  if (options.resume) {
+    queryOptions.resume = options.resume;
+    console.log("[SDK:processMessage] Resuming session:", options.resume);
+  } else if (options.continue) {
+    queryOptions.continue = true;
+    console.log("[SDK:processMessage] Continuing last session");
+  }
+
+  return queryOptions;
+}
+
+/**
+ * Process streaming messages from SDK
+ */
+async function processStreamingMessages(
+  queryResult: ReturnType<typeof sdkQuery>,
+  state: ProcessState,
+  processId: string
+): Promise<boolean> {
+  let resultIsError = false;
+
+  // Process streaming messages
+  for await (const sdkMessage of queryResult) {
+    if (!state.isActive) {
+      break;
+    }
+
+    // Track result messages
+    if (sdkMessage.type === "result") {
+      const resultMsg = sdkMessage as SDKResultMessage;
+      resultIsError = resultMsg.is_error || resultMsg.subtype !== "success";
+      console.log("[SDK:processMessage] Received result:", {
+        subtype: resultMsg.subtype,
+        isError: resultMsg.is_error,
+        numTurns: resultMsg.num_turns,
+      });
+    }
+
+    handleSDKMessage(processId, sdkMessage);
+  }
+
+  return resultIsError;
+}
+
+/**
+ * Handle exit code 1 errors (may be normal after successful completion)
+ */
+function handleExitCode1Error(
+  processId: string,
+  projectPath: string,
+  sessionId: string | undefined,
+  permissionMode: PermissionMode | undefined
+): void {
+  console.warn(
+    "[SDK:processMessage] Process exited with code 1 (may be normal after completion):",
+    {
+      projectPath,
+      sessionId,
+      permissionMode,
+    }
+  );
+
+  // Send a completion event instead of error if we got this far
+  // (the for-await loop completed which means messages were processed)
+  sendToRenderer("message", {
+    processId,
+    type: "complete",
+    code: 1,
+    warning: "Process exited with code 1, but messages were received",
+  });
+
+  processEvents.emit("message", {
+    processId,
+    type: "complete",
+    code: 1,
+    warning: "Process exited with code 1, but messages were received",
+  });
+}
 
 /**
  * Internal function to process messages using the SDK
@@ -390,55 +576,14 @@ async function processMessage(
 
     // If resuming, verify the session file exists first
     if (options.resume) {
-      const sanitizedPath = projectPath.replace(/\//g, "-").replace(/\\/g, "-");
-      const sessionDir = join(homedir(), ".claude", "projects", sanitizedPath);
-      const sessionFile = join(sessionDir, `${options.resume}.jsonl`);
-
-      console.log(
-        "[SDK:processMessage] Looking for session file:",
-        sessionFile
+      const sessionExists = await verifySessionFileExists(
+        projectPath,
+        options.resume,
+        processId
       );
-
-      if (!existsSync(sessionFile)) {
-        // List available session files for debugging
-        try {
-          const files = await readdir(sessionDir);
-          console.log("[SDK:processMessage] Available session files:", files);
-        } catch (_e) {
-          console.log(
-            "[SDK:processMessage] Session directory doesn't exist:",
-            sessionDir
-          );
-        }
-
-        const error =
-          `Session file not found: ${sessionFile}\n\n` +
-          `The session ${options.resume} doesn't exist at the expected location.\n` +
-          "This can happen if:\n" +
-          "1. The session was deleted\n" +
-          "2. The project path changed\n" +
-          "3. The session was never saved\n\n" +
-          `Expected path: ${sessionFile}`;
-
-        console.error("[SDK:processMessage]", error);
-
-        sendToRenderer("message", {
-          processId,
-          type: "error",
-          content: error,
-        });
-
-        processEvents.emit("message", {
-          processId,
-          type: "error",
-          content: error,
-        });
+      if (!sessionExists) {
         return;
       }
-
-      console.log(
-        "[SDK:processMessage] Session file exists, proceeding with resume"
-      );
     }
 
     // Send system init event
@@ -449,56 +594,23 @@ async function processMessage(
       content: "Starting Claude session...",
     });
 
-    // Build environment with proper PATH for Claude CLI
-    // Electron main process may not have the full shell environment
-    const homeDir = homedir();
-    const enhancedEnv = {
-      ...process.env,
-      // Ensure common bin paths are in PATH
-      PATH: [
-        process.env.PATH,
-        join(homeDir, ".local", "bin"),
-        "/usr/local/bin",
-        "/opt/homebrew/bin",
-        join(homeDir, ".volta", "bin"),
-        join(homeDir, ".nvm", "versions", "node", "current", "bin"),
-      ]
-        .filter(Boolean)
-        .join(":"),
-      // Ensure HOME is set (needed for ~/.claude credentials)
-      HOME: homeDir,
-    };
-
     // Build the query options
-    const queryOptions: Parameters<typeof sdkQuery>[0]["options"] = {
-      cwd: projectPath,
-      pathToClaudeCodeExecutable: executablePath,
-      abortController: state.abortController,
-      permissionMode: options.permissionMode || "default",
-      model: "claude-sonnet-4-20250514",
-      settingSources: ["user", "project"], // Load user settings (auth) and project settings (CLAUDE.md)
-      includePartialMessages: true, // Enable streaming partial messages
-      env: enhancedEnv, // Pass enhanced environment with proper PATH and HOME
-    };
-
-    // Add resume or continue option (they are mutually exclusive)
-    if (options.resume) {
-      queryOptions.resume = options.resume;
-      console.log("[SDK:processMessage] Resuming session:", options.resume);
-    } else if (options.continue) {
-      queryOptions.continue = true;
-      console.log("[SDK:processMessage] Continuing last session");
-    }
+    const queryOptions = buildQueryOptions(
+      projectPath,
+      executablePath,
+      state.abortController,
+      options
+    );
 
     console.log(
       "[SDK:processMessage] Query options:",
       JSON.stringify(
         {
-          cwd: queryOptions.cwd,
-          resume: queryOptions.resume,
-          continue: queryOptions.continue,
-          permissionMode: queryOptions.permissionMode,
-          model: queryOptions.model,
+          cwd: queryOptions?.cwd,
+          resume: queryOptions?.resume,
+          continue: queryOptions?.continue,
+          permissionMode: queryOptions?.permissionMode,
+          model: queryOptions?.model,
         },
         null,
         2
@@ -513,30 +625,12 @@ async function processMessage(
 
     state.query = queryResult;
 
-    // Track if we received a valid result (to handle exit code 1 after success)
-    let _receivedResult = false;
-    let resultIsError = false;
-
     // Process streaming messages
-    for await (const sdkMessage of queryResult) {
-      if (!state.isActive) {
-        break;
-      }
-
-      // Track result messages
-      if (sdkMessage.type === "result") {
-        _receivedResult = true;
-        const resultMsg = sdkMessage as SDKResultMessage;
-        resultIsError = resultMsg.is_error || resultMsg.subtype !== "success";
-        console.log("[SDK:processMessage] Received result:", {
-          subtype: resultMsg.subtype,
-          isError: resultMsg.is_error,
-          numTurns: resultMsg.num_turns,
-        });
-      }
-
-      handleSDKMessage(processId, sdkMessage);
-    }
+    const resultIsError = await processStreamingMessages(
+      queryResult,
+      state,
+      processId
+    );
 
     // Send completion event
     console.log("[SDK:processMessage] Query completed successfully");
@@ -556,36 +650,13 @@ async function processMessage(
     const errorMessage = error instanceof Error ? error.message : String(error);
     const isExitCode1 = errorMessage.includes("exited with code 1");
 
-    // If we received a result before the error, this might just be normal process cleanup
-    // The SDK sometimes throws after the generator completes
-    const _state = activeProcesses.get(processId);
-
     if (isExitCode1) {
-      // Log but don't necessarily treat as fatal error
-      console.warn(
-        "[SDK:processMessage] Process exited with code 1 (may be normal after completion):",
-        {
-          projectPath,
-          sessionId: options.resume,
-          permissionMode: options.permissionMode,
-        }
+      handleExitCode1Error(
+        processId,
+        projectPath,
+        options.resume,
+        options.permissionMode
       );
-
-      // Send a completion event instead of error if we got this far
-      // (the for-await loop completed which means messages were processed)
-      sendToRenderer("message", {
-        processId,
-        type: "complete",
-        code: 1,
-        warning: "Process exited with code 1, but messages were received",
-      });
-
-      processEvents.emit("message", {
-        processId,
-        type: "complete",
-        code: 1,
-        warning: "Process exited with code 1, but messages were received",
-      });
       return;
     }
 
@@ -818,8 +889,13 @@ export const resumeSession = os
     })
   )
   .handler(
-    async ({
-      input: { projectPath, sessionId, permissionMode, forkSession },
+    ({
+      input: {
+        projectPath,
+        sessionId,
+        permissionMode: _permissionMode,
+        forkSession: _forkSession,
+      },
     }) => {
       const processId = generateProcessId();
       const abortController = new AbortController();

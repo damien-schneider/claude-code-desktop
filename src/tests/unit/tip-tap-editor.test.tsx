@@ -5,7 +5,7 @@
 
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { TipTapEditor } from "@/renderer/components/TipTapEditor";
+import { TipTapEditor } from "@/renderer/components/tip-tap-editor";
 
 describe("TipTapEditor", () => {
   it("should render textarea with content", () => {
@@ -208,11 +208,10 @@ describe("TipTapEditor", () => {
     expect(() =>
       render(
         <TipTapEditor
-          actions={<button>Save</button>}
+          actions={<button type="button">Save</button>}
           className="test-class"
           content="Test content"
           editable={true}
-          hasChanges={true}
           onChange={vi.fn()}
           placeholder="Write..."
         />

@@ -189,10 +189,10 @@ describe("Rule Schema", () => {
     it("should validate priority enum", () => {
       const validPriorities = ["low", "medium", "high"] as const;
 
-      validPriorities.forEach((priority) => {
+      for (const priority of validPriorities) {
         const result = ruleFrontmatterSchema.safeParse({ priority });
         expect(result.success).toBe(true);
-      });
+      }
     });
 
     it("should reject invalid priority", () => {
@@ -309,17 +309,17 @@ describe("Base Schema Validation", () => {
     ];
 
     it("should accept valid names", () => {
-      validNames.forEach((name) => {
+      for (const name of validNames) {
         const result = claudeNameSchema.safeParse(name);
         expect(result.success).toBe(true);
-      });
+      }
     });
 
     it("should reject invalid names", () => {
-      invalidNames.forEach((name) => {
+      for (const name of invalidNames) {
         const result = claudeNameSchema.safeParse(name);
         expect(result.success).toBe(false);
-      });
+      }
     });
 
     it("should handle edge case of exactly 64 characters", () => {
@@ -356,17 +356,17 @@ describe("Base Schema Validation", () => {
     ];
 
     it("should accept valid colors", () => {
-      validColors.forEach((color) => {
+      for (const color of validColors) {
         const result = colorSchema.safeParse(color);
         expect(result.success).toBe(true);
-      });
+      }
     });
 
     it("should reject invalid colors", () => {
-      invalidColors.forEach((color) => {
+      for (const color of invalidColors) {
         const result = colorSchema.safeParse(color);
         expect(result.success).toBe(false);
-      });
+      }
     });
 
     it("should accept undefined as optional", () => {
@@ -390,19 +390,19 @@ describe("Base Schema Validation", () => {
         "claude-3-haiku-20240307",
       ];
 
-      validModels.forEach((model) => {
+      for (const model of validModels) {
         const result = claudeModelSchema.safeParse(model);
         expect(result.success).toBe(true);
-      });
+      }
     });
 
     it("should reject invalid model names", () => {
       const invalidModels = ["gpt-4", "claude-2", "not-a-model", ""];
 
-      invalidModels.forEach((model) => {
+      for (const model of invalidModels) {
         const result = claudeModelSchema.safeParse(model);
         expect(result.success).toBe(false);
-      });
+      }
     });
   });
 

@@ -166,13 +166,13 @@ describe("sessionMessageSchema", () => {
   it("should accept all status values", () => {
     const statuses = ["pending", "streaming", "complete", "error"] as const;
 
-    statuses.forEach((status) => {
+    for (const status of statuses) {
       const result = sessionMessageSchema.safeParse({
         ...validMessage,
         status,
       });
       expect(result.success).toBe(true);
-    });
+    }
   });
 
   it("should reject invalid type", () => {

@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+const YAML_FRONTMATTER_REGEX = /^---\n([\s\S]*?)\n---/;
+const YAML_KEY_VALUE_REGEX = /^(\w+):\s*(.+)$/;
+const YAML_FRONTMATTER_REMOVE_REGEX = /^---\n[\s\S]*?\n---\n?/;
+
 /**
  * Zod schemas for validating Claude Code configuration files
  *
@@ -203,7 +207,7 @@ export const parseFrontmatter = <T extends z.ZodType>(
   content: string,
   schema: T
 ): { frontmatter?: z.infer<T>; body: string } => {
-  const yamlMatch = content.match(/^---\n([\s\S]*?)\n---/);
+  const yamlMatch = content.match(YAML_FRONTMATTER_REGEX);
   if (!yamlMatch) {
     return { body: content };
   }
@@ -215,7 +219,7 @@ export const parseFrontmatter = <T extends z.ZodType>(
     // Simple YAML parser for key-value pairs
     const lines = yaml.split("\n");
     for (const line of lines) {
-      const match = line.match(/^(\w+):\s*(.+)$/);
+      const match = line.match(YAML_KEY_VALUE_REGEX);
       if (match) {
         const [, key, value] = match;
         // Handle arrays (basic support)
@@ -233,7 +237,7 @@ export const parseFrontmatter = <T extends z.ZodType>(
     const validated = schema.parse(frontmatter);
     return {
       frontmatter: validated,
-      body: content.replace(/^---\n[\s\S]*?\n---\n?/, ""),
+      body: content.replace(YAML_FRONTMATTER_REMOVE_REGEX, ""),
     };
   } catch {
     return { body: content };
@@ -318,9 +322,7 @@ export const validateSkillContent = (
   const result = skillFrontmatterSchema.safeParse(parsed.frontmatter);
   if (!result.success) {
     errors.push(
-      ...result.error.issues.map(
-        (e: any) => `${e.path.join(".")}: ${e.message}`
-      )
+      ...result.error.issues.map((e) => `${e.path.join(".")}: ${e.message}`)
     );
     return { valid: false, errors };
   }

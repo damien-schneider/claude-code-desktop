@@ -21,9 +21,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
+  Panel,
+  PanelGroup,
+  PanelResizeHandle,
 } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { showError } from "@/renderer/lib/toast";
@@ -610,12 +610,9 @@ export const SkillsTab: React.FC = () => {
   return (
     <div className="flex h-full flex-col">
       {/* Main Content */}
-      <ResizablePanelGroup
-        className="flex-1 overflow-hidden"
-        direction="horizontal"
-      >
+      <PanelGroup className="flex-1 overflow-hidden" direction="horizontal">
         {/* Skills List */}
-        <ResizablePanel
+        <Panel
           className="border-r bg-muted/30"
           defaultSize={25}
           maxSize={40}
@@ -633,12 +630,12 @@ export const SkillsTab: React.FC = () => {
             selectedSkill={selectedSkill}
             skills={skills}
           />
-        </ResizablePanel>
+        </Panel>
 
-        <ResizableHandle withHandle />
+        <PanelResizeHandle />
 
         {/* Skill Editor */}
-        <ResizablePanel defaultSize={75} minSize={60}>
+        <Panel defaultSize={75} minSize={60}>
           <SkillEditor
             form={form}
             isRawMode={isRawMode}
@@ -651,8 +648,8 @@ export const SkillsTab: React.FC = () => {
             setIsRawMode={setIsRawMode}
             setRawContent={setRawContent}
           />
-        </ResizablePanel>
-      </ResizablePanelGroup>
+        </Panel>
+      </PanelGroup>
     </div>
   );
 };

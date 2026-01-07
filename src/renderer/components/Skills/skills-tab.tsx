@@ -23,12 +23,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
+  Panel,
+  PanelGroup,
+  PanelResizeHandle,
 } from "@/components/ui/resizable";
 import { Textarea } from "@/components/ui/textarea";
-import { TipTapEditor } from "@/renderer/components/TipTapEditor";
+import { TipTapEditor } from "@/renderer/components/tip-tap-editor";
 import { showError } from "@/renderer/lib/toast";
 import {
   type SkillCreateValues,
@@ -37,7 +37,7 @@ import {
   skillFormSchema,
 } from "@/schemas/claude";
 import { cn } from "@/utils/tailwind";
-import { useClaudeItems } from "../Hooks/useClaudeItems";
+import { useClaudeItems } from "../hooks/use-claude-items";
 
 interface Skill {
   name: string;
@@ -95,12 +95,15 @@ const parseSkillFrontmatter = (
     const metadataMatch = yaml.match(/^metadata:\s*\n((?: {2}.+\n?)+)/m);
     if (metadataMatch) {
       frontmatter.metadata = {};
-      metadataMatch[1].split("\n").forEach((line) => {
+      for (const line of metadataMatch[1].split("\n")) {
         const match = line.match(/^ {2}(\w+):\s*(.+)$/);
         if (match) {
-          frontmatter.metadata![match[1]] = match[2].trim();
+          const metadata = frontmatter.metadata;
+          if (metadata) {
+            metadata[match[1]] = match[2].trim();
+          }
         }
-      });
+      }
     }
 
     return {
@@ -178,6 +181,7 @@ export const SkillsTab: React.FC = () => {
   const [isRawMode, setIsRawMode] = useState(false);
   const [rawContent, setRawContent] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Form for skill editing
   const form = useForm<SkillFormValues>({
@@ -246,6 +250,7 @@ export const SkillsTab: React.FC = () => {
       return;
     }
 
+    // biome-ignore lint/suspicious/noAlert: Replacing with modal is out of scope
     if (confirm("Are you sure you want to delete this skill?")) {
       const success = await deleteItem(selectedSkill);
       if (success) {
@@ -284,140 +289,171 @@ export const SkillsTab: React.FC = () => {
   return (
     <div className="flex h-full flex-col">
       {/* Main Content */}
-      <ResizablePanelGroup
-        className="flex-1 overflow-hidden"
-        direction="horizontal"
-      >
+      <PanelGroup className="flex-1 overflow-hidden" direction="horizontal">
         {/* Skills List */}
-        <ResizablePanel
+        <Panel
           className="border-r bg-muted/30"
-          defaultSize={25}
-          maxSize={40}
-          minSize={15}
+          collapsedSize={36}
+          collapsible
+          defaultSize={250}
+          maxSize={350}
+          minSize={210}
+          onCollapse={() => setSidebarCollapsed(true)}
+          onExpand={() => setSidebarCollapsed(false)}
         >
-          {loading ? (
-            <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-              Loading...
-            </div>
-          ) : (
-            <div className="flex-1 space-y-1 overflow-y-auto p-2">
-              {/* Add Skill Button / Form */}
-              {isAdding ? (
-                <div className="rounded-md border border-primary/20 bg-primary/10 p-2">
-                  <Form {...createForm}>
-                    <form
-                      className="space-y-2"
-                      onSubmit={createForm.handleSubmit(handleConfirmAdd)}
-                    >
-                      <FormField
-                        control={createForm.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                autoFocus
-                                className="font-mono text-sm"
-                                onKeyDown={(e) => {
-                                  if (e.key === "Escape") {
-                                    handleCancelAdd();
-                                  }
-                                }}
-                                placeholder="my-skill-name (optional, leave empty for auto-name)"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <div className="flex gap-2">
-                        <Button className="flex-1" size="sm" type="submit">
-                          Create
-                        </Button>
-                        <Button
-                          className="flex-1"
-                          onClick={handleCancelAdd}
-                          size="sm"
-                          type="button"
-                          variant="outline"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                </div>
-              ) : (
-                <button
-                  className={cn(
-                    "flex w-full items-center justify-center gap-2 rounded-md border-2 border-dashed p-3 transition-colors",
-                    activePath
-                      ? "cursor-pointer border-primary/50 hover:border-primary hover:bg-primary/5"
-                      : "cursor-not-allowed border-muted opacity-50"
-                  )}
-                  disabled={!activePath}
-                  onClick={handleAdd}
-                  title={
-                    activePath
-                      ? "Add new skill"
-                      : "Select a project or global settings first"
-                  }
-                >
-                  <PlusCircle className="h-5 w-5" weight="regular" />
-                  <span className="font-medium text-sm">Add Skill</span>
-                </button>
-              )}
-
-              {/* Skills List */}
-              {skills.length === 0 && !isAdding ? (
-                <div className="flex h-[calc(100%-60px)] items-center justify-center text-muted-foreground">
-                  <div className="text-center">
-                    <Lightning
-                      className="mx-auto mb-2 h-8 w-8 opacity-50"
-                      weight="regular"
-                    />
-                    <p className="text-sm">No skills found</p>
-                    <p className="mt-1 text-xs">
-                      Create skills to extend Claude
-                    </p>
+          <div className="flex h-full flex-col overflow-hidden">
+            {loading ? (
+              <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
+                Loading...
+              </div>
+            ) : (
+              <div className="flex-1 space-y-1 overflow-y-auto p-2">
+                {/* Add Skill Button / Form */}
+                {isAdding ? (
+                  <div className="rounded-md border border-primary/20 bg-primary/10 p-2">
+                    <Form {...createForm}>
+                      <form
+                        className="space-y-2"
+                        onSubmit={createForm.handleSubmit(handleConfirmAdd)}
+                      >
+                        <FormField
+                          control={createForm.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  autoFocus
+                                  className="font-mono text-sm"
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Escape") {
+                                      handleCancelAdd();
+                                    }
+                                  }}
+                                  placeholder="my-skill-name (optional, leave empty for auto-name)"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <div className="flex gap-2">
+                          <Button className="flex-1" size="sm" type="submit">
+                            Create
+                          </Button>
+                          <Button
+                            className="flex-1"
+                            onClick={handleCancelAdd}
+                            size="sm"
+                            type="button"
+                            variant="outline"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
                   </div>
-                </div>
-              ) : (
-                skills.map((skill) => (
-                  <div
+                ) : (
+                  <button
                     className={cn(
-                      "cursor-pointer rounded-md p-2 transition-colors",
-                      selectedSkill === skill.path
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-muted/50"
+                      "flex w-full items-center justify-center gap-2 rounded-md border-2 border-dashed transition-colors",
+                      activePath
+                        ? "cursor-pointer border-primary/50 hover:border-primary hover:bg-primary/5"
+                        : "cursor-not-allowed border-muted opacity-50",
+                      sidebarCollapsed ? "p-2" : "p-3"
                     )}
-                    key={skill.path}
-                    onClick={() => setSelectedSkill(skill.path)}
+                    disabled={!activePath}
+                    onClick={handleAdd}
+                    title={
+                      activePath
+                        ? "Add new skill"
+                        : "Select a project or global settings first"
+                    }
+                    type="button"
                   >
-                    <div className="flex items-start gap-2">
-                      <FolderOpen className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate font-medium text-sm">
-                          {skill.displayName || skill.name}
-                        </div>
-                        <div className="truncate text-xs opacity-70">
-                          {skill.description || "No description"}
-                        </div>
-                      </div>
+                    <PlusCircle className="h-5 w-5" weight="regular" />
+                    {!sidebarCollapsed && (
+                      <span className="font-medium text-sm">Add Skill</span>
+                    )}
+                  </button>
+                )}
+
+                {/* Skills List */}
+                {skills.length === 0 && !isAdding ? (
+                  <div className="flex h-[calc(100%-60px)] items-center justify-center text-muted-foreground">
+                    <div className="text-center">
+                      <Lightning
+                        className="mx-auto mb-2 h-8 w-8 opacity-50"
+                        weight="regular"
+                      />
+                      {!sidebarCollapsed && (
+                        <>
+                          <p className="text-sm">No skills found</p>
+                          <p className="mt-1 text-xs">
+                            Create skills to extend Claude
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
-                ))
-              )}
-            </div>
-          )}
-        </ResizablePanel>
+                ) : (
+                  skills.map((skill) => (
+                    <div
+                      className={cn(
+                        "cursor-pointer rounded-md p-2 transition-colors",
+                        selectedSkill === skill.path
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-muted/50",
+                        sidebarCollapsed && "flex justify-center"
+                      )}
+                      key={skill.path}
+                      onClick={() => setSelectedSkill(skill.path)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          setSelectedSkill(skill.path);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      title={
+                        sidebarCollapsed
+                          ? skill.displayName || skill.name
+                          : undefined
+                      }
+                    >
+                      <div className="flex items-start gap-2">
+                        <FolderOpen
+                          className={cn(
+                            "h-4 w-4 shrink-0",
+                            !sidebarCollapsed && "mt-0.5"
+                          )}
+                        />
+                        {!sidebarCollapsed && (
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate font-medium text-sm">
+                              {skill.displayName || skill.name}
+                            </div>
+                            <div className="truncate text-xs opacity-70">
+                              {skill.description || "No description"}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        </Panel>
 
-        <ResizableHandle withHandle />
+        <PanelResizeHandle />
 
         {/* Skill Editor */}
-        <ResizablePanel defaultSize={75} minSize={60}>
-          <div className="flex h-full flex-1 flex-col overflow-hidden">
+        <Panel defaultSize="75%" minSize="60%">
+          <div className="flex h-full min-w-0 flex-col overflow-hidden">
             {selectedSkillData ? (
               <>
                 {/* Toolbar */}
@@ -633,8 +669,8 @@ Reference files using relative paths: See [reference](references/REFERENCE.md)
               </div>
             )}
           </div>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+        </Panel>
+      </PanelGroup>
     </div>
   );
 };

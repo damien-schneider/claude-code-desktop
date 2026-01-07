@@ -10,7 +10,7 @@ import {
   type TextContentBlock,
   type ToolResultContentBlock,
   type ToolUseContentBlock,
-} from "@/renderer/stores/chatAtoms";
+} from "@/renderer/stores/chat-atoms";
 
 describe("Chat Atoms Type Safety", () => {
   describe("ContentBlock Types", () => {
@@ -488,8 +488,11 @@ describe("useClaudeStream Type Safety", () => {
           return content;
         }
         return content
-          .filter((block) => block.type === "text" && block.text)
-          .map((block) => block.text!)
+          .filter(
+            (block): block is { type: string; text: string } =>
+              block.type === "text" && block.text !== undefined
+          )
+          .map((block) => block.text)
           .join("");
       };
 

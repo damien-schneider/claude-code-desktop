@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { EnabledPluginsEditor } from "@/renderer/components/Settings/enabled-plugins-editor";
-import type { EnabledPlugins } from "@/renderer/components/Settings/settings-types";
+import { EnabledPluginsEditor } from "@/renderer/components/settings/enabled-plugins-editor";
+import type { EnabledPlugins } from "@/renderer/components/settings/settings-types";
 
 describe("EnabledPluginsEditor", () => {
   it("should render all plugin entries sorted alphabetically", () => {

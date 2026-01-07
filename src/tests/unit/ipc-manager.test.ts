@@ -6,9 +6,10 @@ import { describe, expect, it } from "vitest";
 
 // Mock the IPC manager since it's not exported
 class IPCManager {
-  public readonly client: any;
+  readonly client: any;
   private initialized = false;
   private readonly clientPort: MessagePort | null;
+  readonly serverPort: MessagePort | null;
 
   constructor() {
     const { port1, port2 } = new MessageChannel();
@@ -17,7 +18,7 @@ class IPCManager {
     this.client = {};
   }
 
-  public initialize() {
+  initialize() {
     if (this.initialized) {
       return;
     }
@@ -130,24 +131,24 @@ describe("IPCManager", () => {
       const channels = Array.from({ length: 5 }, () => new MessageChannel());
 
       expect(channels).toHaveLength(5);
-      channels.forEach((channel) => {
+      for (const channel of channels) {
         expect(channel.port1).toBeDefined();
         expect(channel.port2).toBeDefined();
-      });
+      }
     });
 
     it("should handle rapid MessageChannel creation", () => {
-      const channels = [];
+      const channels: MessageChannel[] = [];
 
       for (let i = 0; i < 10; i++) {
         channels.push(new MessageChannel());
       }
 
       expect(channels).toHaveLength(10);
-      channels.forEach((channel) => {
+      for (const channel of channels) {
         expect(channel.port1).toBeDefined();
         expect(channel.port2).toBeDefined();
-      });
+      }
     });
   });
 

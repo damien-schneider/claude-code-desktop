@@ -1,7 +1,7 @@
 // Jotai atoms (preferred for new code)
 
 // Zustand stores (legacy, will be phased out)
-export { deduplicateProjects, useAppStore } from "./appStore";
+export { deduplicateProjects, useAppStore } from "./app-store";
 export {
   type AppMode,
   activePathAtom,
@@ -19,12 +19,9 @@ export {
   initializeHomePathAtom,
   isGlobalSettingsSelectedAtom,
   isScanningAtom,
-  // UI state
-  leftSidebarCollapsedAtom,
   type NavigationView,
   // Projects
   projectsAtom,
-  rightSidebarCollapsedAtom,
   scanProjectsAtom,
   searchQueryAtom,
   selectedProjectIdAtom,
@@ -37,10 +34,7 @@ export {
   setProjectsAtom,
   setSearchQueryAtom,
   setShowFavoritesOnlyAtom,
-  setShowWithClaudeOnlyAtom,
   showFavoritesOnlyAtom,
-  showWithClaudeOnlyAtom,
-  sidebarCollapsedAtom,
   toggleFavoriteAtom,
 } from "./atoms";
 // Chat atoms
@@ -95,7 +89,7 @@ export {
   streamingErrorAtom,
   streamingMessageAtom,
   thinkingStartTimeAtom,
-} from "./chatAtoms";
+} from "./chat-atoms";
 export {
   type AgentConfig,
   type HookConfig,
@@ -103,4 +97,4 @@ export {
   type SettingsConfig,
   type SkillConfig,
   useConfigStore,
-} from "./configStore";
+} from "./config-store";

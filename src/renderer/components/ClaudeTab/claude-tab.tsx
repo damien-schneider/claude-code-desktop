@@ -10,7 +10,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ipc } from "@/ipc/manager";
-import { TipTapEditor } from "@/renderer/components/TipTapEditor";
+import { TipTapEditor } from "@/renderer/components/tip-tap-editor";
 import { showError, showSuccess } from "@/renderer/lib/toast";
 import { useAppStore } from "@/renderer/stores";
 
@@ -72,7 +72,7 @@ export const ClaudeTab: React.FC = () => {
     }
   }, [currentView, loadClaudeMD]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!currentPath) {
       return;
     }
@@ -93,7 +93,7 @@ export const ClaudeTab: React.FC = () => {
     } finally {
       setSaving(false);
     }
-  };
+  }, [currentPath, content]);
 
   const handleCancel = () => {
     setContent(originalContent);
@@ -106,7 +106,7 @@ export const ClaudeTab: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
-        if (hasChanges && !saving && !loading) {
+        if (hasChanges && !saving && !loading && currentPath) {
           handleSave();
         }
       }
@@ -114,7 +114,7 @@ export const ClaudeTab: React.FC = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [hasChanges, saving, loading, handleSave]);
+  }, [hasChanges, saving, loading, currentPath, handleSave]);
 
   return (
     <TooltipProvider>
@@ -165,7 +165,6 @@ export const ClaudeTab: React.FC = () => {
               }
               className="min-h-full"
               content={content}
-              hasChanges={hasChanges}
               onChange={setContent}
               placeholder="# Project Instructions
 

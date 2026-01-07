@@ -26,14 +26,7 @@ vi.mock("sonner", () => ({
   },
 }));
 
-const toast = sonner.toast as {
-  success: ReturnType<typeof vi.fn>;
-  error: ReturnType<typeof vi.fn>;
-  info: ReturnType<typeof vi.fn>;
-  warning: ReturnType<typeof vi.fn>;
-  loading: ReturnType<typeof vi.fn>;
-  promise: ReturnType<typeof vi.fn>;
-};
+const toast = sonner.toast as any;
 
 describe("showSuccess", () => {
   beforeEach(() => {
@@ -96,6 +89,7 @@ describe("showError", () => {
   });
 
   it("should handle Error without message", () => {
+    // biome-ignore lint/suspicious/useErrorMessage: Testing error handling without message
     const error = new Error();
 
     showError("Failed", error);
@@ -186,7 +180,7 @@ describe("withPromise", () => {
     vi.clearAllMocks();
   });
 
-  it("should call toast.promise with correct parameters", async () => {
+  it("should call toast.promise with correct parameters", () => {
     const promise = Promise.resolve("success");
 
     const result = withPromise(promise, "Loading...", "Success!", "Error!");
@@ -217,7 +211,7 @@ describe("withPromise", () => {
     await expect(result).rejects.toThrow("Failed");
   });
 
-  it("should handle promise with custom messages", async () => {
+  it("should handle promise with custom messages", () => {
     const promise = Promise.resolve();
 
     withPromise(
@@ -234,7 +228,7 @@ describe("withPromise", () => {
     });
   });
 
-  it("should handle empty messages", async () => {
+  it("should handle empty messages", () => {
     const promise = Promise.resolve();
 
     withPromise(promise, "", "", "");

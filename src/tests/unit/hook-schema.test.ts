@@ -25,10 +25,10 @@ describe("hookTypeSchema", () => {
       "SessionEnd",
     ];
 
-    validTypes.forEach((type) => {
+    for (const type of validTypes) {
       const result = hookTypeSchema.safeParse(type);
       expect(result.success).toBe(true);
-    });
+    }
   });
 
   it("should reject invalid hook types", () => {

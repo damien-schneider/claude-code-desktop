@@ -205,11 +205,15 @@ export function EnvVarsEditor({ env, onChange }: EnvVarsEditorProps) {
                 <div className="flex items-start gap-3">
                   <div className="flex-1 space-y-3">
                     <div>
-                      <label className="font-medium text-foreground text-sm">
+                      <label
+                        className="font-medium text-foreground text-sm"
+                        htmlFor={`custom-name-${index}`}
+                      >
                         {customVar.name || "New Variable Name"}
                       </label>
                       <Input
                         className="mt-1"
+                        id={`custom-name-${index}`}
                         onChange={(e) =>
                           handleCustomNameChange(index, e.target.value)
                         }
@@ -218,11 +222,15 @@ export function EnvVarsEditor({ env, onChange }: EnvVarsEditorProps) {
                       />
                     </div>
                     <div>
-                      <label className="font-medium text-muted-foreground text-sm">
+                      <label
+                        className="font-medium text-muted-foreground text-sm"
+                        htmlFor={`custom-value-${index}`}
+                      >
                         Value
                       </label>
                       <Input
                         className="mt-1"
+                        id={`custom-value-${index}`}
                         onChange={(e) =>
                           handleCustomValueChange(index, e.target.value)
                         }

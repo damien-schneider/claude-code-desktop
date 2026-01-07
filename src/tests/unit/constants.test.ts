@@ -19,9 +19,9 @@ describe("Constants", () => {
     });
 
     it("should have non-empty channel names", () => {
-      Object.values(IPC_CHANNELS).forEach((channel) => {
+      for (const channel of Object.values(IPC_CHANNELS)) {
         expect(channel.length).toBeGreaterThan(0);
-      });
+      }
     });
   });
 
@@ -66,25 +66,25 @@ describe("Constants", () => {
         "claude-3-opus-20240229",
       ];
 
-      models.forEach((model) => {
+      for (const model of models) {
         expect(model).toMatch(/^claude-/);
-      });
+      }
     });
   });
 
   describe("File extensions", () => {
     it("should recognize markdown extensions", () => {
       const mdExtensions = [".md", ".markdown"];
-      mdExtensions.forEach((ext) => {
+      for (const ext of mdExtensions) {
         expect(ext.startsWith(".")).toBe(true);
-      });
+      }
     });
 
     it("should recognize config extensions", () => {
       const configExtensions = [".json", ".yaml", ".yml"];
-      configExtensions.forEach((ext) => {
+      for (const ext of configExtensions) {
         expect(ext.startsWith(".")).toBe(true);
-      });
+      }
     });
   });
 
@@ -96,9 +96,9 @@ describe("Constants", () => {
 
     it("should recognize hidden directories", () => {
       const hiddenDirs = [".git", ".claude", ".config"];
-      hiddenDirs.forEach((dir) => {
+      for (const dir of hiddenDirs) {
         expect(dir.startsWith(".")).toBe(true);
-      });
+      }
     });
   });
 
@@ -154,9 +154,9 @@ describe("Constants", () => {
       const version = "1.0.0";
       const parts = version.split(".");
       expect(parts).toHaveLength(3);
-      parts.forEach((part) => {
+      for (const part of parts) {
         expect(!Number.isNaN(Number.parseInt(part, 10))).toBe(true);
-      });
+      }
     });
   });
 
@@ -180,9 +180,9 @@ describe("Constants", () => {
   describe("Color patterns", () => {
     it("should recognize hex colors", () => {
       const hexColors = ["#fff", "#ffffff", "#FFF", "#FFFFFF"];
-      hexColors.forEach((color) => {
+      for (const color of hexColors) {
         expect(color).toMatch(/^#[0-9a-fA-F]{3,6}$/);
-      });
+      }
     });
 
     it("should recognize RGB colors", () => {

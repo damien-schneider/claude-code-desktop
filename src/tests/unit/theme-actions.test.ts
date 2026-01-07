@@ -18,15 +18,7 @@ import { LOCAL_STORAGE_KEYS } from "@/constants";
 import { ipc } from "@/ipc/manager";
 
 // Type-safe mock access
-const mockIpc = ipc as {
-  client: {
-    theme: {
-      getCurrentThemeMode: ReturnType<typeof vi.fn>;
-      setThemeMode: ReturnType<typeof vi.fn>;
-      toggleThemeMode: ReturnType<typeof vi.fn>;
-    };
-  };
-};
+const mockIpc = ipc as any;
 
 describe("Theme Actions", () => {
   beforeEach(() => {

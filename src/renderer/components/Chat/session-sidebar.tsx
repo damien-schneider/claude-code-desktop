@@ -9,14 +9,6 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { useAtom, useSetAtom } from "jotai";
 import React, { useMemo } from "react";
-import {
-  Sidebar as AppSidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/app-sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -125,8 +117,8 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
   };
 
   return (
-    <AppSidebar className={className} side="right">
-      <SidebarHeader>
+    <div className={cn("flex h-full flex-col border-l bg-muted/30", className)}>
+      <div className="flex flex-col gap-2 p-4">
         {/* Search and Reload */}
         <div className="flex gap-2">
           <div className="relative flex-1">
@@ -157,9 +149,11 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
               onValueChange={(v) => setFilter(v as SessionFilter)}
               value={filter}
             >
-              <TabsList>
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="project">
+              <TabsList className="w-full">
+                <TabsTrigger className="flex-1" value="all">
+                  All
+                </TabsTrigger>
+                <TabsTrigger className="flex-1" value="project">
                   {currentProjectName || "Project"}
                 </TabsTrigger>
               </TabsList>
@@ -173,19 +167,19 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
             className="w-full font-bold"
             disabled={!selectedProjectId}
             onClick={handleStartNewSession}
-            size="default"
             variant="default"
           >
             <Plus className="mr-1 h-4 w-4" weight="bold" />
             Start new session
           </Button>
         </div>
-      </SidebarHeader>
+      </div>
 
-      <SidebarContent>
+      <div className="flex-1 overflow-y-auto p-2">
         {sessions.length === 0 && !loading ? (
           <div className="px-3 py-8 text-center text-muted-foreground text-sm">
             <ChatCircle className="mx-auto mb-2 h-12 w-12 opacity-50" />
+
             <p>No sessions found</p>
             <p className="mt-1 text-xs">
               Start a conversation in your terminal with Claude Code
@@ -198,14 +192,23 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
                 <div className="px-3 py-2 font-medium text-muted-foreground text-xs">
                   {groupName}
                 </div>
-                <SidebarMenu>
+                <div className="flex flex-col gap-1">
                   {groupSessions.map((session) => (
-                    <SidebarMenuItem key={session.sessionId}>
-                      <SidebarMenuButton
-                        isActive={currentSessionId === session.sessionId}
+                    <div
+                      className="group/menu-item relative"
+                      key={session.sessionId}
+                    >
+                      <button
+                        className={cn(
+                          "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none transition-colors hover:bg-muted/50 focus-visible:bg-muted focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
+                          currentSessionId === session.sessionId
+                            ? "bg-primary text-primary-foreground hover:bg-primary"
+                            : "text-foreground"
+                        )}
                         onClick={() => handleSessionClick(session.sessionId)}
+                        type="button"
                       >
-                        <ChatCircle className="h-4 w-4" />
+                        <ChatCircle className="h-4 w-4 shrink-0" />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 truncate font-medium text-sm">
                             <span className="truncate">
@@ -213,18 +216,18 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
                             </span>
                             {isSessionStreaming(session.sessionId) && (
                               <Spinner
-                                className="h-3 w-3 flex-shrink-0 animate-spin text-primary"
+                                className="h-3 w-3 shrink-0 animate-spin text-primary"
                                 weight="bold"
                               />
                             )}
                           </div>
                           <div className="flex items-center gap-1 text-muted-foreground text-xs">
-                            <Folder className="h-3 w-3 flex-shrink-0" />
+                            <Folder className="h-3 w-3 shrink-0" />
                             <span className="truncate">
                               {session.projectName}
                             </span>
-                            <span className="flex-shrink-0">•</span>
-                            <span className="flex-shrink-0">
+                            <span className="shrink-0">•</span>
+                            <span className="shrink-0">
                               {formatDistanceToNow(
                                 new Date(session.lastMessageAt),
                                 { addSuffix: true }
@@ -232,16 +235,16 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
                             </span>
                           </div>
                         </div>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
+                      </button>
+                    </div>
                   ))}
-                </SidebarMenu>
+                </div>
               </React.Fragment>
             ) : null
           )
         )}
-      </SidebarContent>
-    </AppSidebar>
+      </div>
+    </div>
   );
 };
 

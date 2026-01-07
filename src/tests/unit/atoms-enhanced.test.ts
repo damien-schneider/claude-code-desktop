@@ -21,7 +21,6 @@ import {
   searchQueryAtom,
   selectedProjectIdAtom,
   showFavoritesOnlyAtom,
-  showWithClaudeOnlyAtom,
 } from "@/renderer/stores/atoms";
 
 // Reset all hooks after each test
@@ -76,7 +75,7 @@ describe("Navigation View Atoms", () => {
       "mcp",
     ];
 
-    views.forEach((view) => {
+    for (const view of views) {
       const { result: viewResult } = renderHook(() => useAtom(currentViewAtom));
 
       act(() => {
@@ -84,7 +83,7 @@ describe("Navigation View Atoms", () => {
       });
 
       expect(viewResult.current[0]).toBe(view);
-    });
+    }
   });
 });
 
@@ -194,9 +193,7 @@ describe("Active Path Derived Atom", () => {
   });
 
   it("should return home path when global settings is selected", () => {
-    const { result: projectIdResult } = renderHook(() =>
-      useAtom(selectedProjectIdAtom)
-    );
+    renderHook(() => useAtom(selectedProjectIdAtom));
     const { result: homePathResult } = renderHook(() => useAtom(homePathAtom));
     const { result: globalResult } = renderHook(() =>
       useAtom(isGlobalSettingsSelectedAtom)
@@ -336,18 +333,6 @@ describe("Filtered Projects Derived Atom", () => {
     expect(updateResult.current[0]).toBe(true);
   });
 
-  it("should filter by hasClaudeConfig", () => {
-    const { result: updateResult } = renderHook(() =>
-      useAtom(showWithClaudeOnlyAtom)
-    );
-
-    act(() => {
-      updateResult.current[1](true);
-    });
-
-    expect(updateResult.current[0]).toBe(true);
-  });
-
   it("should apply multiple filters together", () => {
     const { result: searchResult } = renderHook(() => useAtom(searchQueryAtom));
     const { result: favResult } = renderHook(() =>
@@ -405,12 +390,8 @@ describe("Filter Toggle Atoms", () => {
     const { result: favResult } = renderHook(() =>
       useAtom(showFavoritesOnlyAtom)
     );
-    const { result: claudeResult } = renderHook(() =>
-      useAtom(showWithClaudeOnlyAtom)
-    );
     act(() => {
       favResult.current[1](false);
-      claudeResult.current[1](false);
     });
   });
 
@@ -426,20 +407,6 @@ describe("Filter Toggle Atoms", () => {
     });
 
     expect(favoritesResult.current[0]).toBe(true);
-  });
-
-  it("should toggle Claude config filter", () => {
-    const { result: claudeResult } = renderHook(() =>
-      useAtom(showWithClaudeOnlyAtom)
-    );
-
-    expect(claudeResult.current[0]).toBe(false);
-
-    act(() => {
-      claudeResult.current[1](true);
-    });
-
-    expect(claudeResult.current[0]).toBe(true);
   });
 });
 

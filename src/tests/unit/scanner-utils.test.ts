@@ -162,7 +162,7 @@ describe("Scanner Utilities", () => {
         path: "/test/project",
         name: "test-project",
         hasClaudeConfig: false,
-      };
+      } as any;
 
       expect(project.isFavorite).toBeUndefined();
       expect(project.lastModified).toBeUndefined();
@@ -171,7 +171,7 @@ describe("Scanner Utilities", () => {
 
   describe("Scan options", () => {
     it("should accept default scan options", () => {
-      const options = {};
+      const options = {} as any;
       expect(options.maxDepth).toBeUndefined();
       expect(options.excludePaths).toBeUndefined();
       expect(options.includeHidden).toBeUndefined();
@@ -182,7 +182,7 @@ describe("Scanner Utilities", () => {
         maxDepth: 5,
         excludePaths: ["custom-exclude"],
         includeHidden: true,
-      };
+      } as any;
 
       expect(options.maxDepth).toBe(5);
       expect(options.excludePaths).toEqual(["custom-exclude"]);
@@ -287,7 +287,9 @@ describe("Scanner Utilities", () => {
     });
 
     it("should handle undefined favorite status", () => {
-      const projects = [{ path: "/p1", name: "p1", hasClaudeConfig: true }];
+      const projects = [
+        { path: "/p1", name: "p1", hasClaudeConfig: true },
+      ] as any[];
 
       const favorites = projects.filter((p) => p.isFavorite);
       expect(favorites).toHaveLength(0);

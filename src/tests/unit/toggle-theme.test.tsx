@@ -1,6 +1,24 @@
 import { render } from "@testing-library/react";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import ToggleTheme from "@/components/toggle-theme";
+
+// Mock next-themes
+vi.mock("next-themes", () => ({
+  useTheme: () => ({ theme: "light", setTheme: vi.fn() }),
+}));
+
+// Mock Phosphor icons
+vi.mock("@phosphor-icons/react", () => ({
+  Sun: ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="sun-icon" />
+  ),
+  Moon: ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="moon-icon" />
+  ),
+  Monitor: ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="monitor-icon" />
+  ),
+}));
 
 test("renders ToggleTheme", () => {
   const { getByRole } = render(<ToggleTheme />);

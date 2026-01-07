@@ -154,7 +154,9 @@ export function PromptInputProvider({
     (FileUIPart & { id: string })[]
   >([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const openRef = useRef<() => void>(() => {});
+  const openRef = useRef<() => void>(() => {
+    // Intentionally empty - will be set by file input component
+  });
 
   const add = useCallback((files: File[] | FileList) => {
     const incoming = Array.from(files);
@@ -881,7 +883,8 @@ export const PromptInputTextarea = ({
 
     const files: File[] = [];
 
-    for (const item of items) {
+    // Convert DataTransferItemList to array for iteration
+    for (const item of Array.from(items)) {
       if (item.kind === "file") {
         const file = item.getAsFile();
         if (file) {
@@ -1070,13 +1073,13 @@ interface SpeechRecognition extends EventTarget {
   lang: string;
   start(): void;
   stop(): void;
-  onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onend: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onstart: ((this: SpeechRecognition, ev: Event) => void) | null;
+  onend: ((this: SpeechRecognition, ev: Event) => void) | null;
   onresult:
-    | ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any)
+    | ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => void)
     | null;
   onerror:
-    | ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any)
+    | ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => void)
     | null;
 }
 

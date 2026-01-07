@@ -107,7 +107,7 @@ export const listSessionDirectories = os.handler(async () => {
 /**
  * Session summary type for internal use
  */
-interface SessionSummary {
+export interface SessionSummary {
   sessionId: string;
   projectPath: string;
   projectName: string;
@@ -116,6 +116,147 @@ interface SessionSummary {
   messageCount: number;
   gitBranch?: string;
   previewMessage?: string;
+}
+
+/**
+ * Extract message content safely
+ */
+function extractMessageContent(message: unknown): string | null {
+  if (!message || typeof message !== "object") {
+    return null;
+  }
+
+  const msg = message as {
+    content?: unknown;
+    isSidechain?: boolean;
+    isMeta?: boolean;
+  };
+
+  // Skip sidechain/subagent messages
+  if (msg.isSidechain || msg.isMeta) {
+    return null;
+  }
+
+  if (!msg.content) {
+    return null;
+  }
+
+  // Convert to string
+  const content =
+    typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content);
+
+  // Skip tool results containing subagent data
+  if (content.includes('"isSidechain":true') || content.includes('"agentId"')) {
+    return null;
+  }
+
+  return content.slice(0, 100);
+}
+
+/**
+ * Parse session lines to extract metadata
+ */
+function parseSessionLines(lines: string[]): {
+  previewMessage: string;
+  firstUserTimestamp: string;
+  lastTimestamp: string;
+  gitBranch: string;
+} {
+  let previewMessage = "";
+  let firstUserTimestamp = "";
+  let lastTimestamp = "";
+  let gitBranch = "";
+
+  for (const line of lines) {
+    try {
+      const parsed = JSON.parse(line);
+
+      if (parsed.timestamp) {
+        if (!firstUserTimestamp && parsed.type === "user") {
+          firstUserTimestamp = parsed.timestamp;
+        }
+        lastTimestamp = parsed.timestamp;
+      }
+
+      if (parsed.gitBranch && !gitBranch) {
+        gitBranch = parsed.gitBranch;
+      }
+
+      // Only use direct user messages for preview (not tool results containing subagent data)
+      if (
+        parsed.type === "user" &&
+        !previewMessage &&
+        parsed.message?.content
+      ) {
+        const content = extractMessageContent(parsed.message);
+        if (content) {
+          previewMessage = content;
+        }
+      }
+    } catch {
+      // Skip invalid lines
+    }
+  }
+
+  return { previewMessage, firstUserTimestamp, lastTimestamp, gitBranch };
+}
+
+/**
+ * Parse a single session file to extract metadata
+ */
+async function parseSessionFile(
+  sessionDir: string,
+  file: string,
+  projectPath: string
+): Promise<SessionSummary | null> {
+  try {
+    const filePath = join(sessionDir, file);
+    const content = await readFile(filePath, "utf-8");
+    const lines = content.split("\n").filter(Boolean);
+
+    if (lines.length === 0) {
+      return null;
+    }
+
+    const { previewMessage, firstUserTimestamp, lastTimestamp, gitBranch } =
+      parseSessionLines(lines);
+
+    const sessionId = file.replace(".jsonl", "");
+    const fileStat = await stat(filePath);
+
+    // Use fileStat.mtime for lastMessageAt if no valid timestamp found
+    const fallbackTimestamp = fileStat.mtime.toISOString();
+    const result: SessionSummary = {
+      sessionId,
+      projectPath,
+      projectName:
+        projectPath.split("/").pop() ||
+        projectPath.split("\\").pop() ||
+        projectPath,
+      createdAt:
+        firstUserTimestamp ||
+        fileStat.birthtime.toISOString() ||
+        new Date(0).toISOString(),
+      lastMessageAt: lastTimestamp || fallbackTimestamp,
+      messageCount: lines.length,
+    };
+
+    // Only add optional fields if they have values
+    if (gitBranch) {
+      result.gitBranch = gitBranch;
+    }
+    if (previewMessage) {
+      result.previewMessage = previewMessage;
+    }
+
+    return result;
+  } catch (error) {
+    console.error(
+      `[getProjectSessionsInternal] Error parsing session file ${file}:`,
+      error
+    );
+    return null;
+  }
 }
 
 /**
@@ -151,92 +292,9 @@ async function getProjectSessionsInternal(
 
     // Parse metadata from each file
     const sessions = await Promise.all(
-      sessionFiles.map(async (file) => {
-        try {
-          const filePath = join(sessionDir, file);
-          const content = await readFile(filePath, "utf-8");
-          const lines = content.split("\n").filter(Boolean);
-
-          if (lines.length === 0) {
-            return null;
-          }
-
-          // Find the first user message for preview (skip file-history-snapshot)
-          let previewMessage = "";
-          let firstUserTimestamp = "";
-          let lastTimestamp = "";
-          let gitBranch = "";
-
-          for (const line of lines) {
-            try {
-              const parsed = JSON.parse(line);
-              if (parsed.timestamp) {
-                if (!firstUserTimestamp && parsed.type === "user") {
-                  firstUserTimestamp = parsed.timestamp;
-                }
-                lastTimestamp = parsed.timestamp;
-              }
-              if (parsed.gitBranch && !gitBranch) {
-                gitBranch = parsed.gitBranch;
-              }
-              // Only use direct user messages for preview (not tool results containing subagent data)
-              if (
-                parsed.type === "user" &&
-                !parsed.isSidechain && // Skip sidechain/subagent messages
-                !previewMessage &&
-                parsed.message?.content &&
-                !parsed.isMeta && // Skip meta messages like file-history-snapshot
-                !parsed.message?.content?.includes?.('"isSidechain":true') && // Skip tool results containing subagent data
-                !parsed.message?.content?.includes?.('"agentId"') // Skip tool results with agent data
-              ) {
-                const msgContent =
-                  typeof parsed.message.content === "string"
-                    ? parsed.message.content
-                    : JSON.stringify(parsed.message.content);
-                previewMessage = msgContent.slice(0, 100);
-              }
-            } catch {
-              // Skip invalid lines
-            }
-          }
-
-          const sessionId = file.replace(".jsonl", "");
-          const fileStat = await stat(filePath);
-
-          // Use fileStat.mtime for lastMessageAt if no valid timestamp found
-          const fallbackTimestamp = fileStat.mtime.toISOString();
-          const result: SessionSummary = {
-            sessionId,
-            projectPath,
-            projectName:
-              projectPath.split("/").pop() ||
-              projectPath.split("\\").pop() ||
-              projectPath,
-            createdAt:
-              firstUserTimestamp ||
-              fileStat.birthtime.toISOString() ||
-              new Date(0).toISOString(),
-            lastMessageAt: lastTimestamp || fallbackTimestamp,
-            messageCount: lines.length,
-          };
-
-          // Only add optional fields if they have values
-          if (gitBranch) {
-            result.gitBranch = gitBranch;
-          }
-          if (previewMessage) {
-            result.previewMessage = previewMessage;
-          }
-
-          return result;
-        } catch (error) {
-          console.error(
-            `[getProjectSessionsInternal] Error parsing session file ${file}:`,
-            error
-          );
-          return null;
-        }
-      })
+      sessionFiles.map((file) =>
+        parseSessionFile(sessionDir, file, projectPath)
+      )
     );
 
     // Filter out nulls from failed parses
@@ -260,7 +318,7 @@ async function getProjectSessionsInternal(
  */
 export const getProjectSessions = os
   .input(z.object({ projectPath: z.string() }))
-  .handler(async ({ input: { projectPath } }) => {
+  .handler(({ input: { projectPath } }) => {
     return getProjectSessionsInternal(projectPath);
   });
 

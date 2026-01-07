@@ -1,1 +1,1 @@
-export { HooksTab } from "./HooksTab";
+export { HooksTab } from "./hooks-tab";

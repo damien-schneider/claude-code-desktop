@@ -34,11 +34,11 @@ describe("App Actions", () => {
     });
 
     it("should return windows platform", async () => {
-      vi.mocked(ipc.client.app.currentPlatfom).mockResolvedValue("windows");
+      vi.mocked(ipc.client.app.currentPlatfom).mockResolvedValue("win32");
 
       const result = await getPlatform();
 
-      expect(result).toBe("windows");
+      expect(result).toBe("win32");
     });
 
     it("should return linux platform", async () => {

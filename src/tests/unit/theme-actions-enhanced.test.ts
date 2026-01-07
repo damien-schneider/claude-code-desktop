@@ -56,7 +56,9 @@ describe("Theme Actions (DOM Integration)", () => {
 
   describe("setTheme", () => {
     it("should add dark class and save to localStorage", async () => {
-      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(undefined);
+      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(
+        "dark" as const
+      );
 
       await setTheme("dark");
 
@@ -66,7 +68,9 @@ describe("Theme Actions (DOM Integration)", () => {
     });
 
     it("should remove dark class for light theme", async () => {
-      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(undefined);
+      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(
+        "light" as const
+      );
       document.documentElement.classList.add("dark");
 
       await setTheme("light");
@@ -77,7 +81,9 @@ describe("Theme Actions (DOM Integration)", () => {
     });
 
     it("should remove dark class for system theme", async () => {
-      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(undefined);
+      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(
+        "system" as const
+      );
 
       document.documentElement.classList.add("dark");
       await setTheme("system");
@@ -166,7 +172,9 @@ describe("Theme Actions (DOM Integration)", () => {
   describe("syncWithLocalTheme", () => {
     it("should set system theme when no local preference exists", async () => {
       vi.mocked(ipc.client.theme.getCurrentThemeMode).mockResolvedValue("dark");
-      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(undefined);
+      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(
+        "system" as const
+      );
 
       await syncWithLocalTheme();
 
@@ -179,7 +187,9 @@ describe("Theme Actions (DOM Integration)", () => {
     it("should use local preference when available", async () => {
       storageMock[THEME_KEY] = "light";
       vi.mocked(ipc.client.theme.getCurrentThemeMode).mockResolvedValue("dark");
-      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(undefined);
+      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(
+        "light" as const
+      );
 
       await syncWithLocalTheme();
 
@@ -189,7 +199,9 @@ describe("Theme Actions (DOM Integration)", () => {
 
     it("should sync to dark mode when local preference is dark", async () => {
       storageMock[THEME_KEY] = "dark";
-      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(undefined);
+      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(
+        "dark" as const
+      );
 
       await syncWithLocalTheme();
 
@@ -204,7 +216,9 @@ describe("Theme Actions (DOM Integration)", () => {
       vi.mocked(ipc.client.theme.getCurrentThemeMode).mockResolvedValue(
         "light"
       );
-      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(undefined);
+      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(
+        "system" as const
+      );
 
       await syncWithLocalTheme();
 
@@ -221,7 +235,9 @@ describe("Theme Actions (DOM Integration)", () => {
     });
 
     it("should handle rapid theme changes", async () => {
-      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(undefined);
+      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(
+        "dark" as const
+      );
 
       await setTheme("dark");
       expect(document.documentElement.classList.contains("dark")).toBe(true);
@@ -236,7 +252,9 @@ describe("Theme Actions (DOM Integration)", () => {
 
   describe("Theme persistence", () => {
     it("should persist theme changes across operations", async () => {
-      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(undefined);
+      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(
+        "dark" as const
+      );
       vi.mocked(ipc.client.theme.getCurrentThemeMode).mockResolvedValue("dark");
 
       await setTheme("dark");
@@ -247,7 +265,9 @@ describe("Theme Actions (DOM Integration)", () => {
     });
 
     it("should handle theme transitions correctly", async () => {
-      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(undefined);
+      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(
+        "light" as const
+      );
       vi.mocked(ipc.client.theme.toggleThemeMode)
         .mockResolvedValueOnce(true) // First toggle to dark
         .mockResolvedValueOnce(false); // Second toggle to light
@@ -265,7 +285,9 @@ describe("Theme Actions (DOM Integration)", () => {
 
   describe("DOM manipulation", () => {
     it("should add dark class when isDarkMode is true", async () => {
-      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(undefined);
+      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(
+        "dark" as const
+      );
 
       await setTheme("dark");
 
@@ -273,7 +295,9 @@ describe("Theme Actions (DOM Integration)", () => {
     });
 
     it("should remove dark class when isDarkMode is false", async () => {
-      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(undefined);
+      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(
+        "light" as const
+      );
       document.documentElement.classList.add("dark");
 
       await setTheme("light");
@@ -282,7 +306,9 @@ describe("Theme Actions (DOM Integration)", () => {
     });
 
     it("should override system preference with local theme", async () => {
-      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(undefined);
+      vi.mocked(ipc.client.theme.setThemeMode).mockResolvedValue(
+        "light" as const
+      );
 
       await setTheme("light");
 

@@ -3,7 +3,7 @@ import {
   SessionMessageSchema,
   type SessionSummary,
   SessionSummarySchema,
-} from "./chatAtoms";
+} from "./chat-atoms";
 
 /**
  * Validates and parses a session message from unknown data

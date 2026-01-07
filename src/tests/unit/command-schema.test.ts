@@ -65,14 +65,14 @@ describe("commandFrontmatterSchema", () => {
   it("should accept all argument types", () => {
     const types = ["string", "number", "boolean", "array"] as const;
 
-    types.forEach((type) => {
+    for (const type of types) {
       const result = commandFrontmatterSchema.safeParse({
         description: "Test",
         arguments: [{ name: "test", type }],
       });
 
       expect(result.success).toBe(true);
-    });
+    }
   });
 });
 

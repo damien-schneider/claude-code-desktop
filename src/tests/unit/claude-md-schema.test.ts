@@ -80,10 +80,10 @@ describe("standardSectionsEnum", () => {
       "appendix",
     ] as const;
 
-    validSections.forEach((section) => {
+    for (const section of validSections) {
       const result = standardSectionsEnum.safeParse(section);
       expect(result.success).toBe(true);
-    });
+    }
   });
 
   it("should reject invalid section types", () => {

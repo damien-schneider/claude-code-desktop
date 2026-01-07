@@ -3,6 +3,10 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/utils/tailwind";
 
+// Top-level regex and functions for performance
+const CAMEL_CASE_REGEX = /([A-Z])/g;
+const UPPERCASE_FIRST_FN = (str: string) => str.toUpperCase();
+
 /**
  * Permission mode type - can be any string for dynamic modes
  */
@@ -56,17 +60,14 @@ const knownModeDescriptions: Record<
   },
 };
 
-const modeLabelRegex1 = /([A-Z])/g;
-const modeLabelRegex2 = /^./;
-
 /**
  * Generate a user-friendly label from a mode string
  */
 function formatModeLabel(mode: string): string {
   // Convert camelCase or PascalCase to Title Case
   return mode
-    .replace(modeLabelRegex1, " $1")
-    .replace(modeLabelRegex2, (str) => str.toUpperCase())
+    .replace(CAMEL_CASE_REGEX, " $1")
+    .replace(/^./, UPPERCASE_FIRST_FN)
     .trim();
 }
 
@@ -173,7 +174,7 @@ export const PermissionModeSelector: React.FC<PermissionModeSelectorProps> = ({
       <span className="font-medium text-muted-foreground text-xs">
         Permission Mode
       </span>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2" role="group">
         {availableModes.map((mode) => {
           const info = getModeInfo(mode);
           const isSelected = value === mode;
@@ -183,6 +184,7 @@ export const PermissionModeSelector: React.FC<PermissionModeSelectorProps> = ({
 
           return (
             <Button
+              aria-pressed={isSelected}
               className={cn(
                 "h-auto min-w-[100px] flex-1 justify-start gap-2 px-3 py-2",
                 isDangerous &&

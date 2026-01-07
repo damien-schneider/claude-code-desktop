@@ -100,6 +100,7 @@ export function parseCommandContent(content: string): {
     const body = frontmatterMatch[2];
 
     // Simple YAML parser
+    // biome-ignore lint/suspicious/noExplicitAny: Required for JSON schema validation
     const frontmatter: Record<string, any> = {};
 
     const descMatch = rawFrontmatter.match(/^description:\s*(.+)$/m);
@@ -118,6 +119,7 @@ export function parseCommandContent(content: string): {
     }
 
     return {
+      // biome-ignore lint/suspicious/noExplicitAny: Required for JSON schema validation
       frontmatter: frontmatter as any,
       body,
       hasFrontmatter: true,

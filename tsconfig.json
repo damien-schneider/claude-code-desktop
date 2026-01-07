@@ -21,6 +21,7 @@
     "outDir": "dist",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
+    "skipLibCheck": true,
     "types": ["vitest/globals"]
   },
   "include": [

@@ -61,6 +61,7 @@ export const McpServerForm: React.FC<McpServerFormProps> = ({
 
   const handleSave = () => {
     if (!name.trim()) {
+      // biome-ignore lint/suspicious/noAlert: Replacing with toast is out of scope
       alert("Please enter a server name");
       return;
     }
@@ -88,10 +89,13 @@ export const McpServerForm: React.FC<McpServerFormProps> = ({
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <label className="font-medium text-sm">Server Name</label>
+        <label className="font-medium text-sm" htmlFor="server-name">
+          Server Name
+        </label>
         <Input
           className="mt-1"
           disabled={isEdit}
+          id="server-name"
           onChange={(e) => setName(e.target.value)}
           placeholder="my-server"
           value={name}
@@ -104,9 +108,12 @@ export const McpServerForm: React.FC<McpServerFormProps> = ({
       </div>
 
       <div>
-        <label className="font-medium text-sm">Command</label>
+        <label className="font-medium text-sm" htmlFor="server-command">
+          Command
+        </label>
         <Input
           className="mt-1 font-mono text-sm"
+          id="server-command"
           onChange={(e) => setCommand(e.target.value)}
           placeholder="npx"
           value={command}
@@ -114,9 +121,12 @@ export const McpServerForm: React.FC<McpServerFormProps> = ({
       </div>
 
       <div>
-        <label className="font-medium text-sm">Arguments</label>
+        <label className="font-medium text-sm" htmlFor="server-args">
+          Arguments
+        </label>
         <Input
           className="mt-1 font-mono text-sm"
+          id="server-args"
           onChange={(e) => setArgs(e.target.value)}
           placeholder="-y package-name"
           value={args}
@@ -128,8 +138,15 @@ export const McpServerForm: React.FC<McpServerFormProps> = ({
 
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <label className="font-medium text-sm">Environment Variables</label>
-          <Button onClick={handleAddEnvVar} size="sm" variant="outline">
+          <label className="font-medium text-sm" htmlFor="server-env-0">
+            Environment Variables
+          </label>
+          <Button
+            onClick={handleAddEnvVar}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
             <Plus className="mr-1 h-3 w-3" weight="regular" />
             Add Variable
           </Button>

@@ -2,7 +2,7 @@ import type {
   ClaudeSettings,
   EnabledPlugins,
   EnvVars,
-} from "@/renderer/components/Settings/settings-types";
+} from "@/renderer/components/settings/settings-types";
 
 describe("Settings Types", () => {
   it("should support env vars with all Claude Code environment variables", () => {
