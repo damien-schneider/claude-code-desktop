@@ -17,9 +17,6 @@
       "a11y": {
         "useSemanticElements": "off"
       },
-      "complexity": {
-        "noExcessiveCognitiveComplexity": "off"
-      },
       "suspicious": {
         "noArrayIndexKey": "off"
       }

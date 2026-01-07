@@ -44,62 +44,86 @@ export function detectFieldType(
   keyOrValue: string | unknown,
   value?: unknown
 ): FieldType {
-  // Determine if we have (key, value) or just (value)
-  let key: string | undefined;
-  let actualValue: unknown;
+  const { key, actualValue } = parseArguments(keyOrValue, value);
 
+  const keyBasedType = detectTypeFromKey(key);
+  if (keyBasedType) {
+    return keyBasedType;
+  }
+
+  return detectTypeFromValue(actualValue);
+}
+
+/**
+ * Parse function arguments to extract key and value
+ */
+function parseArguments(
+  keyOrValue: string | unknown,
+  value?: unknown
+): { key: string | undefined; actualValue: unknown } {
   if (value !== undefined) {
-    // Two arguments: (key, value)
-    key = keyOrValue as string;
-    actualValue = value;
-  } else {
-    // One argument: (value)
-    actualValue = keyOrValue;
+    return { key: keyOrValue as string, actualValue: value };
+  }
+  return { key: undefined, actualValue: keyOrValue };
+}
+
+/**
+ * Detect field type based on key name patterns
+ */
+function detectTypeFromKey(key: string | undefined): FieldType | null {
+  if (!key) {
+    return null;
   }
 
-  // Check for special field types based on key name
-  if (key) {
-    const lowerKey = key.toLowerCase();
+  const lowerKey = key.toLowerCase();
 
-    if (SECRET_PATTERNS.some((pattern) => lowerKey.includes(pattern))) {
-      return FieldType.SECRET;
-    }
-
-    if (URL_PATTERNS.some((pattern) => lowerKey.includes(pattern))) {
-      return FieldType.URL;
-    }
-
-    if (MODEL_PATTERNS.some((pattern) => lowerKey.includes(pattern))) {
-      return FieldType.MODEL;
-    }
-
-    if (DURATION_PATTERNS.some((pattern) => lowerKey.includes(pattern))) {
-      return FieldType.DURATION;
-    }
+  if (matchesAnyPattern(lowerKey, SECRET_PATTERNS)) {
+    return FieldType.SECRET;
   }
 
-  // Detect based on value type
-  if (actualValue === null || actualValue === undefined) {
+  if (matchesAnyPattern(lowerKey, URL_PATTERNS)) {
+    return FieldType.URL;
+  }
+
+  if (matchesAnyPattern(lowerKey, MODEL_PATTERNS)) {
+    return FieldType.MODEL;
+  }
+
+  if (matchesAnyPattern(lowerKey, DURATION_PATTERNS)) {
+    return FieldType.DURATION;
+  }
+
+  return null;
+}
+
+/**
+ * Check if key matches any of the given patterns
+ */
+function matchesAnyPattern(key: string, patterns: readonly string[]): boolean {
+  return patterns.some((pattern) => key.includes(pattern));
+}
+
+/**
+ * Detect field type based on value type
+ */
+function detectTypeFromValue(value: unknown): FieldType {
+  if (value === null || value === undefined) {
     return FieldType.STRING;
   }
 
-  if (typeof actualValue === "boolean") {
+  if (typeof value === "boolean") {
     return FieldType.BOOLEAN;
   }
 
-  if (typeof actualValue === "number") {
+  if (typeof value === "number") {
     return FieldType.NUMBER;
   }
 
-  if (Array.isArray(actualValue)) {
+  if (Array.isArray(value)) {
     return FieldType.ARRAY;
   }
 
-  if (
-    typeof actualValue === "object" &&
-    actualValue !== null &&
-    !Array.isArray(actualValue)
-  ) {
+  if (typeof value === "object" && value !== null) {
     return FieldType.OBJECT;
   }
 

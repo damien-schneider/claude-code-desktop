@@ -168,37 +168,63 @@ function parseSessionLines(lines: string[]): {
   let gitBranch = "";
 
   for (const line of lines) {
-    try {
-      const parsed = JSON.parse(line);
+    const parsed = tryParseLine(line);
+    if (!parsed) {
+      continue;
+    }
 
-      if (parsed.timestamp) {
-        if (!firstUserTimestamp && parsed.type === "user") {
-          firstUserTimestamp = parsed.timestamp;
-        }
-        lastTimestamp = parsed.timestamp;
+    updateTimestamps(parsed, firstUserTimestamp, (timestamp) => {
+      if (!firstUserTimestamp) {
+        firstUserTimestamp = timestamp;
       }
+    });
+    lastTimestamp = parsed.timestamp || lastTimestamp;
 
-      if (parsed.gitBranch && !gitBranch) {
-        gitBranch = parsed.gitBranch;
-      }
+    if (!gitBranch && parsed.gitBranch) {
+      gitBranch = parsed.gitBranch;
+    }
 
-      // Only use direct user messages for preview (not tool results containing subagent data)
-      if (
-        parsed.type === "user" &&
-        !previewMessage &&
-        parsed.message?.content
-      ) {
-        const content = extractMessageContent(parsed.message);
-        if (content) {
-          previewMessage = content;
-        }
-      }
-    } catch {
-      // Skip invalid lines
+    if (!previewMessage && shouldExtractPreview(parsed)) {
+      previewMessage = extractMessageContent(parsed.message) || "";
     }
   }
 
   return { previewMessage, firstUserTimestamp, lastTimestamp, gitBranch };
+}
+
+/**
+ * Try to parse a JSON line, returning null on failure
+ */
+function tryParseLine(line: string): Record<string, unknown> | null {
+  try {
+    return JSON.parse(line) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Update first user timestamp if this is a user message with timestamp
+ */
+function updateTimestamps(
+  parsed: Record<string, unknown>,
+  firstUserTimestamp: string,
+  setFirstTimestamp: (timestamp: string) => void
+): void {
+  if (parsed.timestamp && !firstUserTimestamp && parsed.type === "user") {
+    setFirstTimestamp(parsed.timestamp as string);
+  }
+}
+
+/**
+ * Check if this line should be used for preview message
+ */
+function shouldExtractPreview(parsed: Record<string, unknown>): boolean {
+  return (
+    parsed.type === "user" &&
+    !!parsed.message?.content &&
+    typeof parsed.message === "object"
+  );
 }
 
 /**

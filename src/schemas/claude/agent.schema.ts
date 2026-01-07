@@ -75,47 +75,61 @@ export const agentCreateSchema = z.object({
 export function buildAgentContent(
   values: z.infer<typeof agentFormSchema>
 ): string {
-  const {
-    name,
-    description,
-    instructions,
-    tools,
-    permissions,
-    model,
-    color,
-    content = "",
-  } = values;
+  const { name, description, content = "" } = values;
 
-  const frontmatterData: Record<string, string | string[]> = {
-    name,
-    description,
+  const frontmatterData = buildFrontmatterData(values);
+  const frontmatter = formatFrontmatter(frontmatterData);
+
+  return `${frontmatter}\n# ${name}\n\nYou are a specialist agent for...\n\n## Instructions\n\n${content}`;
+}
+
+/**
+ * Build frontmatter data object from form values
+ */
+function buildFrontmatterData(
+  values: z.infer<typeof agentFormSchema>
+): Record<string, string | string[]> {
+  const data: Record<string, string | string[]> = {
+    name: values.name,
+    description: values.description,
   };
 
-  if (instructions) {
-    frontmatterData.instructions = instructions;
+  if (values.instructions) {
+    data.instructions = values.instructions;
   }
-  if (tools) {
-    frontmatterData.tools = tools
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
+  if (values.tools) {
+    data.tools = parseCommaSeparatedList(values.tools);
   }
-  if (permissions) {
-    frontmatterData.permissions = permissions
-      .split(",")
-      .map((p) => p.trim())
-      .filter(Boolean);
+  if (values.permissions) {
+    data.permissions = parseCommaSeparatedList(values.permissions);
   }
-  if (model) {
-    frontmatterData.model = model;
+  if (values.model) {
+    data.model = values.model;
   }
-  if (color) {
-    frontmatterData.color = color;
+  if (values.color) {
+    data.color = values.color;
   }
 
-  // Build YAML frontmatter
+  return data;
+}
+
+/**
+ * Parse comma-separated list into array
+ */
+function parseCommaSeparatedList(value: string): string[] {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Format frontmatter data as YAML string
+ */
+function formatFrontmatter(data: Record<string, string | string[]>): string {
   let frontmatter = "---\n";
-  for (const [key, value] of Object.entries(frontmatterData)) {
+
+  for (const [key, value] of Object.entries(data)) {
     if (Array.isArray(value)) {
       if (value.length > 0) {
         frontmatter += `${key}:\n`;
@@ -127,9 +141,9 @@ export function buildAgentContent(
       frontmatter += `${key}: ${value}\n`;
     }
   }
-  frontmatter += "---\n";
 
-  return `${frontmatter}\n# ${name}\n\nYou are a specialist agent for...\n\n## Instructions\n\n${content}`;
+  frontmatter += "---\n";
+  return frontmatter;
 }
 
 /**

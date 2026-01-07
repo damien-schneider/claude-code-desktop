@@ -290,6 +290,81 @@ export function formatMessageContent(
   }
 }
 
+/**
+ * Normalize a session message from IPC to our internal format
+ */
+function normalizeSessionMessage(msg: Record<string, unknown>): SessionMessage {
+  const messageType = determineMessageType(msg);
+  const content = extractMessageContent(msg);
+
+  return {
+    type: messageType,
+    messageId: typeof msg.messageId === "string" ? msg.messageId : undefined,
+    timestamp:
+      typeof msg.timestamp === "string"
+        ? msg.timestamp
+        : new Date().toISOString(),
+    content,
+    status: "complete",
+  };
+}
+
+/**
+ * Determine message type from raw message data
+ */
+function determineMessageType(
+  msg: Record<string, unknown>
+): "user" | "assistant" | "system" {
+  if (
+    typeof msg.type === "string" &&
+    (msg.type === "user" || msg.type === "assistant" || msg.type === "system")
+  ) {
+    return msg.type;
+  }
+
+  if (
+    typeof msg.message === "object" &&
+    msg.message !== null &&
+    "role" in msg.message
+  ) {
+    const role = (msg.message as Record<string, unknown>).role;
+    return role === "user" ? "user" : "assistant";
+  }
+
+  return "assistant";
+}
+
+/**
+ * Extract message content from raw message data
+ */
+function extractMessageContent(
+  msg: Record<string, unknown>
+): string | ContentBlock[] | undefined {
+  if (typeof msg.content === "string") {
+    return msg.content;
+  }
+
+  if (Array.isArray(msg.content)) {
+    return msg.content as ContentBlock[];
+  }
+
+  if (
+    typeof msg.message === "object" &&
+    msg.message !== null &&
+    "content" in msg.message
+  ) {
+    const msgContent = (msg.message as Record<string, unknown>).content;
+    if (typeof msgContent === "string") {
+      return msgContent;
+    }
+    if (Array.isArray(msgContent)) {
+      return msgContent as ContentBlock[];
+    }
+  }
+
+  return undefined;
+}
+
 // =============================================================================
 // Session List State
 // =============================================================================
@@ -571,56 +646,7 @@ export const loadSessionDetailsAtom = atom(
 
       // Normalize messages to our format with proper type handling
       const normalizedMessages: SessionMessage[] = details.messages.map(
-        (msg: Record<string, unknown>): SessionMessage => {
-          // Determine message type
-          let messageType: "user" | "assistant" | "system" = "assistant";
-          if (
-            typeof msg.type === "string" &&
-            (msg.type === "user" ||
-              msg.type === "assistant" ||
-              msg.type === "system")
-          ) {
-            messageType = msg.type;
-          } else if (
-            typeof msg.message === "object" &&
-            msg.message !== null &&
-            "role" in msg.message
-          ) {
-            const role = (msg.message as Record<string, unknown>).role;
-            messageType = role === "user" ? "user" : "assistant";
-          }
-
-          // Extract content safely
-          let content: string | ContentBlock[] | undefined;
-          if (typeof msg.content === "string") {
-            content = msg.content;
-          } else if (Array.isArray(msg.content)) {
-            content = msg.content as ContentBlock[];
-          } else if (
-            typeof msg.message === "object" &&
-            msg.message !== null &&
-            "content" in msg.message
-          ) {
-            const msgContent = (msg.message as Record<string, unknown>).content;
-            if (typeof msgContent === "string") {
-              content = msgContent;
-            } else if (Array.isArray(msgContent)) {
-              content = msgContent as ContentBlock[];
-            }
-          }
-
-          return {
-            type: messageType,
-            messageId:
-              typeof msg.messageId === "string" ? msg.messageId : undefined,
-            timestamp:
-              typeof msg.timestamp === "string"
-                ? msg.timestamp
-                : new Date().toISOString(),
-            content,
-            status: "complete",
-          };
-        }
+        normalizeSessionMessage
       );
 
       set(currentSessionIdAtom, sessionId);

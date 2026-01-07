@@ -815,6 +815,80 @@ export const PromptInput = ({
   );
 };
 
+/**
+ * Check if Enter key should be skipped (composing or shift key pressed)
+ */
+function shouldSkipEnterKey(
+  e: React.KeyboardEvent<HTMLTextAreaElement>,
+  isCurrentlyComposing: boolean
+): boolean {
+  const isComposing = isCurrentlyComposing || e.nativeEvent.isComposing;
+  const isShiftPressed = e.shiftKey;
+  return isComposing || isShiftPressed;
+}
+
+/**
+ * Check if submit button is disabled
+ */
+function isSubmitDisabled(
+  e: React.KeyboardEvent<HTMLTextAreaElement>
+): boolean {
+  const form = e.currentTarget.form;
+  const submitButton = form?.querySelector(
+    'button[type="submit"]'
+  ) as HTMLButtonElement | null;
+  return submitButton?.disabled ?? false;
+}
+
+/**
+ * Check if last attachment should be removed on backspace
+ */
+function shouldRemoveLastAttachment(
+  e: React.KeyboardEvent<HTMLTextAreaElement>,
+  attachmentsState: ReturnType<typeof usePromptInputAttachments>
+): boolean {
+  const isTextareaEmpty = e.currentTarget.value === "";
+  const hasAttachments = attachmentsState.files.length > 0;
+  return isTextareaEmpty && hasAttachments;
+}
+
+/**
+ * Extract final transcript from speech recognition event
+ */
+function extractFinalTranscript(event: SpeechRecognitionEvent): string {
+  let finalTranscript = "";
+
+  for (let i = event.resultIndex; i < event.results.length; i++) {
+    const result = event.results[i];
+    if (result.isFinal) {
+      finalTranscript += result[0]?.transcript ?? "";
+    }
+  }
+
+  return finalTranscript;
+}
+
+/**
+ * Update textarea with transcribed text
+ */
+function updateTextareaWithTranscript(
+  transcript: string,
+  textareaRef?: RefObject<HTMLTextAreaElement | null>,
+  onTranscriptionChange?: (value: string) => void
+): void {
+  if (!(transcript && textareaRef?.current)) {
+    return;
+  }
+
+  const textarea = textareaRef.current;
+  const currentValue = textarea.value;
+  const newValue = currentValue + (currentValue ? " " : "") + transcript;
+
+  textarea.value = newValue;
+  textarea.dispatchEvent(new Event("input", { bubbles: true }));
+  onTranscriptionChange?.(newValue);
+}
+
 export type PromptInputBodyProps = HTMLAttributes<HTMLDivElement>;
 
 export const PromptInputBody = ({
@@ -840,36 +914,41 @@ export const PromptInputTextarea = ({
 
   const handleKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = (e) => {
     if (e.key === "Enter") {
-      if (isComposing || e.nativeEvent.isComposing) {
-        return;
-      }
-      if (e.shiftKey) {
-        return;
-      }
-      e.preventDefault();
-
-      // Check if the submit button is disabled before submitting
-      const form = e.currentTarget.form;
-      const submitButton = form?.querySelector(
-        'button[type="submit"]'
-      ) as HTMLButtonElement | null;
-      if (submitButton?.disabled) {
-        return;
-      }
-
-      form?.requestSubmit();
+      handleEnterKey(e, isComposing);
+      return;
     }
 
-    // Remove last attachment when Backspace is pressed and textarea is empty
-    if (
-      e.key === "Backspace" &&
-      e.currentTarget.value === "" &&
-      attachments.files.length > 0
-    ) {
+    if (e.key === "Backspace") {
+      handleBackspaceKey(e, attachments);
+    }
+  };
+
+  const handleEnterKey = (
+    e: React.KeyboardEvent<HTMLTextAreaElement>,
+    isCurrentlyComposing: boolean
+  ) => {
+    if (shouldSkipEnterKey(e, isCurrentlyComposing)) {
+      return;
+    }
+
+    e.preventDefault();
+
+    if (isSubmitDisabled(e)) {
+      return;
+    }
+
+    e.currentTarget.form?.requestSubmit();
+  };
+
+  const handleBackspaceKey = (
+    e: React.KeyboardEvent<HTMLTextAreaElement>,
+    attachmentsState: ReturnType<typeof usePromptInputAttachments>
+  ) => {
+    if (shouldRemoveLastAttachment(e, attachmentsState)) {
       e.preventDefault();
-      const lastAttachment = attachments.files.at(-1);
+      const lastAttachment = attachmentsState.files.at(-1);
       if (lastAttachment) {
-        attachments.remove(lastAttachment.id);
+        attachmentsState.remove(lastAttachment.id);
       }
     }
   };
@@ -1162,25 +1241,12 @@ export const PromptInputSpeechButton = ({
       };
 
       speechRecognition.onresult = (event) => {
-        let finalTranscript = "";
-
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const result = event.results[i];
-          if (result.isFinal) {
-            finalTranscript += result[0]?.transcript ?? "";
-          }
-        }
-
-        if (finalTranscript && textareaRef?.current) {
-          const textarea = textareaRef.current;
-          const currentValue = textarea.value;
-          const newValue =
-            currentValue + (currentValue ? " " : "") + finalTranscript;
-
-          textarea.value = newValue;
-          textarea.dispatchEvent(new Event("input", { bubbles: true }));
-          onTranscriptionChange?.(newValue);
-        }
+        const finalTranscript = extractFinalTranscript(event);
+        updateTextareaWithTranscript(
+          finalTranscript,
+          textareaRef,
+          onTranscriptionChange
+        );
       };
 
       speechRecognition.onerror = (event) => {
