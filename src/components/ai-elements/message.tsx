@@ -343,8 +343,38 @@ interface ToolResultContentBlock {
 }
 
 // Regex patterns for detecting tool blocks in markdown text
-const TOOL_USE_REGEX = /```tool_use\s*\n([\s\S]*?)```/g;
-const TOOL_RESULT_REGEX = /```tool_result\s*\n?([\s\S]*?)```/g;
+// These handle: ```tool_result\nContent```, ```tool_result Content```, etc.
+// Using \s* to allow zero or more whitespace (including newlines)
+const TOOL_USE_REGEX = /```tool_use\s*([\s\S]*?)```/g;
+const TOOL_RESULT_REGEX = /```tool_result\s*([\s\S]*?)```/g;
+
+// Regex for detecting unclosed tool blocks (streaming content)
+const UNCLOSED_TOOL_RESULT_REGEX = /```tool_result\s*([\s\S]*)$/;
+const UNCLOSED_TOOL_USE_REGEX = /```tool_use\s*([\s\S]*)$/;
+
+/**
+ * Checks if text contains tool blocks (closed or unclosed)
+ */
+function hasToolBlocksInText(text: string): boolean {
+  // Check for closed blocks
+  TOOL_USE_REGEX.lastIndex = 0;
+  TOOL_RESULT_REGEX.lastIndex = 0;
+  if (TOOL_USE_REGEX.test(text) || TOOL_RESULT_REGEX.test(text)) {
+    TOOL_USE_REGEX.lastIndex = 0;
+    TOOL_RESULT_REGEX.lastIndex = 0;
+    return true;
+  }
+
+  // Check for unclosed blocks (streaming)
+  if (
+    UNCLOSED_TOOL_RESULT_REGEX.test(text) ||
+    UNCLOSED_TOOL_USE_REGEX.test(text)
+  ) {
+    return true;
+  }
+
+  return false;
+}
 
 /**
  * Extracts the text content from a React element's children
@@ -459,14 +489,17 @@ const streamdownComponents: Components = {
 /**
  * Processes text content to replace tool blocks with React components
  * This handles cases where tool blocks are embedded in text content
+ * Also handles unclosed tool blocks (e.g., during streaming)
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex text processing with tool block detection and streaming - refactoring would require extracting block parsing logic
 function processTextWithToolBlocks(text: string): React.ReactNode[] {
   const result: React.ReactNode[] = [];
   let lastIndex = 0;
   let key = 0;
 
-  // Combined regex to find both tool_use and tool_result blocks
-  const combinedRegex = /```(tool_use|tool_result)\s*\n?([\s\S]*?)```/g;
+  // Combined regex to find both tool_use and tool_result blocks (closed)
+  // Match tool blocks with flexible whitespace/newline handling
+  const combinedRegex = /```(tool_use|tool_result)\s*([\s\S]*?)```/g;
   let match: RegExpExecArray | null = combinedRegex.exec(text);
 
   while (match !== null) {
@@ -500,9 +533,47 @@ function processTextWithToolBlocks(text: string): React.ReactNode[] {
     match = combinedRegex.exec(text);
   }
 
-  // Add remaining text after last match
+  // Handle remaining text - check for unclosed tool blocks
   if (lastIndex < text.length) {
     const remainingText = text.slice(lastIndex);
+
+    // Check for unclosed tool_result block (streaming)
+    const unclosedResultMatch = UNCLOSED_TOOL_RESULT_REGEX.exec(remainingText);
+    if (unclosedResultMatch) {
+      const textBefore = remainingText.slice(0, unclosedResultMatch.index);
+      if (textBefore.trim()) {
+        result.push(textBefore);
+      }
+      const content = unclosedResultMatch[1].trim();
+      result.push(
+        <ToolResultDisplay
+          content={content || "Loading..."}
+          key={`result-${key++}`}
+        />
+      );
+      return result.length > 0 ? result : [text];
+    }
+
+    // Check for unclosed tool_use block (streaming)
+    const unclosedUseMatch = UNCLOSED_TOOL_USE_REGEX.exec(remainingText);
+    if (unclosedUseMatch) {
+      const textBefore = remainingText.slice(0, unclosedUseMatch.index);
+      if (textBefore.trim()) {
+        result.push(textBefore);
+      }
+      const content = unclosedUseMatch[1].trim();
+      const { toolName, input } = parseToolUseContent(content);
+      result.push(
+        <ToolCallDisplay
+          input={input}
+          key={`tool-${key++}`}
+          toolName={toolName || "Loading..."}
+        />
+      );
+      return result.length > 0 ? result : [text];
+    }
+
+    // No unclosed blocks, just add remaining text
     if (remainingText.trim()) {
       result.push(remainingText);
     }
@@ -523,16 +594,10 @@ export const MessageResponse = memo(
         <div className={cn("size-full", className)}>
           {contentBlocks.map((block, index) => {
             if (block.type === "text") {
-              // Check if text contains tool blocks
+              // Check if text contains tool blocks (closed or unclosed)
               const text = block.text;
-              const hasToolBlocks =
-                TOOL_USE_REGEX.test(text) || TOOL_RESULT_REGEX.test(text);
 
-              // Reset regex lastIndex after test
-              TOOL_USE_REGEX.lastIndex = 0;
-              TOOL_RESULT_REGEX.lastIndex = 0;
-
-              if (hasToolBlocks) {
+              if (hasToolBlocksInText(text)) {
                 const processedContent = processTextWithToolBlocks(text);
                 return (
                   <div key={`text-${index}`}>
@@ -605,15 +670,8 @@ export const MessageResponse = memo(
     // For markdown content passed as children
     const childrenString =
       typeof children === "string" ? children : String(children || "");
-    const hasToolBlocks =
-      TOOL_USE_REGEX.test(childrenString) ||
-      TOOL_RESULT_REGEX.test(childrenString);
 
-    // Reset regex lastIndex after test
-    TOOL_USE_REGEX.lastIndex = 0;
-    TOOL_RESULT_REGEX.lastIndex = 0;
-
-    if (hasToolBlocks) {
+    if (hasToolBlocksInText(childrenString)) {
       const processedContent = processTextWithToolBlocks(childrenString);
       return (
         <div className={cn("size-full", className)}>
