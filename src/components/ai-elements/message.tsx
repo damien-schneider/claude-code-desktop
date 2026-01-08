@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
 import { createContext, memo, useContext, useEffect, useState } from "react";
+import type { Components } from "react-markdown";
 import { Streamdown } from "streamdown";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup, ButtonGroupText } from "@/components/ui/button-group";
@@ -19,6 +20,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/utils/tailwind";
+import { ToolCallDisplay, ToolResultDisplay } from "./tool-display";
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: UIMessage["role"];
@@ -301,19 +303,358 @@ export const MessageBranchPage = ({
   );
 };
 
-export type MessageResponseProps = ComponentProps<typeof Streamdown>;
+export type MessageResponseProps = ComponentProps<typeof Streamdown> & {
+  contentBlocks?: ContentBlock[];
+};
 
+// ContentBlock types for structured content
+type ContentBlock =
+  | TextContentBlock
+  | ImageContentBlock
+  | ToolUseContentBlock
+  | ToolResultContentBlock;
+
+interface TextContentBlock {
+  type: "text";
+  text: string;
+}
+
+interface ImageContentBlock {
+  type: "image";
+  source?: {
+    type: string;
+    media_type?: string;
+    data?: string;
+  };
+}
+
+interface ToolUseContentBlock {
+  type: "tool_use";
+  id?: string;
+  name: string;
+  input: Record<string, unknown>;
+}
+
+interface ToolResultContentBlock {
+  type: "tool_result";
+  tool_use_id?: string;
+  content: string | unknown[];
+  is_error?: boolean;
+}
+
+// Regex patterns for detecting tool blocks in markdown text
+const TOOL_USE_REGEX = /```tool_use\s*\n([\s\S]*?)```/g;
+const TOOL_RESULT_REGEX = /```tool_result\s*\n?([\s\S]*?)```/g;
+
+/**
+ * Extracts the text content from a React element's children
+ * Handles various nested structures that Streamdown might produce
+ */
+function extractTextFromChildren(children: unknown): string {
+  if (typeof children === "string") {
+    return children;
+  }
+
+  if (Array.isArray(children)) {
+    return children.map(extractTextFromChildren).join("");
+  }
+
+  if (children && typeof children === "object" && "props" in children) {
+    const props = (children as { props?: { children?: unknown } }).props;
+    if (props?.children) {
+      return extractTextFromChildren(props.children);
+    }
+  }
+
+  return "";
+}
+
+/**
+ * Parses tool_use block content to extract tool name and input
+ */
+function parseToolUseContent(content: string): {
+  toolName: string;
+  input: Record<string, unknown>;
+} {
+  const lines = content.trim().split("\n");
+  const toolName = lines[0]?.trim() || "tool";
+  const jsonContent = lines.slice(1).join("\n").trim();
+
+  let input: Record<string, unknown> = {};
+  if (jsonContent) {
+    try {
+      input = JSON.parse(jsonContent);
+    } catch {
+      // If JSON parsing fails, treat as raw content
+      input = { content: jsonContent };
+    }
+  }
+
+  return { toolName, input };
+}
+
+/**
+ * Custom Streamdown components for rendering tool-related code blocks
+ */
+const streamdownComponents: Components = {
+  pre: ({ children, className, ...props }) => {
+    // Extract the code element's children to get the actual content
+    const codeContent = extractTextFromChildren(children);
+
+    // Check for tool_use or tool_result language hints in className
+    // Streamdown adds language-{lang} class to code blocks
+    const classStr = String(className || "");
+
+    if (
+      classStr.includes("language-tool_use") ||
+      classStr.includes("tool_use")
+    ) {
+      const { toolName, input } = parseToolUseContent(codeContent);
+      return <ToolCallDisplay input={input} toolName={toolName} />;
+    }
+
+    if (
+      classStr.includes("language-tool_result") ||
+      classStr.includes("tool_result")
+    ) {
+      return <ToolResultDisplay content={codeContent} />;
+    }
+
+    // Default rendering for other code blocks
+    return (
+      <pre className={className} {...props}>
+        {children}
+      </pre>
+    );
+  },
+  code: ({ children, className, ...props }) => {
+    // Handle inline code with tool markers
+    const content = extractTextFromChildren(children);
+    const classStr = String(className || "");
+
+    if (
+      classStr.includes("language-tool_use") ||
+      classStr.includes("tool_use")
+    ) {
+      const { toolName, input } = parseToolUseContent(content);
+      return <ToolCallDisplay input={input} toolName={toolName} />;
+    }
+
+    if (
+      classStr.includes("language-tool_result") ||
+      classStr.includes("tool_result")
+    ) {
+      return <ToolResultDisplay content={content} />;
+    }
+
+    // Default code rendering
+    return (
+      <code className={className} {...props}>
+        {children}
+      </code>
+    );
+  },
+};
+
+/**
+ * Processes text content to replace tool blocks with React components
+ * This handles cases where tool blocks are embedded in text content
+ */
+function processTextWithToolBlocks(text: string): React.ReactNode[] {
+  const result: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let key = 0;
+
+  // Combined regex to find both tool_use and tool_result blocks
+  const combinedRegex = /```(tool_use|tool_result)\s*\n?([\s\S]*?)```/g;
+  let match: RegExpExecArray | null = combinedRegex.exec(text);
+
+  while (match !== null) {
+    // Add text before this match
+    if (match.index > lastIndex) {
+      const textBefore = text.slice(lastIndex, match.index);
+      if (textBefore.trim()) {
+        result.push(textBefore);
+      }
+    }
+
+    const blockType = match[1];
+    const blockContent = match[2].trim();
+
+    if (blockType === "tool_use") {
+      const { toolName, input } = parseToolUseContent(blockContent);
+      result.push(
+        <ToolCallDisplay
+          input={input}
+          key={`tool-${key++}`}
+          toolName={toolName}
+        />
+      );
+    } else if (blockType === "tool_result") {
+      result.push(
+        <ToolResultDisplay content={blockContent} key={`result-${key++}`} />
+      );
+    }
+
+    lastIndex = match.index + match[0].length;
+    match = combinedRegex.exec(text);
+  }
+
+  // Add remaining text after last match
+  if (lastIndex < text.length) {
+    const remainingText = text.slice(lastIndex);
+    if (remainingText.trim()) {
+      result.push(remainingText);
+    }
+  }
+
+  return result.length > 0 ? result : [text];
+}
+
+/**
+ * MessageResponse component for rendering AI message content
+ * Supports both structured content blocks and markdown text with embedded tool blocks
+ */
 export const MessageResponse = memo(
-  ({ className, ...props }: MessageResponseProps) => (
-    <Streamdown
-      className={cn(
-        "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-        className
-      )}
-      {...props}
-    />
-  ),
-  (prevProps, nextProps) => prevProps.children === nextProps.children
+  ({ className, contentBlocks, children, ...props }: MessageResponseProps) => {
+    // If we have structured content blocks, render them directly
+    if (contentBlocks && Array.isArray(contentBlocks)) {
+      return (
+        <div className={cn("size-full", className)}>
+          {contentBlocks.map((block, index) => {
+            if (block.type === "text") {
+              // Check if text contains tool blocks
+              const text = block.text;
+              const hasToolBlocks =
+                TOOL_USE_REGEX.test(text) || TOOL_RESULT_REGEX.test(text);
+
+              // Reset regex lastIndex after test
+              TOOL_USE_REGEX.lastIndex = 0;
+              TOOL_RESULT_REGEX.lastIndex = 0;
+
+              if (hasToolBlocks) {
+                const processedContent = processTextWithToolBlocks(text);
+                return (
+                  <div key={`text-${index}`}>
+                    {processedContent.map((part, i) => {
+                      if (typeof part === "string") {
+                        return (
+                          <Streamdown
+                            className={cn(
+                              "[&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+                            )}
+                            components={streamdownComponents}
+                            controls={{ code: false }}
+                            key={`md-${index}-${i}`}
+                            {...props}
+                          >
+                            {part}
+                          </Streamdown>
+                        );
+                      }
+                      return part;
+                    })}
+                  </div>
+                );
+              }
+
+              // Normal text block - use Streamdown
+              return (
+                <Streamdown
+                  className={cn("[&>*:first-child]:mt-0 [&>*:last-child]:mb-0")}
+                  components={streamdownComponents}
+                  controls={{ code: false }}
+                  key={`text-${index}`}
+                  {...props}
+                >
+                  {block.text}
+                </Streamdown>
+              );
+            }
+
+            if (block.type === "tool_use") {
+              return (
+                <ToolCallDisplay
+                  input={block.input}
+                  key={`tool-${block.id || index}`}
+                  toolName={block.name}
+                />
+              );
+            }
+
+            if (block.type === "tool_result") {
+              const content =
+                typeof block.content === "string"
+                  ? block.content
+                  : block.content;
+              return (
+                <ToolResultDisplay
+                  content={content as string}
+                  isError={block.is_error}
+                  key={`result-${block.tool_use_id || index}`}
+                />
+              );
+            }
+
+            return null;
+          })}
+        </div>
+      );
+    }
+
+    // For markdown content passed as children
+    const childrenString =
+      typeof children === "string" ? children : String(children || "");
+    const hasToolBlocks =
+      TOOL_USE_REGEX.test(childrenString) ||
+      TOOL_RESULT_REGEX.test(childrenString);
+
+    // Reset regex lastIndex after test
+    TOOL_USE_REGEX.lastIndex = 0;
+    TOOL_RESULT_REGEX.lastIndex = 0;
+
+    if (hasToolBlocks) {
+      const processedContent = processTextWithToolBlocks(childrenString);
+      return (
+        <div className={cn("size-full", className)}>
+          {processedContent.map((part, i) => {
+            if (typeof part === "string") {
+              return (
+                <Streamdown
+                  className={cn("[&>*:first-child]:mt-0 [&>*:last-child]:mb-0")}
+                  components={streamdownComponents}
+                  controls={{ code: false }}
+                  key={`md-${i}`}
+                  {...props}
+                >
+                  {part}
+                </Streamdown>
+              );
+            }
+            return part;
+          })}
+        </div>
+      );
+    }
+
+    // Default: render with Streamdown
+    return (
+      <Streamdown
+        className={cn(
+          "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
+          className
+        )}
+        components={streamdownComponents}
+        controls={{ code: false }}
+        {...props}
+      >
+        {children}
+      </Streamdown>
+    );
+  },
+  (prevProps, nextProps) =>
+    prevProps.children === nextProps.children &&
+    prevProps.contentBlocks === nextProps.contentBlocks
 );
 
 MessageResponse.displayName = "MessageResponse";

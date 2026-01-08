@@ -206,10 +206,13 @@ export const ChatArea: React.FC = () => {
     const isUser = msg.type === "user";
     const isSystem = msg.type === "system";
     const isError = msg.status === "error";
-    // Safely format content to always return a string
-    const content = formatMessageContent(
-      msg.content || msg.message?.content || ""
-    );
+
+    // Get content - check if it's an array (content blocks) or needs formatting
+    const content = msg.content || msg.message?.content;
+    const contentBlocks = Array.isArray(content) ? content : undefined;
+    const contentString = contentBlocks
+      ? undefined
+      : formatMessageContent(content || "");
 
     // System messages (errors, info)
     if (isSystem) {
@@ -228,7 +231,9 @@ export const ChatArea: React.FC = () => {
           ) : (
             <CheckCircle className="mt-0.5 h-4 w-4 shrink-0" />
           )}
-          <span className="break-words">{content}</span>
+          <span className="break-words">
+            {formatMessageContent(content || "")}
+          </span>
         </div>
       );
     }
@@ -239,7 +244,13 @@ export const ChatArea: React.FC = () => {
         key={msg.messageId || index}
       >
         <MessageContent>
-          {isUser ? content : <MessageResponse>{content}</MessageResponse>}
+          {isUser ? (
+            formatMessageContent(content || "")
+          ) : (
+            <MessageResponse contentBlocks={contentBlocks}>
+              {contentString}
+            </MessageResponse>
+          )}
         </MessageContent>
       </Message>
     );

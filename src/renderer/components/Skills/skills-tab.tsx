@@ -6,6 +6,7 @@ import {
   Lightning,
   Pencil,
   PlusCircle,
+  Sparkle,
   Trash,
 } from "@phosphor-icons/react";
 import type React from "react";
@@ -29,7 +30,8 @@ import {
 } from "@/components/ui/resizable";
 import { Textarea } from "@/components/ui/textarea";
 import { TipTapEditor } from "@/renderer/components/tip-tap-editor";
-import { showError } from "@/renderer/lib/toast";
+import { useFileWatcher } from "@/renderer/hooks/use-file-watcher";
+import { showError, showSuccess } from "@/renderer/lib/toast";
 import {
   type SkillCreateValues,
   type SkillFormValues,
@@ -165,6 +167,20 @@ export const SkillsTab: React.FC = () => {
     loadItems,
   } = useClaudeItems({ type: "skills", currentView: "skills" });
 
+  // File watcher for hot-reload
+  const { isWatching } = useFileWatcher({
+    projectPath: activePath,
+    watchHome: true,
+    enabled: !!activePath,
+    onSkillChange: async (event) => {
+      // Reload skills when a skill file changes
+      await loadItems();
+      if (event.action === "change" || event.action === "add") {
+        showSuccess("Skill updated", `"${event.path.split("/").pop()}"`);
+      }
+    },
+  });
+
   // Parse skills to extract frontmatter
   const [skills, setSkills] = useState<Skill[]>([]);
 
@@ -299,6 +315,16 @@ export const SkillsTab: React.FC = () => {
 
   return (
     <div className="flex h-full flex-col">
+      {/* Header with hot-reload indicator */}
+      {activePath && isWatching && (
+        <div className="flex items-center gap-2 border-b bg-primary/5 px-4 py-2">
+          <Sparkle className="size-4 animate-pulse text-primary" />
+          <span className="font-medium text-sm">Auto-reload enabled</span>
+          <span className="text-muted-foreground text-xs">
+            Skills will reload automatically when files change
+          </span>
+        </div>
+      )}
       {/* Main Content */}
       <PanelGroup className="flex-1 overflow-hidden" direction="horizontal">
         {/* Skills List */}

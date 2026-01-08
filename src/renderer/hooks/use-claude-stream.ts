@@ -274,22 +274,38 @@ export const useClaudeStream = (processId: string | null) => {
           setIsThinking(false);
           const content = extractAssistantContent(eventData.message);
           console.log("[useClaudeStream] Extracted content:", content);
+
+          // Always clear streaming state when assistant event arrives
+          // to prevent duplication in UI (even if content is empty)
+          streamingContentRef.current = "";
+          setStreamingMessage("");
+
           if (content) {
-            // Finalize streaming content first if there is any
-            if (streamingContentRef.current) {
-              streamingContentRef.current = "";
-              setStreamingMessage("");
-            }
-            setMessages((prev) => [
-              ...prev,
-              {
-                type: "assistant",
-                content,
-                messageId: eventData.uuid || `msg-${Date.now()}`,
-                timestamp: new Date().toISOString(),
-                status: "complete",
-              },
-            ]);
+            // Generate message ID with random suffix for uniqueness
+            const messageId =
+              eventData.uuid ||
+              `msg-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+
+            setMessages((prev) => {
+              // Deduplication: Skip if message with this ID already exists
+              if (prev.some((msg) => msg.messageId === messageId)) {
+                console.log(
+                  "[useClaudeStream] Skipping duplicate message:",
+                  messageId
+                );
+                return prev;
+              }
+              return [
+                ...prev,
+                {
+                  type: "assistant",
+                  content,
+                  messageId,
+                  timestamp: new Date().toISOString(),
+                  status: "complete",
+                },
+              ];
+            });
           }
           break;
         }
@@ -320,16 +336,32 @@ export const useClaudeStream = (processId: string | null) => {
 
           // Finalize any remaining streaming content
           if (streamingContentRef.current) {
-            setMessages((prev) => [
-              ...prev,
-              {
-                type: "assistant",
-                content: streamingContentRef.current,
-                messageId: eventData.uuid || `msg-${Date.now()}`,
-                timestamp: new Date().toISOString(),
-                status: "complete",
-              },
-            ]);
+            // Save content before clearing
+            const streamingContent = streamingContentRef.current;
+            const messageId =
+              eventData.uuid ||
+              `msg-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+
+            setMessages((prev) => {
+              // Deduplication: Skip if message with this ID already exists
+              if (prev.some((msg) => msg.messageId === messageId)) {
+                console.log(
+                  "[useClaudeStream] Skipping duplicate message in result:",
+                  messageId
+                );
+                return prev;
+              }
+              return [
+                ...prev,
+                {
+                  type: "assistant",
+                  content: streamingContent,
+                  messageId,
+                  timestamp: new Date().toISOString(),
+                  status: "complete",
+                },
+              ];
+            });
             streamingContentRef.current = "";
             setStreamingMessage("");
           }
@@ -405,16 +437,30 @@ export const useClaudeStream = (processId: string | null) => {
 
           // Finalize any remaining streaming content
           if (streamingContentRef.current) {
-            setMessages((prev) => [
-              ...prev,
-              {
-                type: "assistant",
-                content: streamingContentRef.current,
-                messageId: `msg-${Date.now()}`,
-                timestamp: new Date().toISOString(),
-                status: "complete",
-              },
-            ]);
+            // Save content before clearing
+            const streamingContent = streamingContentRef.current;
+            const messageId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+
+            setMessages((prev) => {
+              // Deduplication: Skip if message with this ID already exists
+              if (prev.some((msg) => msg.messageId === messageId)) {
+                console.log(
+                  "[useClaudeStream] Skipping duplicate message in complete:",
+                  messageId
+                );
+                return prev;
+              }
+              return [
+                ...prev,
+                {
+                  type: "assistant",
+                  content: streamingContent,
+                  messageId,
+                  timestamp: new Date().toISOString(),
+                  status: "complete",
+                },
+              ];
+            });
             streamingContentRef.current = "";
             setStreamingMessage("");
           }
