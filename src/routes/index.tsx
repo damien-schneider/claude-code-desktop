@@ -37,18 +37,18 @@ function ClaudeCodeManagerPage() {
   // Quick Open handler
   const handleQuickOpen = () => setIsQuickOpenOpen(true);
 
-  const handleScan = useCallback(async () => {
+  const _handleScan = useCallback(async () => {
     await scanProjects();
   }, [scanProjects]);
 
-  const handleProjectClick = useCallback(
+  const _handleProjectClick = useCallback(
     (projectPath: string) => {
       selectProject(projectPath);
     },
     [selectProject]
   );
 
-  const handleGlobalSettingsClick = useCallback(() => {
+  const _handleGlobalSettingsClick = useCallback(() => {
     selectGlobalSettings();
   }, [selectGlobalSettings]);
 
@@ -67,7 +67,7 @@ function ClaudeCodeManagerPage() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isQuickOpenOpen]);
+  }, [isQuickOpenOpen, setIsQuickOpenOpen]);
 
   useEffect(() => {
     // Initialize with current working directory

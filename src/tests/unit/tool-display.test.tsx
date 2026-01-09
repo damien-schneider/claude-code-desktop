@@ -95,8 +95,8 @@ describe("ToolCallDisplay", () => {
     expect(screen.getByText("Path:")).toBeInTheDocument();
   });
 
-  it("handles file paths with special styling", async () => {
-    const user = userEvent.setup();
+  it("handles file paths with special styling", () => {
+    const _user = userEvent.setup();
     render(
       <ToolCallDisplay
         defaultOpen

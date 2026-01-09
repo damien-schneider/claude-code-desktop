@@ -1,8 +1,9 @@
-bun run test
-
 #!/bin/sh
 # Exit on any error
 set -e
+
+# Run tests first
+bun run test
 
 # Check if there are any staged files
 if [ -z "$(git diff --cached --name-only)" ]; then
@@ -23,7 +24,7 @@ git stash push --quiet --keep-index --message "pre-commit-stash" || true
 STASHED=$?
 
 # Run formatter on the staged files
-bun x ultracite fix
+bun x ultracite check
 FORMAT_EXIT_CODE=$?
 
 # Restore working directory state

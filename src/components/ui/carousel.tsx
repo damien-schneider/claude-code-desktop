@@ -13,12 +13,12 @@ type UseCarouselParameters = Parameters<typeof useEmblaCarousel>;
 type CarouselOptions = UseCarouselParameters[0];
 type CarouselPlugin = UseCarouselParameters[1];
 
-type CarouselProps = {
+interface CarouselProps {
   opts?: CarouselOptions;
   plugins?: CarouselPlugin;
   orientation?: "horizontal" | "vertical";
   setApi?: (api: CarouselApi) => void;
-};
+}
 
 type CarouselContextProps = {
   carouselRef: ReturnType<typeof useEmblaCarousel>[0];
@@ -61,7 +61,9 @@ function Carousel({
   const [canScrollNext, setCanScrollNext] = React.useState(false);
 
   const onSelect = React.useCallback((api: CarouselApi) => {
-    if (!api) return;
+    if (!api) {
+      return;
+    }
     setCanScrollPrev(api.canScrollPrev());
     setCanScrollNext(api.canScrollNext());
   }, []);
@@ -88,12 +90,16 @@ function Carousel({
   );
 
   React.useEffect(() => {
-    if (!(api && setApi)) return;
+    if (!(api && setApi)) {
+      return;
+    }
     setApi(api);
   }, [api, setApi]);
 
   React.useEffect(() => {
-    if (!api) return;
+    if (!api) {
+      return;
+    }
     onSelect(api);
     api.on("reInit", onSelect);
     api.on("select", onSelect);
@@ -118,11 +124,9 @@ function Carousel({
       }}
     >
       <div
-        aria-roledescription="carousel"
         className={cn("relative", className)}
         data-slot="carousel"
         onKeyDownCapture={handleKeyDown}
-        role="region"
         {...props}
       >
         {children}
@@ -157,14 +161,12 @@ function CarouselItem({ className, ...props }: React.ComponentProps<"div">) {
 
   return (
     <div
-      aria-roledescription="slide"
       className={cn(
         "min-w-0 shrink-0 grow-0 basis-full",
         orientation === "horizontal" ? "pl-4" : "pt-4",
         className
       )}
       data-slot="carousel-item"
-      role="group"
       {...props}
     />
   );
