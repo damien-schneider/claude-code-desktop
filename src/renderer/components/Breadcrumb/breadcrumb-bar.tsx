@@ -61,7 +61,7 @@ export const BreadcrumbBar: React.FC<BreadcrumbBarProps> = ({
   return (
     <div
       className={cn(
-        "flex min-h-11 select-none items-center gap-2 border-b px-4 py-2",
+        "flex min-h-11 select-none items-center gap-2 px-4 py-2",
         className
       )}
       style={{ WebkitAppRegion: "drag" } as React.CSSProperties}

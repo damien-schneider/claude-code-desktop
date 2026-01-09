@@ -18,7 +18,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { ResizablePanel as Panel } from "@/components/ui/resizable";
 import {
-  type ClaudeProject,
   filteredProjectsAtom,
   isGlobalSettingsSelectedAtom,
   isScanningAtom,
@@ -36,21 +35,7 @@ import {
 import { cn } from "@/utils/tailwind";
 
 export function ProjectsSidebar() {
-  const [filteredProjects] = useAtom(filteredProjectsAtom);
-  const [selectedProjectId] = useAtom(selectedProjectIdAtom);
-  const [isGlobalSettingsSelected] = useAtom(isGlobalSettingsSelectedAtom);
-  const [searchQuery, setSearchQuery] = useAtom(searchQueryAtom);
-  const [isScanning] = useAtom(isScanningAtom);
-  const scanProjects = useSetAtom(scanProjectsAtom);
-  const selectProject = useSetAtom(selectProjectAtom);
-  const selectGlobalSettings = useSetAtom(selectGlobalSettingsAtom);
-
-  // UI state from ui-atoms
-  const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useAtom(
-    leftSidebarCollapsedAtom
-  );
-  const [settingsOpen, setSettingsOpen] = useAtom(settingsSectionOpenAtom);
-  const [projectsOpen, setProjectsOpen] = useAtom(projectsSectionOpenAtom);
+  const [, setLeftSidebarCollapsed] = useAtom(leftSidebarCollapsedAtom);
 
   return (
     <Panel
@@ -64,46 +49,19 @@ export function ProjectsSidebar() {
       onExpand={() => setLeftSidebarCollapsed(false)}
     >
       <div className="flex h-full flex-col overflow-hidden rounded-l-2xl bg-background-2">
-        <SidebarHeader
-          isScanning={isScanning}
-          leftSidebarCollapsed={leftSidebarCollapsed}
-          onScan={scanProjects}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-        />
-        <SidebarContent
-          filteredProjects={filteredProjects}
-          isGlobalSettingsSelected={isGlobalSettingsSelected}
-          leftSidebarCollapsed={leftSidebarCollapsed}
-          onGlobalSettingsClick={selectGlobalSettings}
-          onProjectClick={selectProject}
-          projectsOpen={projectsOpen}
-          searchQuery={searchQuery}
-          selectedProjectId={selectedProjectId}
-          setProjectsOpen={setProjectsOpen}
-          setSettingsOpen={setSettingsOpen}
-          settingsOpen={settingsOpen}
-        />
+        <SidebarHeader />
+        <SidebarContent />
       </div>
     </Panel>
   );
 }
 
-interface SidebarHeaderProps {
-  isScanning: boolean;
-  leftSidebarCollapsed: boolean;
-  onScan: () => void;
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-}
+function SidebarHeader() {
+  const [searchQuery, setSearchQuery] = useAtom(searchQueryAtom);
+  const [isScanning] = useAtom(isScanningAtom);
+  const [leftSidebarCollapsed] = useAtom(leftSidebarCollapsedAtom);
+  const scanProjects = useSetAtom(scanProjectsAtom);
 
-function SidebarHeader({
-  isScanning,
-  leftSidebarCollapsed,
-  onScan,
-  searchQuery,
-  setSearchQuery,
-}: SidebarHeaderProps) {
   return (
     <div className="flex flex-col gap-2 p-2">
       <div className="flex gap-2">
@@ -129,7 +87,7 @@ function SidebarHeader({
           leftSidebarCollapsed ? "w-8 p-0" : "justify-start px-2"
         )}
         disabled={isScanning}
-        onClick={onScan}
+        onClick={scanProjects}
         variant="default"
       >
         {isScanning ? (
@@ -154,76 +112,27 @@ function SidebarHeader({
   );
 }
 
-interface SidebarContentProps {
-  filteredProjects: ClaudeProject[];
-  isGlobalSettingsSelected: boolean;
-  leftSidebarCollapsed: boolean;
-  onGlobalSettingsClick: () => void;
-  onProjectClick: (path: string) => void;
-  projectsOpen: boolean;
-  searchQuery: string;
-  selectedProjectId?: string | null;
-  setProjectsOpen: (open: boolean) => void;
-  setSettingsOpen: (open: boolean) => void;
-  settingsOpen: boolean;
-}
-
-function SidebarContent({
-  filteredProjects,
-  isGlobalSettingsSelected,
-  leftSidebarCollapsed,
-  onGlobalSettingsClick,
-  onProjectClick,
-  projectsOpen,
-  searchQuery,
-  selectedProjectId,
-  setProjectsOpen,
-  setSettingsOpen,
-  settingsOpen,
-}: SidebarContentProps) {
+function SidebarContent() {
   return (
     <div className="flex-1 overflow-y-auto px-2 pb-2">
       <div className="flex flex-col gap-4">
-        <SettingsSection
-          isGlobalSettingsSelected={isGlobalSettingsSelected}
-          leftSidebarCollapsed={leftSidebarCollapsed}
-          onGlobalSettingsClick={onGlobalSettingsClick}
-          open={settingsOpen}
-          setOpen={setSettingsOpen}
-        />
-        <ProjectsSection
-          filteredProjects={filteredProjects}
-          leftSidebarCollapsed={leftSidebarCollapsed}
-          onProjectClick={onProjectClick}
-          open={projectsOpen}
-          searchQuery={searchQuery}
-          selectedProjectId={selectedProjectId}
-          setOpen={setProjectsOpen}
-        />
+        <SettingsSection />
+        <ProjectsSection />
       </div>
     </div>
   );
 }
 
-interface SettingsSectionProps {
-  isGlobalSettingsSelected: boolean;
-  leftSidebarCollapsed: boolean;
-  onGlobalSettingsClick: () => void;
-  open: boolean;
-  setOpen: (open: boolean) => void;
-}
+function SettingsSection() {
+  const [isGlobalSettingsSelected] = useAtom(isGlobalSettingsSelectedAtom);
+  const [leftSidebarCollapsed] = useAtom(leftSidebarCollapsedAtom);
+  const [settingsOpen, setSettingsOpen] = useAtom(settingsSectionOpenAtom);
+  const selectGlobalSettings = useSetAtom(selectGlobalSettingsAtom);
 
-function SettingsSection({
-  isGlobalSettingsSelected,
-  leftSidebarCollapsed,
-  onGlobalSettingsClick,
-  open,
-  setOpen,
-}: SettingsSectionProps) {
   return (
     <Collapsible
-      onOpenChange={setOpen}
-      open={leftSidebarCollapsed ? false : open}
+      onOpenChange={setSettingsOpen}
+      open={leftSidebarCollapsed ? false : settingsOpen}
     >
       <div className="flex flex-col gap-1">
         {/* @ts-expect-error - asChild type definition issue in UI library */}
@@ -243,7 +152,7 @@ function SettingsSection({
             {!leftSidebarCollapsed && (
               <>
                 <span className="flex-1 text-left">Global Settings</span>
-                {open ? (
+                {settingsOpen ? (
                   <CaretDown className="h-3 w-3" weight="regular" />
                 ) : (
                   <CaretRight className="h-3 w-3" weight="regular" />
@@ -262,7 +171,7 @@ function SettingsSection({
                     ? "bg-primary text-primary-foreground"
                     : "hover:bg-accent hover:text-accent-foreground"
                 )}
-                onClick={onGlobalSettingsClick}
+                onClick={selectGlobalSettings}
                 type="button"
               >
                 <Folder className="h-4 w-4" weight="regular" />
@@ -276,29 +185,18 @@ function SettingsSection({
   );
 }
 
-interface ProjectsSectionProps {
-  filteredProjects: ClaudeProject[];
-  leftSidebarCollapsed: boolean;
-  onProjectClick: (path: string) => void;
-  open: boolean;
-  searchQuery: string;
-  selectedProjectId?: string | null;
-  setOpen: (open: boolean) => void;
-}
+function ProjectsSection() {
+  const [filteredProjects] = useAtom(filteredProjectsAtom);
+  const [leftSidebarCollapsed] = useAtom(leftSidebarCollapsedAtom);
+  const [projectsOpen, setProjectsOpen] = useAtom(projectsSectionOpenAtom);
+  const [searchQuery] = useAtom(searchQueryAtom);
+  const [selectedProjectId] = useAtom(selectedProjectIdAtom);
+  const selectProject = useSetAtom(selectProjectAtom);
 
-function ProjectsSection({
-  filteredProjects,
-  leftSidebarCollapsed,
-  onProjectClick,
-  open,
-  searchQuery,
-  selectedProjectId,
-  setOpen,
-}: ProjectsSectionProps) {
   return (
     <Collapsible
-      onOpenChange={setOpen}
-      open={leftSidebarCollapsed ? false : open}
+      onOpenChange={setProjectsOpen}
+      open={leftSidebarCollapsed ? false : projectsOpen}
     >
       <div className="flex flex-col gap-1">
         {/* @ts-expect-error - asChild type definition issue in UI library */}
@@ -321,7 +219,7 @@ function ProjectsSection({
                 <span className="mr-2 text-[10px] tabular-nums opacity-70">
                   {filteredProjects.length}
                 </span>
-                {open ? (
+                {projectsOpen ? (
                   <CaretDown className="h-3 w-3" weight="regular" />
                 ) : (
                   <CaretRight className="h-3 w-3" weight="regular" />
@@ -347,7 +245,7 @@ function ProjectsSection({
                         : "hover:bg-accent hover:text-accent-foreground"
                     )}
                     key={project.path}
-                    onClick={() => onProjectClick(project.path)}
+                    onClick={() => selectProject(project.path)}
                     type="button"
                   >
                     <Folder className="h-4 w-4 shrink-0" weight="regular" />
