@@ -612,20 +612,22 @@ export const ToolResultDisplay = memo(
       return (
         <TooltipProvider>
           <Tooltip>
-            <TooltipTrigger asChild>
-              <div
-                className={cn(
-                  "my-1 inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-[11px]",
-                  isError
-                    ? "border-destructive/30 bg-destructive/10 text-destructive"
-                    : "bg-muted/30 text-muted-foreground",
-                  className
-                )}
-              >
-                <Icon className={cn("size-3", iconColor)} />
-                <span className="font-mono">{stringContent}</span>
-              </div>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={() => (
+                <div
+                  className={cn(
+                    "my-1 inline-flex items-center gap-1.5 rounded border px-2 py-0.5 text-[11px]",
+                    isError
+                      ? "border-destructive/30 bg-destructive/10 text-destructive"
+                      : "bg-muted/30 text-muted-foreground",
+                    className
+                  )}
+                >
+                  <Icon className={cn("size-3", iconColor)} />
+                  <span className="font-mono">{stringContent}</span>
+                </div>
+              )}
+            />
             <TooltipContent>
               <p>Click to copy</p>
             </TooltipContent>

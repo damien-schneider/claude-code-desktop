@@ -15,20 +15,14 @@ import {
 import { useAtom } from "jotai";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form";
+import { Field, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
-  Panel,
-  PanelGroup,
-  PanelResizeHandle,
+  ResizablePanel as Panel,
+  ResizablePanelGroup as PanelGroup,
+  ResizableHandle as PanelResizeHandle,
 } from "@/components/ui/resizable";
 import {
   Select,
@@ -612,7 +606,7 @@ console.log('${hookType} hook executed:', {
 
       {/* Main content */}
       {activePath && (
-        <PanelGroup className="flex-1 overflow-hidden" direction="horizontal">
+        <PanelGroup className="flex-1 overflow-hidden" orientation="horizontal">
           {/* Hooks List */}
           <Panel
             className={cn(
@@ -643,75 +637,75 @@ console.log('${hookType} hook executed:', {
                   {/* Add Hook Button / Form */}
                   {isAdding && !sidebarCollapsed ? (
                     <div className="rounded-md border border-primary/20 bg-primary/10 p-3">
-                      <Form {...createForm}>
-                        <form
-                          className="space-y-2"
-                          onSubmit={createForm.handleSubmit(handleConfirmAdd)}
-                        >
-                          <FormField
-                            control={createForm.control}
-                            name="hookType"
-                            render={({ field }) => (
-                              <FormItem>
-                                <Select
-                                  defaultValue={field.value}
-                                  onValueChange={(value) => {
-                                    field.onChange(value);
-                                    createForm.setValue(
-                                      "name",
-                                      `my-${value.toLowerCase()}-hook`
-                                    );
-                                  }}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select hook type" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {HOOK_TYPES.map((type) => (
-                                      <SelectItem key={type} value={type}>
-                                        {type}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={createForm.control}
-                            name="name"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    autoFocus
-                                    className="font-mono text-sm"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <div className="flex gap-2">
-                            <Button className="flex-1" size="sm" type="submit">
-                              Create
-                            </Button>
-                            <Button
-                              className="flex-1"
-                              onClick={handleCancelAdd}
-                              size="sm"
-                              type="button"
-                              variant="outline"
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        </form>
-                      </Form>
+                      <form
+                        className="space-y-2"
+                        onSubmit={createForm.handleSubmit(handleConfirmAdd)}
+                      >
+                        <Controller
+                          control={createForm.control}
+                          name="hookType"
+                          render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                              <Select
+                                defaultValue={field.value}
+                                onValueChange={(value) => {
+                                  field.onChange(value);
+                                  createForm.setValue(
+                                    "name",
+                                    `my-${value.toLowerCase()}-hook`
+                                  );
+                                }}
+                              >
+                                <SelectTrigger id="hookType">
+                                  <SelectValue placeholder="Select hook type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {HOOK_TYPES.map((type) => (
+                                    <SelectItem key={type} value={type}>
+                                      {type}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              {fieldState.invalid && (
+                                <FieldError errors={[fieldState.error]} />
+                              )}
+                            </Field>
+                          )}
+                        />
+                        <Controller
+                          control={createForm.control}
+                          name="name"
+                          render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                              <Input
+                                {...field}
+                                aria-invalid={fieldState.invalid}
+                                autoFocus
+                                className="font-mono text-sm"
+                                id="name"
+                              />
+                              {fieldState.invalid && (
+                                <FieldError errors={[fieldState.error]} />
+                              )}
+                            </Field>
+                          )}
+                        />
+                        <div className="flex gap-2">
+                          <Button className="flex-1" size="sm" type="submit">
+                            Create
+                          </Button>
+                          <Button
+                            className="flex-1"
+                            onClick={handleCancelAdd}
+                            size="sm"
+                            type="button"
+                            variant="outline"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </form>
                     </div>
                   ) : (
                     <Button

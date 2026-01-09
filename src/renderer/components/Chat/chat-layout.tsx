@@ -3,9 +3,9 @@ import { useAtom, useSetAtom } from "jotai";
 import { type FC, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Panel,
-  PanelGroup,
-  PanelResizeHandle,
+  ResizablePanel as Panel,
+  ResizablePanelGroup as PanelGroup,
+  ResizableHandle as PanelResizeHandle,
 } from "@/components/ui/resizable";
 import {
   activeProcessIdAtom,

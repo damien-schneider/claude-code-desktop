@@ -11,22 +11,14 @@ import {
 } from "@phosphor-icons/react";
 import type React from "react";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
-  Panel,
-  PanelGroup,
-  PanelResizeHandle,
+  ResizablePanel as Panel,
+  ResizablePanelGroup as PanelGroup,
+  ResizableHandle as PanelResizeHandle,
 } from "@/components/ui/resizable";
 import { Textarea } from "@/components/ui/textarea";
 import { TipTapEditor } from "@/renderer/components/tip-tap-editor";
@@ -326,7 +318,7 @@ export const SkillsTab: React.FC = () => {
         </div>
       )}
       {/* Main Content */}
-      <PanelGroup className="flex-1 overflow-hidden" direction="horizontal">
+      <PanelGroup className="flex-1 overflow-hidden" orientation="horizontal">
         {/* Skills List */}
         <Panel
           className="border-r bg-muted/30"
@@ -348,49 +340,49 @@ export const SkillsTab: React.FC = () => {
                 {/* Add Skill Button / Form */}
                 {isAdding ? (
                   <div className="rounded-md border border-primary/20 bg-primary/10 p-2">
-                    <Form {...createForm}>
-                      <form
-                        className="space-y-2"
-                        onSubmit={createForm.handleSubmit(handleConfirmAdd)}
-                      >
-                        <FormField
-                          control={createForm.control}
-                          name="name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  autoFocus
-                                  className="font-mono text-sm"
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Escape") {
-                                      handleCancelAdd();
-                                    }
-                                  }}
-                                  placeholder="my-skill-name (optional, leave empty for auto-name)"
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <div className="flex gap-2">
-                          <Button className="flex-1" size="sm" type="submit">
-                            Create
-                          </Button>
-                          <Button
-                            className="flex-1"
-                            onClick={handleCancelAdd}
-                            size="sm"
-                            type="button"
-                            variant="outline"
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </form>
-                    </Form>
+                    <form
+                      className="space-y-2"
+                      onSubmit={createForm.handleSubmit(handleConfirmAdd)}
+                    >
+                      <Controller
+                        control={createForm.control}
+                        name="name"
+                        render={({ field, fieldState }) => (
+                          <Field data-invalid={fieldState.invalid}>
+                            <Input
+                              {...field}
+                              aria-invalid={fieldState.invalid}
+                              autoFocus
+                              className="font-mono text-sm"
+                              id="name"
+                              onKeyDown={(e) => {
+                                if (e.key === "Escape") {
+                                  handleCancelAdd();
+                                }
+                              }}
+                              placeholder="my-skill-name (optional, leave empty for auto-name)"
+                            />
+                            {fieldState.invalid && (
+                              <FieldError errors={[fieldState.error]} />
+                            )}
+                          </Field>
+                        )}
+                      />
+                      <div className="flex gap-2">
+                        <Button className="flex-1" size="sm" type="submit">
+                          Create
+                        </Button>
+                        <Button
+                          className="flex-1"
+                          onClick={handleCancelAdd}
+                          size="sm"
+                          type="button"
+                          variant="outline"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </form>
                   </div>
                 ) : (
                   <button
@@ -538,112 +530,112 @@ export const SkillsTab: React.FC = () => {
                       placeholder="---\nname: skill-name\ndescription: Description of when to use this skill\n---\n\n# Skill Name\n\nAdd your skill instructions here..."
                     />
                   ) : (
-                    <Form {...form}>
-                      <form
-                        className="space-y-4 p-4"
-                        onSubmit={form.handleSubmit(handleSave)}
-                      >
-                        <FormField
-                          control={form.control}
-                          name="name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Name (internal ID)</FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  className="font-mono text-sm"
-                                  placeholder="my-skill-name"
-                                />
-                              </FormControl>
-                              <FormDescription>
-                                Lowercase letters, numbers, and hyphens only.
-                                Max 64 characters. Must match directory name.
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                    <form
+                      className="space-y-4 p-4"
+                      onSubmit={form.handleSubmit(handleSave)}
+                    >
+                      <Controller
+                        control={form.control}
+                        name="name"
+                        render={({ field, fieldState }) => (
+                          <Field data-invalid={fieldState.invalid}>
+                            <FieldLabel htmlFor="name">
+                              Name (internal ID)
+                            </FieldLabel>
+                            <Input
+                              {...field}
+                              aria-invalid={fieldState.invalid}
+                              className="font-mono text-sm"
+                              id="name"
+                              placeholder="my-skill-name"
+                            />
+                            {fieldState.invalid && (
+                              <FieldError errors={[fieldState.error]} />
+                            )}
+                          </Field>
+                        )}
+                      />
 
-                        <FormField
-                          control={form.control}
-                          name="description"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Description *</FormLabel>
-                              <FormControl>
-                                <Textarea
-                                  {...field}
-                                  className="text-sm"
-                                  placeholder="Describe what this skill does and when Claude should use it..."
-                                  rows={3}
-                                />
-                              </FormControl>
-                              <FormDescription>
-                                Include both what the skill does AND when to
-                                trigger it. Max 1024 characters.
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                      <Controller
+                        control={form.control}
+                        name="description"
+                        render={({ field, fieldState }) => (
+                          <Field data-invalid={fieldState.invalid}>
+                            <FieldLabel htmlFor="description">
+                              Description *
+                            </FieldLabel>
+                            <Textarea
+                              {...field}
+                              aria-invalid={fieldState.invalid}
+                              className="text-sm"
+                              id="description"
+                              placeholder="Describe what this skill does and when Claude should use it..."
+                              rows={3}
+                            />
+                            {fieldState.invalid && (
+                              <FieldError errors={[fieldState.error]} />
+                            )}
+                          </Field>
+                        )}
+                      />
 
-                        <FormField
-                          control={form.control}
-                          name="license"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>License (optional)</FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  className="text-sm"
-                                  placeholder="MIT, Apache-2.0, or see LICENSE.txt"
-                                />
-                              </FormControl>
-                              <FormDescription>
-                                License name or reference to a bundled license
-                                file.
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                      <Controller
+                        control={form.control}
+                        name="license"
+                        render={({ field, fieldState }) => (
+                          <Field data-invalid={fieldState.invalid}>
+                            <FieldLabel htmlFor="license">
+                              License (optional)
+                            </FieldLabel>
+                            <Input
+                              {...field}
+                              aria-invalid={fieldState.invalid}
+                              className="text-sm"
+                              id="license"
+                              placeholder="MIT, Apache-2.0, or see LICENSE.txt"
+                            />
+                            {fieldState.invalid && (
+                              <FieldError errors={[fieldState.error]} />
+                            )}
+                          </Field>
+                        )}
+                      />
 
-                        <FormField
-                          control={form.control}
-                          name="compatibility"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Compatibility (optional)</FormLabel>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  className="text-sm"
-                                  placeholder="e.g., Designed for Claude Code, Requires git and docker"
-                                />
-                              </FormControl>
-                              <FormDescription>
-                                Environment requirements or intended product.
-                                Max 500 characters.
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                      <Controller
+                        control={form.control}
+                        name="compatibility"
+                        render={({ field, fieldState }) => (
+                          <Field data-invalid={fieldState.invalid}>
+                            <FieldLabel htmlFor="compatibility">
+                              Compatibility (optional)
+                            </FieldLabel>
+                            <Input
+                              {...field}
+                              aria-invalid={fieldState.invalid}
+                              className="text-sm"
+                              id="compatibility"
+                              placeholder="e.g., Designed for Claude Code, Requires git and docker"
+                            />
+                            {fieldState.invalid && (
+                              <FieldError errors={[fieldState.error]} />
+                            )}
+                          </Field>
+                        )}
+                      />
 
-                        <FormField
-                          control={form.control}
-                          name="content"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Instructions</FormLabel>
-                              <FormControl>
-                                <TipTapEditor
-                                  className="min-h-[400px]"
-                                  content={field.value || ""}
-                                  onChange={field.onChange}
-                                  placeholder={`# Skill Name
+                      <Controller
+                        control={form.control}
+                        name="content"
+                        render={({ field, fieldState }) => (
+                          <Field data-invalid={fieldState.invalid}>
+                            <FieldLabel htmlFor="content">
+                              Instructions
+                            </FieldLabel>
+                            <TipTapEditor
+                              className="min-h-[400px]"
+                              content={field.value || ""}
+                              onChange={field.onChange}
+                              placeholder={`# Skill Name
 
 Add detailed instructions for Claude here.
 
@@ -665,23 +657,22 @@ You can add files to this skill directory:
 
 Reference files using relative paths: See [reference](references/REFERENCE.md)
 `}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                            />
+                            {fieldState.invalid && (
+                              <FieldError errors={[fieldState.error]} />
+                            )}
+                          </Field>
+                        )}
+                      />
 
-                        <div className="rounded-md border bg-muted/30 p-3">
-                          <p className="text-muted-foreground text-xs">
-                            <strong>Progressive Disclosure:</strong> Keep
-                            SKILL.md under 500 lines. Move detailed reference
-                            material to separate files in scripts/, references/,
-                            or assets/.
-                          </p>
-                        </div>
-                      </form>
-                    </Form>
+                      <div className="rounded-md border bg-muted/30 p-3">
+                        <p className="text-muted-foreground text-xs">
+                          <strong>Progressive Disclosure:</strong> Keep SKILL.md
+                          under 500 lines. Move detailed reference material to
+                          separate files in scripts/, references/, or assets/.
+                        </p>
+                      </div>
+                    </form>
                   )}
                 </div>
               </>

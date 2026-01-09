@@ -8,22 +8,14 @@ import {
 } from "@phosphor-icons/react";
 import type React from "react";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
-  Panel,
-  PanelGroup,
-  PanelResizeHandle,
+  ResizablePanel as Panel,
+  ResizablePanelGroup as PanelGroup,
+  ResizableHandle as PanelResizeHandle,
 } from "@/components/ui/resizable";
 import {
   Select,
@@ -276,49 +268,49 @@ export const AgentsTab: React.FC = () => {
         {/* Add Agent Button / Form */}
         {isAdding ? (
           <div className="rounded-md border border-primary/20 bg-primary/10 p-2">
-            <Form {...createForm}>
-              <form
-                className="space-y-2"
-                onSubmit={createForm.handleSubmit(handleConfirmAdd)}
-              >
-                <FormField
-                  control={createForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          autoFocus
-                          className="font-mono text-sm"
-                          onKeyDown={(e) => {
-                            if (e.key === "Escape") {
-                              handleCancelAdd();
-                            }
-                          }}
-                          placeholder="my-agent-name (optional, leave empty for auto-name)"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex gap-2">
-                  <Button className="flex-1" size="sm" type="submit">
-                    Create
-                  </Button>
-                  <Button
-                    className="flex-1"
-                    onClick={handleCancelAdd}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            </Form>
+            <form
+              className="space-y-2"
+              onSubmit={createForm.handleSubmit(handleConfirmAdd)}
+            >
+              <Controller
+                control={createForm.control}
+                name="name"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <Input
+                      {...field}
+                      aria-invalid={fieldState.invalid}
+                      autoFocus
+                      className="font-mono text-sm"
+                      id="name"
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          handleCancelAdd();
+                        }
+                      }}
+                      placeholder="my-agent-name (optional, leave empty for auto-name)"
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+              <div className="flex gap-2">
+                <Button className="flex-1" size="sm" type="submit">
+                  Create
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={handleCancelAdd}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
           </div>
         ) : (
           <button
@@ -448,172 +440,186 @@ export const AgentsTab: React.FC = () => {
               placeholder="---\nname: agent-name\ndescription: Description of when to use this agent\n---\n\n# Agent Name\n\nAdd your agent instructions here..."
             />
           ) : (
-            <Form {...form}>
-              <form
-                className="space-y-4 p-4"
-                onSubmit={form.handleSubmit(handleSave)}
-              >
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name (internal ID)</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          className="font-mono text-sm"
-                          placeholder="my-agent-name"
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Lowercase letters, numbers, and hyphens only. Max 64
-                        characters.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description *</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          className="text-sm"
-                          placeholder="Describe what this agent does and when Claude should use it..."
-                          rows={3}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="instructions"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Instructions (in frontmatter)</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          className="text-sm"
-                          placeholder="Additional instructions stored in frontmatter..."
-                          rows={2}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="tools"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tools (comma-separated)</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          className="font-mono text-sm"
-                          placeholder="tool1, tool2, tool3"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="permissions"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Permissions (comma-separated)</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          className="font-mono text-sm"
-                          placeholder="perm1, perm2, perm3"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="model"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Model</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            className="text-sm"
-                            placeholder="opus, sonnet, haiku"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+            <form
+              className="space-y-4 p-4"
+              onSubmit={form.handleSubmit(handleSave)}
+            >
+              <Controller
+                control={form.control}
+                name="name"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="name">Name (internal ID)</FieldLabel>
+                    <Input
+                      {...field}
+                      aria-invalid={fieldState.invalid}
+                      className="font-mono text-sm"
+                      id="name"
+                      placeholder="my-agent-name"
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
                     )}
-                  />
+                  </Field>
+                )}
+              />
 
-                  <FormField
-                    control={form.control}
-                    name="color"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Color</FormLabel>
-                        <Select
-                          defaultValue={field.value}
-                          onValueChange={field.onChange}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a color" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="blue">Blue</SelectItem>
-                            <SelectItem value="green">Green</SelectItem>
-                            <SelectItem value="purple">Purple</SelectItem>
-                            <SelectItem value="red">Red</SelectItem>
-                            <SelectItem value="orange">Orange</SelectItem>
-                            <SelectItem value="yellow">Yellow</SelectItem>
-                            <SelectItem value="pink">Pink</SelectItem>
-                            <SelectItem value="cyan">Cyan</SelectItem>
-                            <SelectItem value="indigo">Indigo</SelectItem>
-                            <SelectItem value="teal">Teal</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
+              <Controller
+                control={form.control}
+                name="description"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="description">Description *</FieldLabel>
+                    <Textarea
+                      {...field}
+                      aria-invalid={fieldState.invalid}
+                      className="text-sm"
+                      id="description"
+                      placeholder="Describe what this agent does and when Claude should use it..."
+                      rows={3}
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
                     )}
-                  />
-                </div>
+                  </Field>
+                )}
+              />
 
-                <FormField
+              <Controller
+                control={form.control}
+                name="instructions"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="instructions">
+                      Instructions (in frontmatter)
+                    </FieldLabel>
+                    <Textarea
+                      {...field}
+                      aria-invalid={fieldState.invalid}
+                      className="text-sm"
+                      id="instructions"
+                      placeholder="Additional instructions stored in frontmatter..."
+                      rows={2}
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+
+              <Controller
+                control={form.control}
+                name="tools"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="tools">
+                      Tools (comma-separated)
+                    </FieldLabel>
+                    <Input
+                      {...field}
+                      aria-invalid={fieldState.invalid}
+                      className="font-mono text-sm"
+                      id="tools"
+                      placeholder="tool1, tool2, tool3"
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+
+              <Controller
+                control={form.control}
+                name="permissions"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="permissions">
+                      Permissions (comma-separated)
+                    </FieldLabel>
+                    <Input
+                      {...field}
+                      aria-invalid={fieldState.invalid}
+                      className="font-mono text-sm"
+                      id="permissions"
+                      placeholder="perm1, perm2, perm3"
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <Controller
                   control={form.control}
-                  name="content"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Agent Instructions (body)</FormLabel>
-                      <FormControl>
-                        <TipTapEditor
-                          className="min-h-[400px]"
-                          content={field.value || ""}
-                          onChange={field.onChange}
-                          placeholder={`# Agent Name
+                  name="model"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="model">Model</FieldLabel>
+                      <Input
+                        {...field}
+                        aria-invalid={fieldState.invalid}
+                        className="text-sm"
+                        id="model"
+                        placeholder="opus, sonnet, haiku"
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+
+                <Controller
+                  control={form.control}
+                  name="color"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="color">Color</FieldLabel>
+                      <Select
+                        defaultValue={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <SelectTrigger id="color">
+                          <SelectValue placeholder="Select a color" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="blue">Blue</SelectItem>
+                          <SelectItem value="green">Green</SelectItem>
+                          <SelectItem value="purple">Purple</SelectItem>
+                          <SelectItem value="red">Red</SelectItem>
+                          <SelectItem value="orange">Orange</SelectItem>
+                          <SelectItem value="yellow">Yellow</SelectItem>
+                          <SelectItem value="pink">Pink</SelectItem>
+                          <SelectItem value="cyan">Cyan</SelectItem>
+                          <SelectItem value="indigo">Indigo</SelectItem>
+                          <SelectItem value="teal">Teal</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+              </div>
+
+              <Controller
+                control={form.control}
+                name="content"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="content">
+                      Agent Instructions (body)
+                    </FieldLabel>
+                    <TipTapEditor
+                      className="min-h-[400px]"
+                      content={field.value || ""}
+                      onChange={field.onChange}
+                      placeholder={`# Agent Name
 
 You are a specialist agent for...
 
@@ -622,14 +628,14 @@ You are a specialist agent for...
 - Best practices
 - Examples
 `}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </form>
-            </Form>
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+            </form>
           )}
         </div>
       </div>
@@ -639,7 +645,7 @@ You are a specialist agent for...
   return (
     <div className="flex h-full flex-col">
       {/* Main Content */}
-      <PanelGroup className="flex-1 overflow-hidden" direction="horizontal">
+      <PanelGroup className="flex-1 overflow-hidden" orientation="horizontal">
         {/* Agents List */}
         <Panel
           className="border-r bg-muted/30"

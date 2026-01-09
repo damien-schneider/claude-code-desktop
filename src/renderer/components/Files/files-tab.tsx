@@ -18,9 +18,9 @@ import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Panel,
-  PanelGroup,
-  PanelResizeHandle,
+  ResizablePanel as Panel,
+  ResizablePanelGroup as PanelGroup,
+  ResizableHandle as PanelResizeHandle,
 } from "@/components/ui/resizable";
 import type { ExplorerItem } from "@/ipc/claude/handlers";
 import { ipc } from "@/ipc/manager";

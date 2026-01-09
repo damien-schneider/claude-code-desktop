@@ -9,21 +9,15 @@ import {
 } from "@phosphor-icons/react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form";
+import { Field, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
-  Panel,
-  PanelGroup,
-  PanelResizeHandle,
+  ResizablePanel as Panel,
+  ResizablePanelGroup as PanelGroup,
+  ResizableHandle as PanelResizeHandle,
 } from "@/components/ui/resizable";
 import {
   Tooltip,
@@ -208,7 +202,7 @@ export const RulesTab: React.FC = () => {
     <TooltipProvider>
       <div className="flex h-full flex-col">
         {/* Main Content */}
-        <PanelGroup className="flex-1 overflow-hidden" direction="horizontal">
+        <PanelGroup className="flex-1 overflow-hidden" orientation="horizontal">
           {/* Rules List */}
           <Panel
             className="border-r bg-muted/30"
@@ -226,49 +220,49 @@ export const RulesTab: React.FC = () => {
                   {/* Add Rule Button / Form */}
                   {isAdding ? (
                     <div className="rounded-md border border-primary/20 bg-primary/10 p-2">
-                      <Form {...createForm}>
-                        <form
-                          className="space-y-2"
-                          onSubmit={createForm.handleSubmit(handleConfirmAdd)}
-                        >
-                          <FormField
-                            control={createForm.control}
-                            name="name"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    autoFocus
-                                    className="font-mono text-sm"
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Escape") {
-                                        handleCancelAdd();
-                                      }
-                                    }}
-                                    placeholder="my-rule (optional, leave empty for auto-name)"
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <div className="flex gap-2">
-                            <Button className="flex-1" size="sm" type="submit">
-                              Create
-                            </Button>
-                            <Button
-                              className="flex-1"
-                              onClick={handleCancelAdd}
-                              size="sm"
-                              type="button"
-                              variant="outline"
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        </form>
-                      </Form>
+                      <form
+                        className="space-y-2"
+                        onSubmit={createForm.handleSubmit(handleConfirmAdd)}
+                      >
+                        <Controller
+                          control={createForm.control}
+                          name="name"
+                          render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                              <Input
+                                {...field}
+                                aria-invalid={fieldState.invalid}
+                                autoFocus
+                                className="font-mono text-sm"
+                                id="name"
+                                onKeyDown={(e) => {
+                                  if (e.key === "Escape") {
+                                    handleCancelAdd();
+                                  }
+                                }}
+                                placeholder="my-rule (optional, leave empty for auto-name)"
+                              />
+                              {fieldState.invalid && (
+                                <FieldError errors={[fieldState.error]} />
+                              )}
+                            </Field>
+                          )}
+                        />
+                        <div className="flex gap-2">
+                          <Button className="flex-1" size="sm" type="submit">
+                            Create
+                          </Button>
+                          <Button
+                            className="flex-1"
+                            onClick={handleCancelAdd}
+                            size="sm"
+                            type="button"
+                            variant="outline"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </form>
                     </div>
                   ) : (
                     <button
@@ -343,47 +337,53 @@ export const RulesTab: React.FC = () => {
                     actions={
                       <ButtonGroup>
                         <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              disabled={saving || !hasChanges}
-                              onClick={handleSave}
-                              size="icon"
-                              variant="default"
-                            >
-                              <Check className="h-4 w-4" weight="regular" />
-                            </Button>
-                          </TooltipTrigger>
+                          <TooltipTrigger
+                            render={() => (
+                              <Button
+                                disabled={saving || !hasChanges}
+                                onClick={handleSave}
+                                size="icon"
+                                variant="default"
+                              >
+                                <Check className="h-4 w-4" weight="regular" />
+                              </Button>
+                            )}
+                          />
                           <TooltipContent>
                             <p>Save (⌘S)</p>
                           </TooltipContent>
                         </Tooltip>
                         {hasChanges && (
                           <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                disabled={saving}
-                                onClick={handleCancel}
-                                size="icon"
-                                variant="outline"
-                              >
-                                <X className="h-4 w-4" weight="regular" />
-                              </Button>
-                            </TooltipTrigger>
+                            <TooltipTrigger
+                              render={() => (
+                                <Button
+                                  disabled={saving}
+                                  onClick={handleCancel}
+                                  size="icon"
+                                  variant="outline"
+                                >
+                                  <X className="h-4 w-4" weight="regular" />
+                                </Button>
+                              )}
+                            />
                             <TooltipContent>
                               <p>Cancel changes</p>
                             </TooltipContent>
                           </Tooltip>
                         )}
                         <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              onClick={handleDelete}
-                              size="icon"
-                              variant="destructive"
-                            >
-                              <Trash className="h-4 w-4" weight="regular" />
-                            </Button>
-                          </TooltipTrigger>
+                          <TooltipTrigger
+                            render={() => (
+                              <Button
+                                onClick={handleDelete}
+                                size="icon"
+                                variant="destructive"
+                              >
+                                <Trash className="h-4 w-4" weight="regular" />
+                              </Button>
+                            )}
+                          />
                           <TooltipContent>
                             <p>Delete</p>
                           </TooltipContent>

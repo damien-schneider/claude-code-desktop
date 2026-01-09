@@ -7,23 +7,15 @@ import {
 } from "@phosphor-icons/react";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
-  Panel,
-  PanelGroup,
-  PanelResizeHandle,
+  ResizablePanel as Panel,
+  ResizablePanelGroup as PanelGroup,
+  ResizableHandle as PanelResizeHandle,
 } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { showError } from "@/renderer/lib/toast";
@@ -182,47 +174,47 @@ const SkillSidebar: React.FC<SkillSidebarProps> = ({
             <>
               {isAdding && (
                 <div className="px-2 py-4">
-                  <Form {...createForm}>
-                    <form
-                      className="space-y-4"
-                      onSubmit={createForm.handleSubmit(onConfirmAdd)}
-                    >
-                      <FormField
-                        control={createForm.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input
-                                autoFocus
-                                placeholder="Skill name (e.g., git-branch)"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <div className="flex gap-2">
-                        <Button
-                          className="flex-1"
-                          size="sm"
-                          type="submit"
-                          variant="secondary"
-                        >
-                          Create
-                        </Button>
-                        <Button
-                          onClick={onCancelAdd}
-                          size="sm"
-                          type="button"
-                          variant="ghost"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
+                  <form
+                    className="space-y-4"
+                    onSubmit={createForm.handleSubmit(onConfirmAdd)}
+                  >
+                    <Controller
+                      control={createForm.control}
+                      name="name"
+                      render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <Input
+                            {...field}
+                            aria-invalid={fieldState.invalid}
+                            autoFocus
+                            id="name"
+                            placeholder="Skill name (e.g., git-branch)"
+                          />
+                          {fieldState.invalid && (
+                            <FieldError errors={[fieldState.error]} />
+                          )}
+                        </Field>
+                      )}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        className="flex-1"
+                        size="sm"
+                        type="submit"
+                        variant="secondary"
+                      >
+                        Create
+                      </Button>
+                      <Button
+                        onClick={onCancelAdd}
+                        size="sm"
+                        type="button"
+                        variant="ghost"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
                 </div>
               )}
 
@@ -367,92 +359,108 @@ const SkillEditor: React.FC<SkillEditorProps> = ({
             />
           </div>
         ) : (
-          <Form {...form}>
-            <form className="space-y-6" onSubmit={form.handleSubmit(onSave)}>
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Display Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Human friendly name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+          <form className="space-y-6" onSubmit={form.handleSubmit(onSave)}>
+            <div className="grid grid-cols-2 gap-4">
+              <Controller
+                control={form.control}
+                name="name"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="name">Display Name</FieldLabel>
+                    <Input
+                      placeholder="Human friendly name"
+                      {...field}
+                      aria-invalid={fieldState.invalid}
+                      id="name"
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+              <Controller
+                control={form.control}
+                name="license"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="license">License</FieldLabel>
+                    <Input
+                      placeholder="e.g., MIT, UNLICENSED"
+                      {...field}
+                      aria-invalid={fieldState.invalid}
+                      id="license"
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+            </div>
+
+            <Controller
+              control={form.control}
+              name="description"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="description">Description</FieldLabel>
+                  <Input
+                    placeholder="What does this skill do?"
+                    {...field}
+                    aria-invalid={fieldState.invalid}
+                    id="description"
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
                   )}
-                />
-                <FormField
-                  control={form.control}
-                  name="license"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>License</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., MIT, UNLICENSED" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                </Field>
+              )}
+            />
+
+            <Controller
+              control={form.control}
+              name="compatibility"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="compatibility">Compatibility</FieldLabel>
+                  <Input
+                    placeholder="e.g., node >= 18, macOS"
+                    {...field}
+                    aria-invalid={fieldState.invalid}
+                    id="compatibility"
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
                   )}
-                />
-              </div>
+                </Field>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="What does this skill do?"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <Separator />
 
-              <FormField
-                control={form.control}
-                name="compatibility"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Compatibility</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., node >= 18, macOS" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      System or environment requirements
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Separator />
-
-              <FormField
-                control={form.control}
-                name="content"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Skill Implementation (Bash)</FormLabel>
-                    <FormControl>
-                      <textarea
-                        className="min-h-[300px] w-full resize-y rounded-md border bg-transparent p-3 font-mono text-sm outline-none focus:ring-1 focus:ring-ring"
-                        placeholder="# Your skill logic here..."
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </form>
-          </Form>
+            <Controller
+              control={form.control}
+              name="content"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="content">
+                    Skill Implementation (Bash)
+                  </FieldLabel>
+                  <textarea
+                    className="min-h-[300px] w-full resize-y rounded-md border bg-transparent p-3 font-mono text-sm outline-none focus:ring-1 focus:ring-ring"
+                    placeholder="# Your skill logic here..."
+                    {...field}
+                    aria-invalid={fieldState.invalid}
+                    id="content"
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+          </form>
         )}
       </div>
     </div>
@@ -610,7 +618,7 @@ export const SkillsTab: React.FC = () => {
   return (
     <div className="flex h-full flex-col">
       {/* Main Content */}
-      <PanelGroup className="flex-1 overflow-hidden" direction="horizontal">
+      <PanelGroup className="flex-1 overflow-hidden" orientation="horizontal">
         {/* Skills List */}
         <Panel
           className="border-r bg-muted/30"

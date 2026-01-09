@@ -20,9 +20,9 @@ import {
 } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import {
-  Panel,
-  PanelGroup,
-  PanelResizeHandle,
+  ResizablePanel as Panel,
+  ResizablePanelGroup as PanelGroup,
+  ResizableHandle as PanelResizeHandle,
 } from "@/components/ui/resizable";
 import { ipc } from "@/ipc/manager";
 import { BreadcrumbBar } from "@/renderer/components/breadcrumb/breadcrumb-bar";

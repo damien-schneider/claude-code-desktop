@@ -16,15 +16,9 @@ import {
 } from "@phosphor-icons/react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form";
+import { Field, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { ipc } from "@/ipc/manager";
 import { CodeEditor } from "@/renderer/components/code-editor";
@@ -526,43 +520,43 @@ Add your command instructions here.
       <div className="p-2">
         {isAdding && (
           <div className="mb-2 rounded-md border border-primary/20 bg-primary/10 p-2">
-            <Form {...createForm}>
-              <form
-                className="space-y-2"
-                onSubmit={createForm.handleSubmit(handleConfirmAdd)}
-              >
-                <FormField
-                  control={createForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          autoFocus
-                          className="font-mono text-sm"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex gap-2">
-                  <Button className="flex-1" size="sm" type="submit">
-                    Create
-                  </Button>
-                  <Button
-                    className="flex-1"
-                    onClick={handleCancelAdd}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            </Form>
+            <form
+              className="space-y-2"
+              onSubmit={createForm.handleSubmit(handleConfirmAdd)}
+            >
+              <Controller
+                control={createForm.control}
+                name="name"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <Input
+                      {...field}
+                      aria-invalid={fieldState.invalid}
+                      autoFocus
+                      className="font-mono text-sm"
+                      id="name"
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+              <div className="flex gap-2">
+                <Button className="flex-1" size="sm" type="submit">
+                  Create
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={handleCancelAdd}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
           </div>
         )}
         {groupedCommands.map((group) => {

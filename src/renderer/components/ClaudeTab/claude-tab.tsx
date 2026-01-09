@@ -130,32 +130,36 @@ export const ClaudeTab: React.FC = () => {
               actions={
                 <ButtonGroup>
                   <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        disabled={saving || loading || !hasChanges}
-                        onClick={handleSave}
-                        size="icon"
-                        variant="default"
-                      >
-                        <Check className="h-4 w-4" weight="regular" />
-                      </Button>
-                    </TooltipTrigger>
+                    <TooltipTrigger
+                      render={() => (
+                        <Button
+                          disabled={saving || loading || !hasChanges}
+                          onClick={handleSave}
+                          size="icon"
+                          variant="default"
+                        >
+                          <Check className="h-4 w-4" weight="regular" />
+                        </Button>
+                      )}
+                    />
                     <TooltipContent>
                       <p>Save (⌘S)</p>
                     </TooltipContent>
                   </Tooltip>
                   {hasChanges && (
                     <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          disabled={saving || loading}
-                          onClick={handleCancel}
-                          size="icon"
-                          variant="outline"
-                        >
-                          <X className="h-4 w-4" weight="regular" />
-                        </Button>
-                      </TooltipTrigger>
+                      <TooltipTrigger
+                        render={() => (
+                          <Button
+                            disabled={saving || loading}
+                            onClick={handleCancel}
+                            size="icon"
+                            variant="outline"
+                          >
+                            <X className="h-4 w-4" weight="regular" />
+                          </Button>
+                        )}
+                      />
                       <TooltipContent>
                         <p>Cancel changes</p>
                       </TooltipContent>

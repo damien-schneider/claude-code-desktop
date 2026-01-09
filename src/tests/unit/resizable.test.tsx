@@ -6,17 +6,10 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
-  Panel,
-  PanelGroup,
-  PanelResizeHandle,
+  ResizablePanel as Panel,
+  ResizablePanelGroup as PanelGroup,
+  ResizableHandle as PanelResizeHandle,
 } from "@/components/ui/resizable";
-
-// Mock lucide-react icons
-vi.mock("lucide-react", () => ({
-  GripVerticalIcon: ({ className }: { className?: string }) => (
-    <svg className={className} data-testid="grip-vertical-icon" />
-  ),
-}));
 
 // Mock ResizeObserver as a class constructor
 class ResizeObserverMock {
@@ -117,7 +110,7 @@ describe("Resizable Panels - Component Structure", () => {
 
     const handle = container.querySelector('[data-slot="resizable-handle"]');
     expect(handle).toBeInTheDocument();
-    expect(handle).toHaveClass("cursor-col-resize");
+    // Note: cursor-col-resize is handled by CSS using data-orientation attribute
   });
 
   it("should render handle with grip icon when withHandle is true", () => {
@@ -126,7 +119,7 @@ describe("Resizable Panels - Component Structure", () => {
         <Panel defaultSize={50}>
           <div>Panel 1</div>
         </Panel>
-        <PanelResizeHandle variant="classic" withHandle={true} />
+        <PanelResizeHandle withHandle={true} />
         <Panel defaultSize={50}>
           <div>Panel 2</div>
         </Panel>
@@ -136,8 +129,8 @@ describe("Resizable Panels - Component Structure", () => {
     const handle = container.querySelector('[data-slot="resizable-handle"]');
     expect(handle).toBeInTheDocument();
 
-    // Check for the grip icon SVG (only in classic variant)
-    const gripIcon = handle?.querySelector("svg");
+    // Check for the grip icon div (withHandle adds a visual indicator)
+    const gripIcon = handle?.querySelector("div");
     expect(gripIcon).toBeInTheDocument();
   });
 
@@ -157,7 +150,7 @@ describe("Resizable Panels - Component Structure", () => {
     const handle = container.querySelector('[data-slot="resizable-handle"]');
     expect(handle).toBeInTheDocument();
 
-    const gripIcon = handle?.querySelector("svg");
+    const gripIcon = handle?.querySelector("div");
     expect(gripIcon).not.toBeInTheDocument();
   });
 

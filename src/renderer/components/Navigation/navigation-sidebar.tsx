@@ -74,17 +74,19 @@ export const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
 
               return (
                 <Tooltip key={item.id}>
-                  <TooltipTrigger asChild>
-                    <Button
-                      className={cn("rounded-xl")}
-                      onClick={() => handleNavClick(item.id)}
-                      size={"icon"}
-                      type="button"
-                      variant={isActive ? "default" : "ghost"}
-                    >
-                      <Icon className="h-5 w-5 shrink-0" weight="regular" />
-                    </Button>
-                  </TooltipTrigger>
+                  <TooltipTrigger
+                    render={() => (
+                      <Button
+                        className={cn("rounded-xl")}
+                        onClick={() => handleNavClick(item.id)}
+                        size={"icon"}
+                        type="button"
+                        variant={isActive ? "default" : "ghost"}
+                      >
+                        <Icon className="h-5 w-5 shrink-0" weight="regular" />
+                      </Button>
+                    )}
+                  />
                   <TooltipContent side="right">
                     <p>{item.label}</p>
                   </TooltipContent>

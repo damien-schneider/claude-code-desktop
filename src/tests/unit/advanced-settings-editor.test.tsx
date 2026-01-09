@@ -25,12 +25,14 @@ describe("AdvancedSettingsEditor", () => {
     const icons = document.querySelectorAll("svg");
     expect(icons.length).toBeGreaterThan(0);
 
-    // Check for alwaysThinkingEnabled switch
-    const thinkingSwitch = screen.getByRole("switch", {
-      name: ALWAYS_THINKING_ENABLED_REGEX,
-    });
+    // Check for alwaysThinkingEnabled label
+    const label = screen.getByText(ALWAYS_THINKING_ENABLED_REGEX);
+    expect(label).toBeInTheDocument();
+
+    // Check for the switch element (Base UI uses role="switch" on a span)
+    const thinkingSwitch = screen.getByRole("switch");
     expect(thinkingSwitch).toBeInTheDocument();
-    expect(thinkingSwitch).not.toBeChecked();
+    expect(thinkingSwitch).toHaveAttribute("data-unchecked");
   });
 
   it("should call onChange when toggle changes", () => {
@@ -43,10 +45,9 @@ describe("AdvancedSettingsEditor", () => {
       <AdvancedSettingsEditor onChange={handleChange} settings={settings} />
     );
 
-    const toggle = screen.getByRole("switch", {
-      name: ALWAYS_THINKING_ENABLED_REGEX,
-    });
-    fireEvent.click(toggle);
+    // Click the label to toggle the switch (more reliable than clicking the switch directly)
+    const label = screen.getByText(ALWAYS_THINKING_ENABLED_REGEX);
+    fireEvent.click(label);
 
     expect(handleChange).toHaveBeenCalledWith({
       alwaysThinkingEnabled: true,

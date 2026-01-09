@@ -79,8 +79,7 @@ describe("ToolCallDisplay", () => {
     );
 
     // The detailed view should not be visible
-    const expandButton = screen.getByRole("button");
-    expect(expandButton).toHaveAttribute("data-state", "closed");
+    expect(screen.queryByText("Path:")).not.toBeInTheDocument();
   });
 
   it("can be opened by default", () => {
@@ -92,8 +91,8 @@ describe("ToolCallDisplay", () => {
       />
     );
 
-    const expandButton = screen.getByRole("button");
-    expect(expandButton).toHaveAttribute("data-state", "open");
+    // The detailed view should be visible when defaultOpen is true
+    expect(screen.getByText("Path:")).toBeInTheDocument();
   });
 
   it("handles file paths with special styling", async () => {
@@ -105,12 +104,6 @@ describe("ToolCallDisplay", () => {
         toolName="read_file"
       />
     );
-
-    // Click to expand if needed
-    const button = screen.getByRole("button");
-    if (button.getAttribute("data-state") === "closed") {
-      await user.click(button);
-    }
 
     // File paths should be displayed - check for the Path label
     expect(screen.getByText("Path:")).toBeInTheDocument();
@@ -221,8 +214,8 @@ Line 3`;
     const longContent = "A".repeat(200);
     render(<ToolResultDisplay content={longContent} />);
 
-    const trigger = screen.getByRole("button");
-    expect(trigger).toHaveAttribute("data-state", "closed");
+    // The full content should not be visible (it should show truncated version)
+    expect(screen.queryByText(END_OF_CONTENT_REGEX)).not.toBeInTheDocument();
   });
 });
 
@@ -440,7 +433,8 @@ describe("Accessibility", () => {
     await user.tab();
     expect(button).toHaveFocus();
 
+    // Press Enter to expand - the content should become visible
     await user.keyboard("{Enter}");
-    expect(button).toHaveAttribute("data-state", "open");
+    expect(screen.getByText(PATH_REGEX)).toBeInTheDocument();
   });
 });

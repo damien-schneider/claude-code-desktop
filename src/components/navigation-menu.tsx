@@ -16,21 +16,26 @@ export default function NavigationMenu() {
     <NavigationMenuBase className="px-2 text-muted-foreground">
       <NavigationMenuList>
         <NavigationMenuItem>
-          <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-            <Link to="/">{t("titleHomePage")}</Link>
-          </NavigationMenuLink>
+          <NavigationMenuLink
+            className={navigationMenuTriggerStyle()}
+            render={() => <Link to="/">{t("titleHomePage")}</Link>}
+          />
         </NavigationMenuItem>
         <NavigationMenuItem>
-          <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-            <Link to="/second">{t("titleSecondPage")}</Link>
-          </NavigationMenuLink>
+          <NavigationMenuLink
+            className={navigationMenuTriggerStyle()}
+            render={() => <Link to="/second">{t("titleSecondPage")}</Link>}
+          />
         </NavigationMenuItem>
         <NavigationMenuItem>
-          <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-            <ExternalLink href="https://docs.luanroger.dev/electron-shadcn">
-              {t("documentation")}
-            </ExternalLink>
-          </NavigationMenuLink>
+          <NavigationMenuLink
+            className={navigationMenuTriggerStyle()}
+            render={() => (
+              <ExternalLink href="https://docs.luanroger.dev/electron-shadcn">
+                {t("documentation")}
+              </ExternalLink>
+            )}
+          />
         </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenuBase>
