@@ -13,6 +13,7 @@ import {
 import { useAtom } from "jotai";
 import type React from "react";
 import { useCallback } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -62,43 +63,38 @@ export const NavigationSidebar: React.FC<NavigationSidebarProps> = ({
   );
 
   return (
-    <TooltipProvider delayDuration={0}>
-      <nav
-        className={cn(
-          "flex h-full w-12 flex-col border-r bg-muted/30",
-          className
-        )}
-      >
-        {/* Navigation Menu */}
+    <div className="h-full shrink-0 py-2 pr-2">
+      <div className="flex h-full flex-col rounded-r-2xl bg-background-2 py-1.5 pr-1.5">
+        <TooltipProvider delayDuration={0}>
+          <nav className={cn("flex h-full w-full flex-col gap-1", className)}>
+            {/* Navigation Menu */}
+            {ALL_NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const isActive = currentView === item.id;
 
-        {ALL_NAV_ITEMS.map((item) => {
-          const Icon = item.icon;
-          const isActive = currentView === item.id;
-
-          return (
-            <Tooltip key={item.id}>
-              <TooltipTrigger asChild>
-                <button
-                  className={cn(
-                    "flex w-full items-center justify-center py-2.5 transition-colors",
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted/50"
-                  )}
-                  onClick={() => handleNavClick(item.id)}
-                  type="button"
-                >
-                  <Icon className="h-5 w-5 shrink-0" weight="regular" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>{item.label}</p>
-              </TooltipContent>
-            </Tooltip>
-          );
-        })}
-      </nav>
-    </TooltipProvider>
+              return (
+                <Tooltip key={item.id}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      className={cn("rounded-xl")}
+                      onClick={() => handleNavClick(item.id)}
+                      size={"icon"}
+                      type="button"
+                      variant={isActive ? "default" : "ghost"}
+                    >
+                      <Icon className="h-5 w-5 shrink-0" weight="regular" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <p>{item.label}</p>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </nav>
+        </TooltipProvider>
+      </div>
+    </div>
   );
 };
 

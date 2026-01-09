@@ -171,15 +171,14 @@ function ClaudeCodeManagerPage() {
               settingsOpen={settingsOpen}
             />
 
+            <NavigationSidebar />
+
             <PanelResizeHandle />
 
             {/* Main Content + Nav */}
-            <Panel defaultSize="80%" minSize="50%">
+            <Panel className="" defaultSize="80%" minSize="50%">
               <div className="flex h-full min-w-0 overflow-hidden">
                 {/* Navigation Sidebar - fixed width */}
-                <div className="h-full w-12 shrink-0">
-                  <NavigationSidebar />
-                </div>
 
                 {/* Content View - takes remaining space */}
                 <div className="h-full min-w-0 flex-1 overflow-hidden">
@@ -247,7 +246,7 @@ function ProjectsSidebar({
       onCollapse={() => setLeftSidebarCollapsed(true)}
       onExpand={() => setLeftSidebarCollapsed(false)}
     >
-      <div className="flex h-full flex-col overflow-hidden rounded-2xl bg-background-2">
+      <div className="flex h-full flex-col overflow-hidden rounded-l-2xl bg-background-2">
         <SidebarHeader
           isScanning={isScanning}
           leftSidebarCollapsed={leftSidebarCollapsed}
