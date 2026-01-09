@@ -3,14 +3,11 @@ import { useAtom, useSetAtom } from "jotai";
 import { useCallback, useEffect } from "react";
 import { Toaster } from "sonner";
 
-<<<<<<< Updated upstream
+import {
   ResizablePanel as Panel,
-=======
->>>>>>> Stashed changes
   ResizablePanelGroup as PanelGroup,
   ResizableHandle as PanelResizeHandle,
-  ResizablePanel as Panel,
-} from "@/components/ui/resizable"
+} from "@/components/ui/resizable";
 
 import { ipc } from "@/ipc/manager";
 import { BreadcrumbBar } from "@/renderer/components/breadcrumb/breadcrumb-bar";
@@ -19,42 +16,23 @@ import { NavigationSidebar } from "@/renderer/components/navigation/navigation-s
 import { ProjectsSidebar } from "@/renderer/components/projects/projects-sidebar";
 import { QuickOpenDialog } from "@/renderer/components/quick-open";
 
-<<<<<<< Updated upstream
+import {
   scanProjectsAtom,
   selectGlobalSettingsAtom,
-=======
->>>>>>> Stashed changes
   selectProjectAtom,
-  selectGlobalSettingsAtom,
-  scanProjectsAtom,
-  selectedProjectIdAtom,
   setProjectsAtom,
-} from "@/renderer/stores"
-<<<<<<< Updated upstream
-
-
-
-=======
-
+} from "@/renderer/stores";
 import { quickOpenDialogOpenAtom } from "@/renderer/stores/ui-atoms";
 import { deduplicateProjects } from "@/renderer/utils/projects";
-
->>>>>>> Stashed changes
 
 function ClaudeCodeManagerPage() {
   const setProjects = useSetAtom(setProjectsAtom);
   const selectProject = useSetAtom(selectProjectAtom);
   const selectGlobalSettings = useSetAtom(selectGlobalSettingsAtom);
   const scanProjects = useSetAtom(scanProjectsAtom);
-  <<<<<<< Updated upstream
   const [isQuickOpenOpen, setIsQuickOpenOpen] = useAtom(
     quickOpenDialogOpenAtom
   );
-  =======
-  const [isQuickOpenOpen, setIsQuickOpenOpen] = useAtom(
-    quickOpenDialogOpenAtom
-  );
-  >>>>>>> Stashed changes
 
   // Quick Open handler
   const handleQuickOpen = () => setIsQuickOpenOpen(true);

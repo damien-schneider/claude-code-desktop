@@ -118,7 +118,6 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
 
   return (
     <div className="h-full shrink-0 pl-2">
-<<<<<<< Updated upstream
       <div
         className={cn(
           "flex h-full flex-col rounded-l-2xl bg-background-2 py-1.5 pl-1.5",
@@ -144,39 +143,6 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
               size="icon"
               title="Reload sessions"
               variant="ghost"
-=======
-      <div className={cn("flex h-full flex-col rounded-l-2xl bg-background-2 py-1.5 pl-1.5", className)}>
-        <div className="flex flex-col gap-2 p-2 pr-3">
-        {/* Search and Reload */}
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <MagnifyingGlass className="absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              className="h-9 pl-8"
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search sessions..."
-              value={searchQuery}
-            />
-          </div>
-          <Button
-            className={cn("h-9 w-9 shrink-0", loading && "animate-spin")}
-            disabled={loading}
-            onClick={handleReload}
-            size="icon"
-            title="Reload sessions"
-            variant="ghost"
-          >
-            <ArrowsClockwise className="h-4 w-4" weight="regular" />
-          </Button>
-        </div>
-
-        {/* Project Filter Toggle */}
-        {selectedProjectId && (
-          <div className="mt-2">
-            <Tabs
-              onValueChange={(v) => setFilter(v as SessionFilter)}
-              value={filter}
->>>>>>> Stashed changes
             >
               <ArrowsClockwise className="h-4 w-4" weight="regular" />
             </Button>
@@ -284,7 +250,6 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
             )
           )}
         </div>
-      </div>
       </div>
     </div>
   );
