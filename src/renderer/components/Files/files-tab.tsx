@@ -579,14 +579,16 @@ export const FilesTab: React.FC = () => {
     <PanelGroup className="h-full" orientation="horizontal">
       {/* File Tree */}
       <Panel
-        className="flex flex-col border-r bg-muted/30"
+        className="py-2"
         defaultSize={250}
         maxSize={350}
         minSize={210}
       >
+        <div className="flex flex-col bg-background-2 h-full rounded-2xl">
+
         <div className="flex h-full flex-col overflow-hidden">
           {/* Header with path and create buttons */}
-          <div className="border-b bg-background p-3">
+          <div className="p-3">
             <div
               className="mb-2 truncate text-muted-foreground text-xs"
               title={rootPath}
@@ -623,6 +625,7 @@ export const FilesTab: React.FC = () => {
               renderFileTree={(nodes, level) => renderFileTree(nodes, level)}
             />
           </div>
+        </div>
         </div>
       </Panel>
 
