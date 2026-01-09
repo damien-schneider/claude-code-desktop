@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import {
   type ClaudeProject,
   deduplicateProjects,
-} from "@/renderer/stores/app-store";
+} from "@/renderer/utils/projects";
 
 describe("appStore Utilities", () => {
   describe("deduplicateProjects", () => {

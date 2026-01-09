@@ -253,7 +253,7 @@ export const scanProjectsAtom = atom(
     set(isScanningAtom, true);
     try {
       const { ipc } = await import("@/ipc/manager");
-      const { deduplicateProjects } = await import("./app-store");
+      const { deduplicateProjects } = await import("../utils/projects");
       const { showWarning, showSuccess } = await import("@/renderer/lib/toast");
 
       // Call the scanner IPC

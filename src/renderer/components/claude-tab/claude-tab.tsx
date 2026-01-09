@@ -1,4 +1,5 @@
 import { Check, X } from "@phosphor-icons/react";
+import { useAtom } from "jotai";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -12,32 +13,27 @@ import {
 import { ipc } from "@/ipc/manager";
 import { TipTapEditor } from "@/renderer/components/tip-tap-editor";
 import { showError, showSuccess } from "@/renderer/lib/toast";
-import { useAppStore } from "@/renderer/stores";
+import {
+  currentViewAtom,
+  homePathAtom,
+  isGlobalSettingsSelectedAtom,
+  selectedProjectIdAtom,
+} from "@/renderer/stores";
 
 export const ClaudeTab: React.FC = () => {
-  const { selectedProjectId, isMainConfigSelected, currentView } =
-    useAppStore();
-  const [homePath, setHomePath] = useState<string>("");
+  const [selectedProjectId] = useAtom(selectedProjectIdAtom);
+  const [isGlobalSettingsSelected] = useAtom(isGlobalSettingsSelectedAtom);
+  const [currentView] = useAtom(currentViewAtom);
+  const [homePath] = useAtom(homePathAtom);
   const [content, setContent] = useState<string>("");
   const [originalContent, setOriginalContent] = useState<string>("");
   const [_exists, setExists] = useState<boolean>(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Get home path from main process
-  useEffect(() => {
-    const getHome = async () => {
-      try {
-        const home = await ipc.client.app.getHomePath();
-        setHomePath(home);
-      } catch (error) {
-        console.error("Failed to get home path:", error);
-      }
-    };
-    getHome();
-  }, []);
-
-  const currentPath = isMainConfigSelected ? homePath : selectedProjectId || "";
+  const currentPath = isGlobalSettingsSelected
+    ? homePath
+    : selectedProjectId || "";
 
   const loadClaudeMD = useCallback(async () => {
     if (!currentPath) {

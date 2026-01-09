@@ -14,6 +14,7 @@ import {
   UploadSimple,
   WarningCircle,
 } from "@phosphor-icons/react";
+import { useAtom } from "jotai";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -24,7 +25,12 @@ import { ipc } from "@/ipc/manager";
 import { CodeEditor } from "@/renderer/components/code-editor";
 import { TipTapEditor } from "@/renderer/components/tip-tap-editor";
 import { showError, showSuccess } from "@/renderer/lib/toast";
-import { useAppStore } from "@/renderer/stores";
+import {
+  currentViewAtom,
+  homePathAtom,
+  isGlobalSettingsSelectedAtom,
+  selectedProjectIdAtom,
+} from "@/renderer/stores";
 import {
   type CommandCreateValues,
   commandCreateSchema,
@@ -52,9 +58,10 @@ interface CommandGroup {
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex tab component with state management - refactoring would require extracting custom hooks
 export const CommandsTab: React.FC = () => {
-  const { selectedProjectId, isMainConfigSelected, currentView } =
-    useAppStore();
-  const [homePath, setHomePath] = useState<string>("");
+  const [selectedProjectId] = useAtom(selectedProjectIdAtom);
+  const [isGlobalSettingsSelected] = useAtom(isGlobalSettingsSelectedAtom);
+  const [currentView] = useAtom(currentViewAtom);
+  const [homePath] = useAtom(homePathAtom);
   const [commands, setCommands] = useState<CommandFile[]>([]);
   const [selectedCommand, setSelectedCommand] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -76,20 +83,9 @@ export const CommandsTab: React.FC = () => {
     },
   });
 
-  // Get home path from main process
-  useEffect(() => {
-    const getHome = async () => {
-      try {
-        const home = await ipc.client.app.getHomePath();
-        setHomePath(home);
-      } catch (error) {
-        console.error("Failed to get home path:", error);
-      }
-    };
-    getHome();
-  }, []);
-
-  const currentPath = isMainConfigSelected ? homePath : selectedProjectId || "";
+  const currentPath = isGlobalSettingsSelected
+    ? homePath
+    : selectedProjectId || "";
 
   // Toggle group expansion
   const toggleGroup = (category: string) => {

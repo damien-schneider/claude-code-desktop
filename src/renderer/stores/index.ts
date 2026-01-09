@@ -1,7 +1,14 @@
+// =============================================================================
 // Jotai atoms (preferred for new code)
+// =============================================================================
 
-// Zustand stores (legacy, will be phased out)
-export { deduplicateProjects, useAppStore } from "./app-store";
+// =============================================================================
+// Utilities
+// =============================================================================
+export { deduplicateProjects } from "../utils/projects";
+// -----------------------------------------------------------------------------
+// Core atoms (app mode, navigation, projects, favorites)
+// -----------------------------------------------------------------------------
 export {
   type AppMode,
   activePathAtom,
@@ -37,7 +44,9 @@ export {
   showFavoritesOnlyAtom,
   toggleFavoriteAtom,
 } from "./atoms";
-// Chat atoms
+// -----------------------------------------------------------------------------
+// Chat atoms (sessions, messages, streaming, Claude availability)
+// -----------------------------------------------------------------------------
 export {
   type ActiveSession,
   // Active process
@@ -90,11 +99,44 @@ export {
   streamingMessageAtom,
   thinkingStartTimeAtom,
 } from "./chat-atoms";
+// -----------------------------------------------------------------------------
+// Config atoms (rules, skills, agents, hooks)
+// -----------------------------------------------------------------------------
 export {
   type AgentConfig,
+  addAgentAtom,
+  addHookAtom,
+  addRuleAtom,
+  addSkillAtom,
+  agentsAtom,
+  configErrorAtom,
+  configLoadingAtom,
+  deleteAgentAtom,
+  deleteHookAtom,
+  deleteRuleAtom,
+  deleteSkillAtom,
   type HookConfig,
+  hooksAtom,
   type RuleConfig,
-  type SettingsConfig,
+  resetConfigsAtom,
+  rulesAtom,
   type SkillConfig,
-  useConfigStore,
-} from "./config-store";
+  setAgentsAtom,
+  setHooksAtom,
+  setRulesAtom,
+  setSkillsAtom,
+  skillsAtom,
+  updateAgentAtom,
+  updateHookAtom,
+  updateRuleAtom,
+  updateSkillAtom,
+} from "./config-atoms";
+// -----------------------------------------------------------------------------
+// UI state atoms (sidebar, collapsible sections, dialogs)
+// -----------------------------------------------------------------------------
+export {
+  leftSidebarCollapsedAtom,
+  projectsSectionOpenAtom,
+  quickOpenDialogOpenAtom,
+  settingsSectionOpenAtom,
+} from "./ui-atoms";

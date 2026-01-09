@@ -72,12 +72,30 @@ const ResizablePanel = React.forwardRef<
 ResizablePanel.displayName = "ResizablePanel";
 
 function ResizableHandle({
-  withHandle,
+  withHandle = true,
+  variant = "default",
   className,
   ...props
 }: React.ComponentProps<typeof Separator> & {
   withHandle?: boolean;
+  variant?: "default" | "old";
 }) {
+  if (variant === "default") {
+    return (
+      <Separator
+        className={cn(
+          "group relative -mx-1 flex w-2 cursor-col-resize items-center justify-center focus-visible:outline-hidden data-[orientation=vertical]:h-px data-[orientation=vertical]:w-full data-[orientation=horizontal]:cursor-row-resize data-[orientation=vertical]:after:left-0 [&[data-orientation=vertical]>div]:rotate-90",
+          className
+        )}
+        data-slot="resizable-handle"
+        {...props}
+      >
+        {withHandle && (
+          <div className="z-10 flex h-6 w-1 shrink-0 rounded-full bg-border transition-all duration-300 group-hover:h-12 group-hover:bg-primary" />
+        )}
+      </Separator>
+    );
+  }
   return (
     <Separator
       className={cn(
