@@ -18,6 +18,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { ResizablePanel as Panel } from "@/components/ui/resizable";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   filteredProjectsAtom,
   isGlobalSettingsSelectedAtom,
   isScanningAtom,
@@ -63,51 +69,43 @@ function SidebarHeader() {
   const scanProjects = useSetAtom(scanProjectsAtom);
 
   return (
-    <div className="flex flex-col gap-2 p-2">
-      <div className="flex gap-2">
-        {!leftSidebarCollapsed && (
-          <div className="relative flex-1">
-            <MagnifyingGlassIcon
-              className="absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-              weight="regular"
-            />
-            <Input
-              className="h-8 pl-8 text-xs"
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search..."
-              value={searchQuery}
-            />
-          </div>
-        )}
-      </div>
+    <div className="flex flex-row gap-2 p-2">
+      {!leftSidebarCollapsed && (
+        <div className="relative flex-1">
+          <MagnifyingGlassIcon
+            className="absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            weight="regular"
+          />
+          <Input
+            className="h-8 pl-8 text-xs"
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search..."
+            value={searchQuery}
+          />
+        </div>
+      )}
 
-      <Button
-        className={cn(
-          "h-8 text-xs",
-          leftSidebarCollapsed ? "w-8 p-0" : "justify-start px-2"
-        )}
-        disabled={isScanning}
-        onClick={scanProjects}
-        variant="default"
-      >
-        {isScanning ? (
-          <Spinner
-            className={cn(
-              "h-3 w-3 animate-spin",
-              !leftSidebarCollapsed && "mr-1"
-            )}
-            weight="regular"
-          />
-        ) : (
-          <ArrowsClockwise
-            className={cn("h-3 w-3", !leftSidebarCollapsed && "mr-1")}
-            weight="regular"
-          />
-        )}
-        {!leftSidebarCollapsed && (
-          <span>{isScanning ? "Scanning..." : "Scan"}</span>
-        )}
-      </Button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              className="h-8 w-8 p-0"
+              disabled={isScanning}
+              onClick={scanProjects}
+              variant="default"
+            >
+              {isScanning ? (
+                <Spinner className="h-3 w-3 animate-spin" weight="regular" />
+              ) : (
+                <ArrowsClockwise className="h-3 w-3" weight="regular" />
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Scan projects</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 }

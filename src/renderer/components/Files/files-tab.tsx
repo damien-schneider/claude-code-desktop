@@ -15,7 +15,7 @@ import {
 } from "@phosphor-icons/react";
 import { useAtom, useSetAtom } from "jotai";
 import type React from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TabLayout } from "@/components/ui/tab-layout";
@@ -228,43 +228,39 @@ export const FilesTab: React.FC = () => {
   ]);
 
   // Load a directory's contents
-  const loadDirectoryContents = useCallback(
-    async (dirPath: string): Promise<FileNode[]> => {
-      console.log("Loading directory contents for:", dirPath);
-      try {
-        const result = await ipc.client.claude.readDirectory({
-          dirPath,
-          includeHidden: true,
-        });
-        console.log("Directory result:", result);
-        return result.items.map((item) => ({
-          ...item,
-          level: 0,
-          isExpanded: false,
-          loaded: false,
-          children: item.type === "directory" ? [] : undefined,
-        }));
-      } catch (error) {
-        console.error("Failed to load directory:", error);
-        return [];
-      }
-    },
-    []
-  );
-
-  // Recursively build the tree
-  const buildTree = useCallback(
-    async (basePath: string): Promise<FileNode[]> => {
-      const items = await loadDirectoryContents(basePath);
-
-      // For each directory, add an empty children array that will be loaded on expand
-      return items.map((item) => ({
+  const loadDirectoryContents = async (
+    dirPath: string
+  ): Promise<FileNode[]> => {
+    console.log("Loading directory contents for:", dirPath);
+    try {
+      const result = await ipc.client.claude.readDirectory({
+        dirPath,
+        includeHidden: true,
+      });
+      console.log("Directory result:", result);
+      return result.items.map((item) => ({
         ...item,
+        level: 0,
+        isExpanded: false,
+        loaded: false,
         children: item.type === "directory" ? [] : undefined,
       }));
-    },
-    [loadDirectoryContents]
-  );
+    } catch (error) {
+      console.error("Failed to load directory:", error);
+      return [];
+    }
+  };
+
+  // Recursively build the tree
+  const buildTree = async (basePath: string): Promise<FileNode[]> => {
+    const items = await loadDirectoryContents(basePath);
+
+    // For each directory, add an empty children array that will be loaded on expand
+    return items.map((item) => ({
+      ...item,
+      children: item.type === "directory" ? [] : undefined,
+    }));
+  };
 
   // Load tree - unified effect that handles all cases
   useEffect(() => {
@@ -287,15 +283,9 @@ export const FilesTab: React.FC = () => {
 
     setRootPath(claudePath);
     buildTree(claudePath).then(setFileTree);
-  }, [
-    isGlobalSettingsSelected,
-    selectedProjectId,
-    homePath,
-    currentView,
-    buildTree,
-  ]);
+  }, [isGlobalSettingsSelected, selectedProjectId, homePath, currentView]);
 
-  const loadFileContent = useCallback(async (filePath: string) => {
+  const loadFileContent = async (filePath: string) => {
     setLoading(true);
     try {
       const result = await ipc.client.claude.readFileContent({ filePath });
@@ -310,7 +300,7 @@ export const FilesTab: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   // Expand/collapse directory and load its children if needed
   const toggleDirectory = (node: FileNode, tree: FileNode[]): FileNode[] => {

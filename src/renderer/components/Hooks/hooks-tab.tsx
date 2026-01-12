@@ -14,7 +14,7 @@ import {
 } from "@phosphor-icons/react";
 import { useAtom } from "jotai";
 import type React from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError } from "@/components/ui/field";
@@ -203,7 +203,7 @@ export const HooksTab: React.FC = () => {
   }, [setHomePath]);
 
   // Load hooks from the selected project
-  const loadHooks = useCallback(async () => {
+  const loadHooks = async () => {
     if (!activePath) {
       console.log("No active path, skipping hooks load");
       return;
@@ -250,14 +250,14 @@ export const HooksTab: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [activePath]);
+  };
 
   // Reload when switching to this tab or when path changes
   useEffect(() => {
     if (currentView === "hooks") {
       loadHooks();
     }
-  }, [currentView, loadHooks]);
+  }, [currentView, activePath]);
 
   const selectedHookData = hooks.find((h) => h.name === selectedHook);
 

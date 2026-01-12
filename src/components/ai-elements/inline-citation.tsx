@@ -4,7 +4,6 @@ import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import {
   type ComponentProps,
   createContext,
-  useCallback,
   useContext,
   useEffect,
   useState,
@@ -194,11 +193,11 @@ export const InlineCitationCarouselPrev = ({
 }: InlineCitationCarouselPrevProps) => {
   const api = useCarouselApi();
 
-  const handleClick = useCallback(() => {
+  const handleClick = () => {
     if (api) {
       api.scrollPrev();
     }
-  }, [api]);
+  };
 
   return (
     <button
@@ -221,11 +220,11 @@ export const InlineCitationCarouselNext = ({
 }: InlineCitationCarouselNextProps) => {
   const api = useCarouselApi();
 
-  const handleClick = useCallback(() => {
+  const handleClick = () => {
     if (api) {
       api.scrollNext();
     }
-  }, [api]);
+  };
 
   return (
     <button

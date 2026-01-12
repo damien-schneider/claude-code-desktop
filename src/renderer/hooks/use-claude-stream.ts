@@ -1,5 +1,5 @@
 import { useAtom, useSetAtom } from "jotai";
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import {
   activeSessionsAtom,
   completionStatusAtom,
@@ -190,204 +190,232 @@ export const useClaudeStream = (processId: string | null) => {
   // Use ref to track RAF for smooth updates
   const rafRef = useRef<number | null>(null);
 
-  const handleMessage = useCallback(
+  const handleMessage = (
     // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex IPC message handler with multiple event types - refactoring would require breaking into multiple handlers
-    (_event: unknown, data: IPCMessageWrapper) => {
-      const eventData = data.data;
-      if (eventData.processId !== processId) {
-        return;
+    _event: unknown,
+    data: IPCMessageWrapper
+  ) => {
+    const eventData = data.data;
+    if (eventData.processId !== processId) {
+      return;
+    }
+
+    // Update current session ID if not set (for new sessions)
+    if (!currentSessionId && eventData.sessionId) {
+      setCurrentSessionId(eventData.sessionId);
+    }
+
+    switch (eventData.type) {
+      // Session created event
+      case "session_created": {
+        console.log("[useClaudeStream] Session created:", eventData);
+        setActiveSessions((prev) => {
+          const newMap = new Map(prev);
+          newMap.set(eventData.processId, {
+            processId: eventData.processId,
+            sessionId: eventData.sessionId || null,
+            projectPath: eventData.projectPath || "",
+            projectName: eventData.projectName || "",
+            createdAt: eventData.createdAt || new Date().toISOString(),
+            isStreaming: true,
+          });
+          return newMap;
+        });
+        break;
       }
 
-      // Update current session ID if not set (for new sessions)
-      if (!currentSessionId && eventData.sessionId) {
-        setCurrentSessionId(eventData.sessionId);
-      }
-
-      switch (eventData.type) {
-        // Session created event
-        case "session_created": {
-          console.log("[useClaudeStream] Session created:", eventData);
-          setActiveSessions((prev) => {
-            const newMap = new Map(prev);
+      // Session ready event (when we have the session ID)
+      case "session_ready": {
+        console.log("[useClaudeStream] Session ready:", eventData);
+        setActiveSessions((prev) => {
+          const newMap = new Map(prev);
+          const existing = newMap.get(eventData.processId);
+          if (existing) {
             newMap.set(eventData.processId, {
-              processId: eventData.processId,
+              ...existing,
               sessionId: eventData.sessionId || null,
-              projectPath: eventData.projectPath || "",
-              projectName: eventData.projectName || "",
-              createdAt: eventData.createdAt || new Date().toISOString(),
-              isStreaming: true,
             });
-            return newMap;
-          });
-          break;
-        }
-
-        // Session ready event (when we have the session ID)
-        case "session_ready": {
-          console.log("[useClaudeStream] Session ready:", eventData);
-          setActiveSessions((prev) => {
-            const newMap = new Map(prev);
-            const existing = newMap.get(eventData.processId);
-            if (existing) {
-              newMap.set(eventData.processId, {
-                ...existing,
-                sessionId: eventData.sessionId || null,
-              });
-            }
-            return newMap;
-          });
-
-          // Update current session ID if this is the active process
-          if (eventData.processId === processId) {
-            setCurrentSessionId(eventData.sessionId || null);
           }
-          break;
+          return newMap;
+        });
+
+        // Update current session ID if this is the active process
+        if (eventData.processId === processId) {
+          setCurrentSessionId(eventData.sessionId || null);
         }
+        break;
+      }
 
-        // Legacy chunk events (for backwards compatibility)
-        case "chunk": {
-          const content = eventData.content || "";
-          if (content) {
-            // We have text content - we're no longer just "thinking"
-            setIsThinking(false);
-            streamingContentRef.current += content;
-
-            // Use requestAnimationFrame for smooth UI updates
-            if (rafRef.current === null) {
-              rafRef.current = requestAnimationFrame(() => {
-                setStreamingMessage(streamingContentRef.current);
-                rafRef.current = null;
-              });
-            }
-
-            setIsStreaming(true);
-          }
-          break;
-        }
-
-        // SDK assistant message (complete message with content blocks)
-        case "assistant": {
-          console.log(
-            "[useClaudeStream] Assistant message received:",
-            eventData.message
-          );
+      // Legacy chunk events (for backwards compatibility)
+      case "chunk": {
+        const content = eventData.content || "";
+        if (content) {
+          // We have text content - we're no longer just "thinking"
           setIsThinking(false);
-          const content = extractAssistantContent(eventData.message);
-          console.log("[useClaudeStream] Extracted content:", content);
+          streamingContentRef.current += content;
 
-          // Always clear streaming state when assistant event arrives
-          // to prevent duplication in UI (even if content is empty)
-          streamingContentRef.current = "";
-          setStreamingMessage("");
-
-          if (content) {
-            // Generate message ID with random suffix for uniqueness
-            const messageId =
-              eventData.uuid ||
-              `msg-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
-
-            setMessages((prev) => {
-              // Deduplication: Skip if message with this ID already exists
-              if (prev.some((msg) => msg.messageId === messageId)) {
-                console.log(
-                  "[useClaudeStream] Skipping duplicate message:",
-                  messageId
-                );
-                return prev;
-              }
-              return [
-                ...prev,
-                {
-                  type: "assistant",
-                  content,
-                  messageId,
-                  timestamp: new Date().toISOString(),
-                  status: "complete",
-                },
-              ];
+          // Use requestAnimationFrame for smooth UI updates
+          if (rafRef.current === null) {
+            rafRef.current = requestAnimationFrame(() => {
+              setStreamingMessage(streamingContentRef.current);
+              rafRef.current = null;
             });
           }
-          break;
+
+          setIsStreaming(true);
         }
+        break;
+      }
 
-        // SDK user message (echoed back from SDK)
-        case "user": {
-          // User messages are already added locally, skip echo
-          break;
-        }
+      // SDK assistant message (complete message with content blocks)
+      case "assistant": {
+        console.log(
+          "[useClaudeStream] Assistant message received:",
+          eventData.message
+        );
+        setIsThinking(false);
+        const content = extractAssistantContent(eventData.message);
+        console.log("[useClaudeStream] Extracted content:", content);
 
-        // SDK result message (session complete)
-        case "result": {
-          console.log("[useClaudeStream] Result received:", {
-            subtype: eventData.subtype,
-            isError: eventData.isError,
-            result: eventData.result,
-            errors: eventData.errors,
-          });
+        // Always clear streaming state when assistant event arrives
+        // to prevent duplication in UI (even if content is empty)
+        streamingContentRef.current = "";
+        setStreamingMessage("");
 
-          // Clear thinking state
-          setIsThinking(false);
-          setThinkingStartTime(null);
+        if (content) {
+          // Generate message ID with random suffix for uniqueness
+          const messageId =
+            eventData.uuid ||
+            `msg-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 
-          // Track cost if available
-          if (eventData.totalCostUsd !== undefined) {
-            setLastQueryCost(eventData.totalCostUsd);
-          }
-
-          // Finalize any remaining streaming content
-          if (streamingContentRef.current) {
-            // Save content before clearing
-            const streamingContent = streamingContentRef.current;
-            const messageId =
-              eventData.uuid ||
-              `msg-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
-
-            setMessages((prev) => {
-              // Deduplication: Skip if message with this ID already exists
-              if (prev.some((msg) => msg.messageId === messageId)) {
-                console.log(
-                  "[useClaudeStream] Skipping duplicate message in result:",
-                  messageId
-                );
-                return prev;
-              }
-              return [
-                ...prev,
-                {
-                  type: "assistant",
-                  content: streamingContent,
-                  messageId,
-                  timestamp: new Date().toISOString(),
-                  status: "complete",
-                },
-              ];
-            });
-            streamingContentRef.current = "";
-            setStreamingMessage("");
-          }
-
-          // Handle errors from result
-          if (eventData.isError && eventData.errors?.length) {
-            const errorText = eventData.errors?.join("\n") || "Unknown error";
-            setStreamingError(errorText);
-            setCompletionStatus("error");
-            setMessages((prev) => [
+          setMessages((prev) => {
+            // Deduplication: Skip if message with this ID already exists
+            if (prev.some((msg) => msg.messageId === messageId)) {
+              console.log(
+                "[useClaudeStream] Skipping duplicate message:",
+                messageId
+              );
+              return prev;
+            }
+            return [
               ...prev,
               {
-                type: "system",
-                content: `Error: ${errorText}`,
-                messageId: `error-${Date.now()}`,
+                type: "assistant",
+                content,
+                messageId,
                 timestamp: new Date().toISOString(),
-                status: "error",
+                status: "complete",
               },
-            ]);
-          } else if (eventData.subtype === "success") {
-            // Successful completion
-            setCompletionStatus("success");
-            setStreamingError(null);
-          }
+            ];
+          });
+        }
+        break;
+      }
 
-          setIsStreaming(false);
+      // SDK user message (echoed back from SDK)
+      case "user": {
+        // User messages are already added locally, skip echo
+        break;
+      }
+
+      // SDK result message (session complete)
+      case "result": {
+        console.log("[useClaudeStream] Result received:", {
+          subtype: eventData.subtype,
+          isError: eventData.isError,
+          result: eventData.result,
+          errors: eventData.errors,
+        });
+
+        // Clear thinking state
+        setIsThinking(false);
+        setThinkingStartTime(null);
+
+        // Track cost if available
+        if (eventData.totalCostUsd !== undefined) {
+          setLastQueryCost(eventData.totalCostUsd);
+        }
+
+        // Finalize any remaining streaming content
+        if (streamingContentRef.current) {
+          // Save content before clearing
+          const streamingContent = streamingContentRef.current;
+          const messageId =
+            eventData.uuid ||
+            `msg-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+
+          setMessages((prev) => {
+            // Deduplication: Skip if message with this ID already exists
+            if (prev.some((msg) => msg.messageId === messageId)) {
+              console.log(
+                "[useClaudeStream] Skipping duplicate message in result:",
+                messageId
+              );
+              return prev;
+            }
+            return [
+              ...prev,
+              {
+                type: "assistant",
+                content: streamingContent,
+                messageId,
+                timestamp: new Date().toISOString(),
+                status: "complete",
+              },
+            ];
+          });
+          streamingContentRef.current = "";
+          setStreamingMessage("");
+        }
+
+        // Handle errors from result
+        if (eventData.isError && eventData.errors?.length) {
+          const errorText = eventData.errors?.join("\n") || "Unknown error";
+          setStreamingError(errorText);
+          setCompletionStatus("error");
+          setMessages((prev) => [
+            ...prev,
+            {
+              type: "system",
+              content: `Error: ${errorText}`,
+              messageId: `error-${Date.now()}`,
+              timestamp: new Date().toISOString(),
+              status: "error",
+            },
+          ]);
+        } else if (eventData.subtype === "success") {
+          // Successful completion
+          setCompletionStatus("success");
+          setStreamingError(null);
+        }
+
+        setIsStreaming(false);
+
+        // Update active session streaming state
+        if (processId) {
+          setActiveSessions((prev) => {
+            const newMap = new Map(prev);
+            const existing = newMap.get(processId);
+            if (existing) {
+              newMap.set(processId, { ...existing, isStreaming: false });
+            }
+            return newMap;
+          });
+        }
+        break;
+      }
+
+      // SDK system message (init, etc.)
+      case "system": {
+        if (eventData.subtype === "init") {
+          // Starting a new query - set thinking state
+          setIsStreaming(true);
+          setIsThinking(true);
+          setThinkingStartTime(Date.now());
+          setStreamingError(null);
+          setCompletionStatus("idle");
+          streamingContentRef.current = "";
+          setStreamingMessage("");
 
           // Update active session streaming state
           if (processId) {
@@ -395,131 +423,87 @@ export const useClaudeStream = (processId: string | null) => {
               const newMap = new Map(prev);
               const existing = newMap.get(processId);
               if (existing) {
-                newMap.set(processId, { ...existing, isStreaming: false });
+                newMap.set(processId, { ...existing, isStreaming: true });
               }
               return newMap;
             });
           }
-          break;
         }
-
-        // SDK system message (init, etc.)
-        case "system": {
-          if (eventData.subtype === "init") {
-            // Starting a new query - set thinking state
-            setIsStreaming(true);
-            setIsThinking(true);
-            setThinkingStartTime(Date.now());
-            setStreamingError(null);
-            setCompletionStatus("idle");
-            streamingContentRef.current = "";
-            setStreamingMessage("");
-
-            // Update active session streaming state
-            if (processId) {
-              setActiveSessions((prev) => {
-                const newMap = new Map(prev);
-                const existing = newMap.get(processId);
-                if (existing) {
-                  newMap.set(processId, { ...existing, isStreaming: true });
-                }
-                return newMap;
-              });
-            }
-          }
-          break;
-        }
-
-        // Process complete
-        case "complete": {
-          setIsThinking(false);
-          setThinkingStartTime(null);
-
-          // Finalize any remaining streaming content
-          if (streamingContentRef.current) {
-            // Save content before clearing
-            const streamingContent = streamingContentRef.current;
-            const messageId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
-
-            setMessages((prev) => {
-              // Deduplication: Skip if message with this ID already exists
-              if (prev.some((msg) => msg.messageId === messageId)) {
-                console.log(
-                  "[useClaudeStream] Skipping duplicate message in complete:",
-                  messageId
-                );
-                return prev;
-              }
-              return [
-                ...prev,
-                {
-                  type: "assistant",
-                  content: streamingContent,
-                  messageId,
-                  timestamp: new Date().toISOString(),
-                  status: "complete",
-                },
-              ];
-            });
-            streamingContentRef.current = "";
-            setStreamingMessage("");
-          }
-          setIsStreaming(false);
-
-          // If code is non-zero, mark as partial/error completion
-          const code = eventData.code as number | undefined;
-          if (code && code !== 0) {
-            setCompletionStatus("partial");
-          }
-          break;
-        }
-
-        // Error handling
-        case "error": {
-          const errorContent = eventData.content || "Unknown error";
-          console.error(
-            "[useClaudeStream] Claude process error:",
-            errorContent
-          );
-          setIsStreaming(false);
-          setIsThinking(false);
-          setThinkingStartTime(null);
-          setStreamingError(errorContent);
-          setCompletionStatus("error");
-          setMessages((prev) => [
-            ...prev,
-            {
-              type: "system",
-              content: `Error: ${errorContent}`,
-              messageId: `error-${Date.now()}`,
-              timestamp: new Date().toISOString(),
-              status: "error",
-            },
-          ]);
-          break;
-        }
-
-        default: {
-          // Ignore unhandled event types
-          break;
-        }
+        break;
       }
-    },
-    [
-      processId,
-      setMessages,
-      setStreamingMessage,
-      setIsStreaming,
-      setStreamingError,
-      setIsThinking,
-      setThinkingStartTime,
-      setCompletionStatus,
-      setLastQueryCost,
-      currentSessionId,
-      setCurrentSessionId,
-      setActiveSessions,
-    ]
-  );
+
+      // Process complete
+      case "complete": {
+        setIsThinking(false);
+        setThinkingStartTime(null);
+
+        // Finalize any remaining streaming content
+        if (streamingContentRef.current) {
+          // Save content before clearing
+          const streamingContent = streamingContentRef.current;
+          const messageId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+
+          setMessages((prev) => {
+            // Deduplication: Skip if message with this ID already exists
+            if (prev.some((msg) => msg.messageId === messageId)) {
+              console.log(
+                "[useClaudeStream] Skipping duplicate message in complete:",
+                messageId
+              );
+              return prev;
+            }
+            return [
+              ...prev,
+              {
+                type: "assistant",
+                content: streamingContent,
+                messageId,
+                timestamp: new Date().toISOString(),
+                status: "complete",
+              },
+            ];
+          });
+          streamingContentRef.current = "";
+          setStreamingMessage("");
+        }
+        setIsStreaming(false);
+
+        // If code is non-zero, mark as partial/error completion
+        const code = eventData.code as number | undefined;
+        if (code && code !== 0) {
+          setCompletionStatus("partial");
+        }
+        break;
+      }
+
+      // Error handling
+      case "error": {
+        const errorContent = eventData.content || "Unknown error";
+        console.error("[useClaudeStream] Claude process error:", errorContent);
+        setIsStreaming(false);
+        setIsThinking(false);
+        setThinkingStartTime(null);
+        setStreamingError(errorContent);
+        setCompletionStatus("error");
+        setMessages((prev) => [
+          ...prev,
+          {
+            type: "system",
+            content: `Error: ${errorContent}`,
+            messageId: `error-${Date.now()}`,
+            timestamp: new Date().toISOString(),
+            status: "error",
+          },
+        ]);
+        break;
+      }
+
+      default: {
+        // Ignore unhandled event types
+        break;
+      }
+    }
+  };
 
   useEffect(() => {
     if (!processId) {

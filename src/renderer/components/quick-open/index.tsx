@@ -13,7 +13,7 @@ import {
 } from "@phosphor-icons/react";
 import { useAtom } from "jotai";
 import type React from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
@@ -203,22 +203,19 @@ export const QuickOpenDialog: React.FC<QuickOpenDialogProps> = ({
     setSelectedIndex(0);
   }, []);
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setSelectedIndex((i) => Math.min(i + 1, filteredItems.length - 1));
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setSelectedIndex((i) => Math.max(i - 1, 0));
-      } else if (e.key === "Enter" && filteredItems.length > 0) {
-        e.preventDefault();
-        filteredItems[selectedIndex]?.action();
-        onOpenChange(false);
-      }
-    },
-    [filteredItems, selectedIndex, onOpenChange]
-  );
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((i) => Math.min(i + 1, filteredItems.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter" && filteredItems.length > 0) {
+      e.preventDefault();
+      filteredItems[selectedIndex]?.action();
+      onOpenChange(false);
+    }
+  };
 
   // Scroll selected item into view
   useEffect(() => {

@@ -6,7 +6,7 @@ import {
   Trash,
 } from "@phosphor-icons/react";
 import type React from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -550,28 +550,25 @@ export const SkillsTab: React.FC = () => {
 
   const selectedSkillData = skills.find((s) => s.path === selectedSkill);
 
-  const handleSave = useCallback(
-    async (values: SkillFormValues) => {
-      if (!selectedSkill) {
-        return;
-      }
+  const handleSave = async (values: SkillFormValues) => {
+    if (!selectedSkill) {
+      return;
+    }
 
-      setSaving(true);
-      try {
-        const skillContent = isRawMode ? rawContent : buildSkillContent(values);
+    setSaving(true);
+    try {
+      const skillContent = isRawMode ? rawContent : buildSkillContent(values);
 
-        await saveItem(selectedSkill, skillContent);
-        await loadItems();
-      } catch (error) {
-        console.error("Failed to save skill:", error);
-      } finally {
-        setSaving(false);
-      }
-    },
-    [selectedSkill, isRawMode, rawContent, saveItem, loadItems]
-  );
+      await saveItem(selectedSkill, skillContent);
+      await loadItems();
+    } catch (error) {
+      console.error("Failed to save skill:", error);
+    } finally {
+      setSaving(false);
+    }
+  };
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = async () => {
     if (!selectedSkill) {
       return;
     }
@@ -583,9 +580,9 @@ export const SkillsTab: React.FC = () => {
         setSelectedSkill(null);
       }
     }
-  }, [selectedSkill, deleteItem]);
+  };
 
-  const handleAdd = useCallback(() => {
+  const handleAdd = () => {
     if (!activePath) {
       showError(
         "Cannot add skill",
@@ -595,25 +592,22 @@ export const SkillsTab: React.FC = () => {
     }
     setIsAdding(true);
     createForm.reset();
-  }, [activePath, createForm]);
+  };
 
-  const handleConfirmAdd = useCallback(
-    async (values: SkillCreateValues) => {
-      const result = await createItem(values.name);
+  const handleConfirmAdd = async (values: SkillCreateValues) => {
+    const result = await createItem(values.name);
 
-      if (result.success && result.path) {
-        setSelectedSkill(result.path);
-        setIsAdding(false);
-        createForm.reset();
-      }
-    },
-    [createItem, createForm]
-  );
+    if (result.success && result.path) {
+      setSelectedSkill(result.path);
+      setIsAdding(false);
+      createForm.reset();
+    }
+  };
 
-  const handleCancelAdd = useCallback(() => {
+  const handleCancelAdd = () => {
     setIsAdding(false);
     createForm.reset();
-  }, [createForm]);
+  };
 
   return (
     <div className="flex h-full flex-col">

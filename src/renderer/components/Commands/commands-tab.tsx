@@ -16,7 +16,7 @@ import {
 } from "@phosphor-icons/react";
 import { useAtom } from "jotai";
 import type React from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError } from "@/components/ui/field";
@@ -128,7 +128,7 @@ export const CommandsTab: React.FC = () => {
   }, [commands]);
 
   // Load commands from the selected project
-  const loadCommands = useCallback(async () => {
+  const loadCommands = async () => {
     if (!currentPath) {
       console.log("No current path, skipping commands load");
       return;
@@ -195,7 +195,7 @@ export const CommandsTab: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPath]);
+  };
 
   // Reload when switching to this tab or when path changes
   useEffect(() => {

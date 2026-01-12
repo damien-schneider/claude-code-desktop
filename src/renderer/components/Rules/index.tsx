@@ -8,7 +8,7 @@ import {
   X,
 } from "@phosphor-icons/react";
 import type React from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -111,7 +111,7 @@ export const RulesTab: React.FC = () => {
     return ruleContents[selectedRule] !== originalRuleContents[selectedRule];
   }, [selectedRule, ruleContents, originalRuleContents]);
 
-  const handleSave = useCallback(async () => {
+  const handleSave = async () => {
     if (!(selectedRule && selectedRuleData)) {
       return;
     }
@@ -126,16 +126,16 @@ export const RulesTab: React.FC = () => {
     } finally {
       setSaving(false);
     }
-  }, [selectedRule, selectedRuleData, ruleContents, saveItem]);
+  };
 
-  const handleCancel = useCallback(() => {
+  const handleCancel = () => {
     if (selectedRule) {
       setRuleContents((prev) => ({
         ...prev,
         [selectedRule]: originalRuleContents[selectedRule] || "",
       }));
     }
-  }, [selectedRule, originalRuleContents]);
+  };
 
   // Keyboard shortcut for save (Cmd/Ctrl + S)
   useEffect(() => {

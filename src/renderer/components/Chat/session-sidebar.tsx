@@ -11,7 +11,7 @@ import { useAtom, useSetAtom } from "jotai";
 import React, { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Toggle } from "@/components/ui/toggle";
 import {
   activeSessionsAtom,
   currentSessionIdAtom,
@@ -19,7 +19,6 @@ import {
   loadSessionDetailsAtom,
   loadSessionsAtom,
   projectsAtom,
-  type SessionFilter,
   selectedProjectIdAtom,
   sessionFilterAtom,
   sessionSearchQueryAtom,
@@ -117,10 +116,10 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
   };
 
   return (
-    <div className="h-full shrink-0 pl-2">
+    <div className="h-full shrink-0 py-2 pr-2">
       <div
         className={cn(
-          "flex h-full flex-col rounded-l-2xl bg-background-2 py-1.5 pl-1.5",
+          "flex h-full flex-col rounded-2xl bg-background-2",
           className
         )}
       >
@@ -151,19 +150,17 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
           {/* Project Filter Toggle */}
           {selectedProjectId && (
             <div className="mt-2">
-              <Tabs
-                onValueChange={(v) => setFilter(v as SessionFilter)}
-                value={filter}
+              <Toggle
+                pressed={filter === "project"}
+                onPressedChange={(pressed) => setFilter(pressed ? "project" : "all")}
+                className="w-full"
+                variant="outline"
               >
-                <TabsList className="w-full">
-                  <TabsTrigger className="flex-1" value="all">
-                    All
-                  </TabsTrigger>
-                  <TabsTrigger className="flex-1" value="project">
-                    {currentProjectName || "Project"}
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
+                <Folder className="mr-2 h-4 w-4" weight="regular" />
+                {filter === "project"
+                  ? currentProjectName || "Project"
+                  : "All Sessions"}
+              </Toggle>
             </div>
           )}
 

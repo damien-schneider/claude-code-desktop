@@ -103,56 +103,50 @@ export function useClaudeItems({
     }
   }, [currentView, viewName, loadItems]);
 
-  const createItem = useCallback(
-    async (name?: string) => {
-      if (!activePath) {
-        showError(
-          "Cannot create item",
-          "Please select a project or global settings first"
-        );
-        return {
-          success: false,
-          error: "Please select a project or global settings first",
-        };
-      }
+  const createItem = async (name?: string) => {
+    if (!activePath) {
+      showError(
+        "Cannot create item",
+        "Please select a project or global settings first"
+      );
+      return {
+        success: false,
+        error: "Please select a project or global settings first",
+      };
+    }
 
-      try {
-        const result = await ipc.client.claude.createClaudeItem({
-          projectPath: activePath,
-          type,
-          name: name || undefined,
-        });
+    try {
+      const result = await ipc.client.claude.createClaudeItem({
+        projectPath: activePath,
+        type,
+        name: name || undefined,
+      });
 
-        await loadItems();
-        showSuccess(`${formatType(type)} created successfully`);
-        return { success: true, path: result.path, name: result.name };
-      } catch (error) {
-        showError(`Failed to create ${formatType(type)}`, error);
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : "Unknown error",
-        };
-      }
-    },
-    [activePath, type, loadItems]
-  );
+      await loadItems();
+      showSuccess(`${formatType(type)} created successfully`);
+      return { success: true, path: result.path, name: result.name };
+    } catch (error) {
+      showError(`Failed to create ${formatType(type)}`, error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  };
 
-  const deleteItem = useCallback(
-    async (itemPath: string) => {
-      try {
-        await ipc.client.claude.deleteClaudeItem({ itemPath });
-        await loadItems();
-        showSuccess(`${formatType(type)} deleted successfully`);
-        return true;
-      } catch (error) {
-        showError(`Failed to delete ${formatType(type)}`, error);
-        return false;
-      }
-    },
-    [loadItems, type]
-  );
+  const deleteItem = async (itemPath: string) => {
+    try {
+      await ipc.client.claude.deleteClaudeItem({ itemPath });
+      await loadItems();
+      showSuccess(`${formatType(type)} deleted successfully`);
+      return true;
+    } catch (error) {
+      showError(`Failed to delete ${formatType(type)}`, error);
+      return false;
+    }
+  };
 
-  const saveItem = useCallback(async (itemPath: string, content: string) => {
+  const saveItem = async (itemPath: string, content: string) => {
     try {
       await ipc.client.claude.writeFileContent({
         filePath: itemPath,
@@ -164,7 +158,7 @@ export function useClaudeItems({
       showError("Failed to save", error);
       return false;
     }
-  }, []);
+  };
 
   return {
     items,

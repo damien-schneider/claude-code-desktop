@@ -19,7 +19,6 @@ import {
   type ComponentProps,
   memo,
   type ReactNode,
-  useCallback,
   useMemo,
   useState,
 } from "react";
@@ -375,7 +374,7 @@ const JsonField = memo(
     const isExpandable = isLongValue(value) && depth < maxDepth;
     const preview = getValuePreview(value);
 
-    const renderValue = useCallback((): React.ReactNode => {
+    const renderValue = (): React.ReactNode => {
       // Primitives: null/undefined, boolean, number
       if (value === null || value === undefined) {
         return <NullValue value={value} />;
@@ -418,7 +417,7 @@ const JsonField = memo(
 
       // Fallback
       return <span className="text-xs">{preview}</span>;
-    }, [value, isExpanded, depth, maxDepth, preview]);
+    };
 
     return (
       <div className="flex flex-wrap items-start gap-1">
@@ -593,11 +592,11 @@ export const ToolResultDisplay = memo(
     const Icon = isError ? XCircleIcon : CheckCircleIcon;
     const iconColor = isError ? "text-destructive" : "text-emerald-500";
 
-    const handleCopy = useCallback(() => {
+    const handleCopy = () => {
       copyToClipboard(stringContent);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    }, [stringContent]);
+    };
 
     // Compute the display text for the trigger
     const triggerText = useMemo(() => {

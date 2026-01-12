@@ -4,6 +4,7 @@ import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Tooltip,
   TooltipContent,
@@ -113,7 +114,7 @@ export const ClaudeTab: React.FC = () => {
     <TooltipProvider>
       <div className="flex h-full flex-col">
         {/* Editor */}
-        <div className="relative flex-1 overflow-auto p-4">
+        <ScrollArea className="h-full py-2 pr-2">
           {loading ? (
             <div className="flex h-full items-center justify-center">
               <p className="text-muted-foreground text-sm">Loading...</p>
@@ -160,7 +161,7 @@ export const ClaudeTab: React.FC = () => {
                   )}
                 </ButtonGroup>
               }
-              className="min-h-full"
+              className="min-h-full rounded-xl bg-background-2"
               content={content}
               onChange={setContent}
               placeholder="# Project Instructions
@@ -177,7 +178,7 @@ Add your project-specific instructions for Claude Code here.
 "
             />
           )}
-        </div>
+        </ScrollArea>
       </div>
     </TooltipProvider>
   );

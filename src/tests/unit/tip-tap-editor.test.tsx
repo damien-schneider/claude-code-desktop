@@ -1,207 +1,97 @@
 /**
  * Pragmatic tests for TipTapEditor component
- * Tests actual textarea rendering and user interactions
+ * Tests TipTap editor rendering and basic functionality
  */
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { TipTapEditor } from "@/renderer/components/tip-tap-editor";
 
 describe("TipTapEditor", () => {
-  it("should render textarea with content", () => {
-    render(<TipTapEditor content="Hello world" />);
+  it("should render the editor container", async () => {
+    const { container } = render(<TipTapEditor content="" />);
 
-    const textarea = screen.getByRole("textbox");
-    expect(textarea).toBeInTheDocument();
-    expect(textarea).toHaveValue("Hello world");
+    // Wait for editor to initialize
+    await waitFor(() => {
+      const editor =
+        container.querySelector(".ProseMirror") ||
+        container.querySelector("[contenteditable]");
+      expect(editor).toBeTruthy();
+    });
   });
 
-  it("should render with default placeholder", () => {
-    render(<TipTapEditor content="" />);
-
-    const textarea = screen.getByRole("textbox") as HTMLTextAreaElement;
-    expect(textarea.placeholder).toBe("Write content here...");
-  });
-
-  it("should render with custom placeholder", () => {
-    render(<TipTapEditor content="" placeholder="Enter markdown..." />);
-
-    const textarea = screen.getByRole("textbox") as HTMLTextAreaElement;
-    expect(textarea.placeholder).toBe("Enter markdown...");
-  });
-
-  it("should be editable by default", () => {
-    render(<TipTapEditor content="Initial content" />);
-
-    const textarea = screen.getByRole("textbox") as HTMLTextAreaElement;
-    expect(textarea.disabled).toBe(false);
-  });
-
-  it("should be disabled when editable is false", () => {
-    render(<TipTapEditor content="Content" editable={false} />);
-
-    const textarea = screen.getByRole("textbox") as HTMLTextAreaElement;
-    expect(textarea.disabled).toBe(true);
-  });
-
-  it("should call onChange when content changes", () => {
-    const handleChange = vi.fn();
-    render(<TipTapEditor content="" onChange={handleChange} />);
-
-    const textarea = screen.getByRole("textbox");
-    fireEvent.change(textarea, { target: { value: "New content" } });
-
-    expect(handleChange).toHaveBeenCalledWith("New content");
-    expect(handleChange).toHaveBeenCalledTimes(1);
-  });
-
-  it("should not call onChange when not provided", () => {
-    expect(() => {
-      render(<TipTapEditor content="Test" />);
-      const textarea = screen.getByRole("textbox");
-      fireEvent.change(textarea, { target: { value: "New" } });
-    }).not.toThrow();
-  });
-
-  it("should apply custom className", () => {
+  it("should apply custom className", async () => {
     const { container } = render(
       <TipTapEditor className="custom-class" content="" />
     );
 
-    const wrapper = container.querySelector(".custom-class");
-    expect(wrapper).toBeInTheDocument();
+    await waitFor(() => {
+      const wrapper = container.querySelector(".custom-class");
+      expect(wrapper).toBeInTheDocument();
+    });
   });
 
-  it("should have correct structure", () => {
+  it("should have correct wrapper structure", async () => {
     const { container } = render(<TipTapEditor content="Test" />);
 
-    const wrapper = container.querySelector(".relative");
-    expect(wrapper).toBeInTheDocument();
-
-    const textarea = container.querySelector("textarea");
-    expect(textarea).toBeInTheDocument();
+    await waitFor(() => {
+      const wrapper = container.querySelector(".relative");
+      expect(wrapper).toBeInTheDocument();
+    });
   });
 
-  it("should handle empty content", () => {
-    render(<TipTapEditor content="" />);
-
-    const textarea = screen.getByRole("textbox");
-    expect(textarea).toHaveValue("");
-  });
-
-  it("should handle multiline content", () => {
-    const multiline = "Line 1\nLine 2\nLine 3";
-    render(<TipTapEditor content={multiline} />);
-
-    const textarea = screen.getByRole("textbox");
-    expect(textarea).toHaveValue(multiline);
-  });
-
-  it("should handle special characters", () => {
-    const special = "Hello <world> & 'friends' \"quoted\"";
-    render(<TipTapEditor content={special} />);
-
-    const textarea = screen.getByRole("textbox");
-    expect(textarea).toHaveValue(special);
-  });
-
-  it("should render actions when provided", () => {
-    const actions = <button type="button">Save</button>;
+  it("should render actions when provided", async () => {
+    const actions = <button type="button">Save Action</button>;
     const { container } = render(<TipTapEditor actions={actions} content="" />);
 
-    const button = container.querySelector("button");
-    expect(button).toBeInTheDocument();
-    expect(button).toHaveTextContent("Save");
+    await waitFor(() => {
+      const buttons = container.querySelectorAll("button");
+      const saveButton = Array.from(buttons).find(
+        (b) => b.textContent === "Save Action"
+      );
+      expect(saveButton).toBeInTheDocument();
+    });
   });
 
-  it("should not render actions when not provided", () => {
+  it("should always render the raw mode toggle", async () => {
     const { container } = render(<TipTapEditor content="" />);
 
-    const button = container.querySelector("button");
-    expect(button).toBeNull();
+    await waitFor(() => {
+      const buttons = container.querySelectorAll("button");
+      // At least the raw mode toggle should be there
+      expect(buttons.length).toBeGreaterThan(0);
+      const svg =
+        container.querySelector("svg.lucide-code") ||
+        container.querySelector("svg.lucide-eye");
+      expect(svg).toBeInTheDocument();
+    });
   });
 
-  it("should have proper styling classes", () => {
-    const { container } = render(<TipTapEditor content="Test" />);
+  it("should switch to raw mode editor when toggled", async () => {
+    const { container } = render(<TipTapEditor content="Hello World" />);
 
-    const textarea = container.querySelector("textarea");
-    expect(textarea).toHaveClass("min-h-[200px]");
-    expect(textarea).toHaveClass("flex-1");
-    expect(textarea).toHaveClass("resize-none");
-  });
+    // Initially formatted view should be visible, raw view hidden
+    await waitFor(() => {
+      const editors = container.querySelectorAll(".ProseMirror");
+      expect(editors.length).toBe(2); // Both editors exist
+      // First one (formatted) visible, second (raw) hidden via class
+      const wrappers = container.querySelectorAll(".flex-1");
+      expect(wrappers[0]).not.toHaveClass("hidden");
+    });
 
-  it("should have font-mono class", () => {
-    const { container } = render(<TipTapEditor content="Test" />);
+    // Find and click the toggle button (the one with the code icon)
+    const toggleButton = container.querySelector(
+      'button[data-slot="tooltip-trigger"]'
+    ) as HTMLElement;
+    expect(toggleButton).toBeInTheDocument();
 
-    const textarea = container.querySelector("textarea");
-    expect(textarea).toHaveClass("font-mono");
-  });
+    toggleButton.click();
 
-  it("should handle very long content", () => {
-    const longContent = "a".repeat(10_000);
-    render(<TipTapEditor content={longContent} />);
-
-    const textarea = screen.getByRole("textbox");
-    expect(textarea).toHaveValue(longContent);
-  });
-
-  it("should preserve value on re-render", () => {
-    const { rerender } = render(<TipTapEditor content="Initial" />);
-
-    const textarea = screen.getByRole("textbox");
-    expect(textarea).toHaveValue("Initial");
-
-    rerender(<TipTapEditor content="Updated" />);
-    expect(textarea).toHaveValue("Updated");
-  });
-
-  it("should handle rapid content changes", () => {
-    const handleChange = vi.fn();
-    render(<TipTapEditor content="" onChange={handleChange} />);
-
-    const textarea = screen.getByRole("textbox");
-
-    fireEvent.change(textarea, { target: { value: "A" } });
-    fireEvent.change(textarea, { target: { value: "AB" } });
-    fireEvent.change(textarea, { target: { value: "ABC" } });
-
-    expect(handleChange).toHaveBeenCalledTimes(3);
-    expect(handleChange).toHaveBeenLastCalledWith("ABC");
-  });
-
-  it("should call onChange with correct value on multiple changes", () => {
-    const handleChange = vi.fn();
-    render(<TipTapEditor content="" onChange={handleChange} />);
-
-    const textarea = screen.getByRole("textbox");
-
-    fireEvent.change(textarea, { target: { value: "First" } });
-    expect(handleChange).toHaveBeenLastCalledWith("First");
-
-    fireEvent.change(textarea, { target: { value: "Second" } });
-    expect(handleChange).toHaveBeenLastCalledWith("Second");
-  });
-
-  it("should have border on wrapper", () => {
-    const { container } = render(<TipTapEditor content="Test" />);
-
-    const wrapper = container.firstChild as HTMLElement;
-    expect(wrapper).toHaveClass("border");
-  });
-
-  it("should have rounded corners", () => {
-    const { container } = render(<TipTapEditor content="Test" />);
-
-    const wrapper = container.firstChild as HTMLElement;
-    expect(wrapper).toHaveClass("rounded-md");
-  });
-
-  it("should be in a flex container", () => {
-    const { container } = render(<TipTapEditor content="Test" />);
-
-    const wrapper = container.firstChild as HTMLElement;
-    expect(wrapper).toHaveClass("flex");
-    expect(wrapper).toHaveClass("flex-col");
+    // Now raw mode should be visible with code block containing markdown
+    await waitFor(() => {
+      const codeBlock = container.querySelector("pre code.language-markdown");
+      expect(codeBlock).toBeInTheDocument();
+    });
   });
 
   it("should render without crashing when all props provided", () => {
@@ -219,19 +109,54 @@ describe("TipTapEditor", () => {
     ).not.toThrow();
   });
 
-  it("should handle onChange being undefined", () => {
-    const { rerender } = render(
-      <TipTapEditor content="Test" onChange={undefined} />
-    );
-
-    expect(() => rerender(<TipTapEditor content="Updated" />)).not.toThrow();
-  });
-
-  it("should preserve textarea styles", () => {
+  it("should be in a flex container", async () => {
     const { container } = render(<TipTapEditor content="Test" />);
 
-    const textarea = container.querySelector("textarea") as HTMLTextAreaElement;
-    expect(textarea.style.whiteSpace).toBe("pre-wrap");
-    expect(textarea.style.wordBreak).toBe("break-word");
+    await waitFor(() => {
+      const wrapper = container.firstChild as HTMLElement;
+      expect(wrapper).toHaveClass("flex");
+      expect(wrapper).toHaveClass("flex-col");
+    });
+  });
+
+  it("should handle empty content without error", () => {
+    expect(() => render(<TipTapEditor content="" />)).not.toThrow();
+  });
+
+  it("should handle undefined onChange", () => {
+    expect(() =>
+      render(<TipTapEditor content="Test" onChange={undefined} />)
+    ).not.toThrow();
+  });
+
+  it("should handle markdown content", async () => {
+    const markdownContent = "# Heading\n\n**Bold** text";
+    const { container } = render(<TipTapEditor content={markdownContent} />);
+
+    await waitFor(() => {
+      const editor =
+        container.querySelector(".ProseMirror") ||
+        container.querySelector("[contenteditable]");
+      expect(editor).toBeTruthy();
+    });
+  });
+
+  it("should handle editable false", async () => {
+    const { container } = render(
+      <TipTapEditor content="Test" editable={false} />
+    );
+
+    await waitFor(() => {
+      const editor =
+        container.querySelector(".ProseMirror") ||
+        container.querySelector("[contenteditable]");
+      expect(editor).toBeTruthy();
+    });
+  });
+
+  it("should handle re-render without crashing", () => {
+    const { rerender } = render(<TipTapEditor content="Initial" />);
+
+    expect(() => rerender(<TipTapEditor content="Updated" />)).not.toThrow();
   });
 });

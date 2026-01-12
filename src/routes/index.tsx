@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useAtom, useSetAtom } from "jotai";
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { Toaster } from "sonner";
 
 import {
@@ -37,20 +37,17 @@ function ClaudeCodeManagerPage() {
   // Quick Open handler
   const handleQuickOpen = () => setIsQuickOpenOpen(true);
 
-  const _handleScan = useCallback(async () => {
+  const _handleScan = async () => {
     await scanProjects();
-  }, [scanProjects]);
+  };
 
-  const _handleProjectClick = useCallback(
-    (projectPath: string) => {
-      selectProject(projectPath);
-    },
-    [selectProject]
-  );
+  const _handleProjectClick = (projectPath: string) => {
+    selectProject(projectPath);
+  };
 
-  const _handleGlobalSettingsClick = useCallback(() => {
+  const _handleGlobalSettingsClick = () => {
     selectGlobalSettings();
-  }, [selectGlobalSettings]);
+  };
 
   // Keyboard shortcut for Quick Open (Cmd/Ctrl + P or Cmd/Ctrl + K)
   useEffect(() => {
