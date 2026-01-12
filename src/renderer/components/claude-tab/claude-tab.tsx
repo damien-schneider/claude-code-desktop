@@ -88,9 +88,9 @@ export const ClaudeTab: React.FC = () => {
     }
   }, [currentPath, content]);
 
-  const handleCancel = useCallback(() => {
+  const handleCancel = () => {
     setContent(originalContent);
-  }, [originalContent]);
+  };
 
   const hasChanges = content !== originalContent;
 
@@ -99,7 +99,7 @@ export const ClaudeTab: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
-        if (hasChanges && !saving && !loading) {
+        if (hasChanges && !saving && !loading && currentPath) {
           handleSave();
         }
       }
@@ -107,7 +107,7 @@ export const ClaudeTab: React.FC = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [hasChanges, saving, loading, handleSave]);
+  }, [hasChanges, saving, loading, currentPath, handleSave]);
 
   return (
     <TooltipProvider>

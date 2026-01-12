@@ -17,11 +17,8 @@ import { useAtom, useSetAtom } from "jotai";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  ResizablePanel as Panel,
-  ResizablePanelGroup as PanelGroup,
-  ResizableHandle as PanelResizeHandle,
-} from "@/components/ui/resizable";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { TabLayout } from "@/components/ui/tab-layout";
 import type { ExplorerItem } from "@/ipc/claude/handlers";
 import { ipc } from "@/ipc/manager";
 import { TipTapEditor } from "@/renderer/components/tip-tap-editor";
@@ -576,63 +573,8 @@ export const FilesTab: React.FC = () => {
   }
 
   return (
-    <PanelGroup className="h-full" orientation="horizontal">
-      {/* File Tree */}
-      <Panel
-        className="py-2"
-        defaultSize={250}
-        maxSize={350}
-        minSize={210}
-      >
-        <div className="flex flex-col bg-background-2 h-full rounded-2xl">
-
-        <div className="flex h-full flex-col overflow-hidden">
-          {/* Header with path and create buttons */}
-          <div className="p-3">
-            <div
-              className="mb-2 truncate text-muted-foreground text-xs"
-              title={rootPath}
-            >
-              {rootPath}
-            </div>
-            <div className="flex gap-2">
-              <Button
-                className="flex-1"
-                onClick={handleCreateFile}
-                size="sm"
-                variant="outline"
-              >
-                <Plus className="mr-1 h-3 w-3" weight="regular" />
-                File
-              </Button>
-              <Button
-                className="flex-1"
-                onClick={handleCreateFolder}
-                size="sm"
-                variant="outline"
-              >
-                <Plus className="mr-1 h-3 w-3" weight="regular" />
-                Folder
-              </Button>
-            </div>
-          </div>
-
-          {/* File List */}
-          <div className="flex-1 overflow-y-auto p-0">
-            <FileListContent
-              fileTree={fileTree}
-              loading={loading}
-              renderFileTree={(nodes, level) => renderFileTree(nodes, level)}
-            />
-          </div>
-        </div>
-        </div>
-      </Panel>
-
-      <PanelResizeHandle />
-
-      {/* File Editor / Preview */}
-      <Panel defaultSize="75%" minSize="60%">
+    <TabLayout
+      main={
         <div className="flex h-full min-w-0 flex-col overflow-hidden">
           {selectedFile ? (
             <div className="flex h-full flex-1 flex-col">
@@ -698,8 +640,50 @@ export const FilesTab: React.FC = () => {
             </div>
           )}
         </div>
-      </Panel>
-    </PanelGroup>
+      }
+      sidebar={
+        <div className="flex h-full flex-col">
+          {/* Header with path and create buttons */}
+          <div className="p-3">
+            <div
+              className="mb-2 truncate text-muted-foreground text-xs"
+              title={rootPath}
+            >
+              {rootPath}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                className="flex-1"
+                onClick={handleCreateFile}
+                size="sm"
+                variant="outline"
+              >
+                <Plus className="mr-1 h-3 w-3" weight="regular" />
+                File
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={handleCreateFolder}
+                size="sm"
+                variant="outline"
+              >
+                <Plus className="mr-1 h-3 w-3" weight="regular" />
+                Folder
+              </Button>
+            </div>
+          </div>
+
+          {/* File List */}
+          <ScrollArea>
+            <FileListContent
+              fileTree={fileTree}
+              loading={loading}
+              renderFileTree={(nodes, level) => renderFileTree(nodes, level)}
+            />
+          </ScrollArea>
+        </div>
+      }
+    />
   );
 };
 

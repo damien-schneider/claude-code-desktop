@@ -8,7 +8,7 @@ import {
   FileText,
   FloppyDisk,
   Folder,
-  Plus,
+  PlusCircle,
   Spinner,
   Trash,
   UploadSimple,
@@ -21,6 +21,7 @@ import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { TabLayout } from "@/components/ui/tab-layout";
 import { ipc } from "@/ipc/manager";
 import { CodeEditor } from "@/renderer/components/code-editor";
 import { TipTapEditor } from "@/renderer/components/tip-tap-editor";
@@ -35,11 +36,6 @@ import {
   type CommandCreateValues,
   commandCreateSchema,
 } from "@/schemas/claude";
-
-// Top-level regex patterns for performance
-const FRONTMATTER_REGEX = /^---\n([\s\S]*?)\n---/;
-const FRONTMATTER_WITH_BODY_REGEX = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/;
-const DESCRIPTION_REGEX = /description:\s*(.+)$/m;
 
 interface CommandFile {
   name: string;
@@ -56,7 +52,11 @@ interface CommandGroup {
   commands: CommandFile[];
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex tab component with state management - refactoring would require extracting custom hooks
+const FRONTMATTER_REGEX = /^---\n([\s\S]*?)\n---/;
+const DESCRIPTION_REGEX = /description:\s*(.+)$/m;
+const PARSED_COMMAND_REGEX = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/;
+const HAS_FRONTMATTER_REGEX = /^---\n[\s\S]*?\n---/;
+
 export const CommandsTab: React.FC = () => {
   const [selectedProjectId] = useAtom(selectedProjectIdAtom);
   const [isGlobalSettingsSelected] = useAtom(isGlobalSettingsSelectedAtom);
@@ -210,7 +210,7 @@ export const CommandsTab: React.FC = () => {
   const parseCommand = (
     content: string
   ): { frontmatter: string | null; body: string; hasFrontmatter: boolean } => {
-    const frontmatterMatch = content.match(FRONTMATTER_WITH_BODY_REGEX);
+    const frontmatterMatch = content.match(PARSED_COMMAND_REGEX);
     if (frontmatterMatch) {
       return {
         frontmatter: frontmatterMatch[1],
@@ -233,7 +233,7 @@ export const CommandsTab: React.FC = () => {
       return { valid: false, error: "Command content cannot be empty" };
     }
 
-    const hasFrontmatter = content.match(FRONTMATTER_REGEX);
+    const hasFrontmatter = content.match(HAS_FRONTMATTER_REGEX);
     if (!hasFrontmatter) {
       return {
         valid: false,
@@ -298,12 +298,11 @@ export const CommandsTab: React.FC = () => {
       return;
     }
 
-    if (
-      // biome-ignore lint/suspicious/noAlert: Replacing with modal is out of scope for this task
-      !confirm(
-        `Are you sure you want to delete command "${selectedCommandData.name}"?`
-      )
-    ) {
+    // biome-ignore lint/suspicious/noAlert: Legacy confirm usage
+    const isConfirmed = window.confirm(
+      `Are you sure you want to delete command "${selectedCommandData.name}"?`
+    );
+    if (!isConfirmed) {
       return;
     }
 
@@ -324,10 +323,14 @@ export const CommandsTab: React.FC = () => {
 
   const handleAdd = () => {
     if (!currentPath) {
+      showError(
+        "Cannot add command",
+        "Please select a project or global settings first"
+      );
       return;
     }
     setIsAdding(true);
-    createForm.setValue("name", `my-command-${commands.length + 1}`);
+    createForm.reset();
   };
 
   const handleConfirmAdd = async (values: CommandCreateValues) => {
@@ -388,19 +391,24 @@ Add your command instructions here.
       return;
     }
 
-    const exportData = commands.map((c) => ({
-      name: c.name,
-      content: c.content,
-    }));
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `commands-export-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      const exportData = commands.map((c) => ({
+        name: c.name,
+        content: c.content,
+      }));
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `commands-export-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Failed to export commands:", error);
+      setError("Failed to export commands");
+    }
   };
 
   const handleImport = () => {
@@ -412,13 +420,12 @@ Add your command instructions here.
       if (!file) {
         return;
       }
-
-      await processImportFile(file);
+      await processImport(file);
     };
     input.click();
   };
 
-  const processImportFile = async (file: File) => {
+  const processImport = async (file: File) => {
     try {
       const content = await file.text();
       const importData = JSON.parse(content);
@@ -427,7 +434,17 @@ Add your command instructions here.
         throw new Error("Invalid import format: expected an array of commands");
       }
 
-      await writeImportedCommands(importData);
+      const commandsDir = `${currentPath}/.claude/commands`;
+      for (const cmd of importData) {
+        if (cmd.name && cmd.content) {
+          const filePath = `${commandsDir}/${cmd.name}.md`;
+          await ipc.client.claude.writeClaudeFile({
+            filePath,
+            content: cmd.content,
+          });
+        }
+      }
+
       await loadCommands();
     } catch (error) {
       console.error("Failed to import commands:", error);
@@ -437,360 +454,326 @@ Add your command instructions here.
     }
   };
 
-  const writeImportedCommands = async (importData: unknown[]) => {
-    const commandsDir = `${currentPath}/.claude/commands`;
-    for (const cmd of importData) {
-      if (cmd && typeof cmd === "object" && "name" in cmd && "content" in cmd) {
-        const filePath = `${commandsDir}/${String(cmd.name)}.md`;
-        await ipc.client.claude.writeClaudeFile({
-          filePath,
-          content: String(cmd.content),
-        });
-      }
+  const renderSidebar = () => {
+    if (loading) {
+      return (
+        <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
+          <Spinner
+            className="h-6 w-6 animate-spin text-muted-foreground"
+            weight="regular"
+          />
+        </div>
+      );
     }
+
+    if (!currentPath) {
+      return (
+        <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
+          Select a project to manage commands
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex h-full flex-col overflow-hidden">
+        <div className="shrink-0 space-y-1 p-2">
+          {/* Add Command Button / Form */}
+          {isAdding ? (
+            <div className="rounded-md border border-primary/20 bg-primary/10 p-2">
+              <form
+                className="space-y-2"
+                onSubmit={createForm.handleSubmit(handleConfirmAdd)}
+              >
+                <Controller
+                  control={createForm.control}
+                  name="name"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <Input
+                        {...field}
+                        aria-invalid={fieldState.invalid}
+                        autoFocus
+                        className="font-mono text-sm"
+                        id="name"
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape") {
+                            handleCancelAdd();
+                          }
+                        }}
+                        placeholder="my-command (optional, leave empty for auto-name)"
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+                <div className="flex gap-2">
+                  <Button className="flex-1" size="sm" type="submit">
+                    Create
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    onClick={handleCancelAdd}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </div>
+          ) : (
+            <Button
+              className="w-full border p-3"
+              disabled={!currentPath}
+              onClick={handleAdd}
+              type="button"
+              variant="ghost"
+            >
+              <PlusCircle className="h-5 w-5" weight="regular" />
+              <span className="font-medium text-sm">Add Command</span>
+            </Button>
+          )}
+        </div>
+
+        {/* Commands List */}
+        {commands.length === 0 && !isAdding ? (
+          <div className="flex min-h-0 flex-1 items-center justify-center text-muted-foreground">
+            <div className="text-center">
+              <FileText className="mx-auto mb-2 h-8 w-8 opacity-50" />
+              <p className="text-sm">No commands configured</p>
+              <p className="mt-1 text-xs">
+                Create commands to extend Claude's capabilities
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="min-h-0 flex-1 space-y-1 overflow-y-auto p-2">
+            {groupedCommands.map((group) => {
+              const isExpanded = expandedGroups.has(group.category);
+              return (
+                <div className="mb-2" key={group.category}>
+                  <button
+                    className="flex w-full items-center gap-2 rounded-md p-2 text-left transition-colors hover:bg-muted/50"
+                    onClick={() => toggleGroup(group.category)}
+                    type="button"
+                  >
+                    {isExpanded ? (
+                      <CaretDown className="h-4 w-4" weight="regular" />
+                    ) : (
+                      <CaretRight className="h-4 w-4" weight="regular" />
+                    )}
+                    <Folder
+                      className="h-4 w-4 text-muted-foreground"
+                      weight="regular"
+                    />
+                    <span className="font-medium text-sm capitalize">
+                      {group.category === "root" ? "Commands" : group.category}
+                    </span>
+                    <span className="ml-auto text-muted-foreground text-xs">
+                      {group.commands.length}
+                    </span>
+                  </button>
+
+                  {isExpanded && (
+                    <div className="mt-1 ml-4 space-y-1">
+                      {group.commands.map((command) => {
+                        const validationError = validationErrors[command.name];
+                        const isValid =
+                          command.isValid !== false && !validationError;
+
+                        return (
+                          <button
+                            className={`w-full cursor-pointer rounded-md p-2 text-left transition-colors ${
+                              selectedCommand === command.name
+                                ? "bg-primary text-primary-foreground"
+                                : "hover:bg-muted"
+                            }`}
+                            key={command.name}
+                            onClick={() => setSelectedCommand(command.name)}
+                            type="button"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <Code
+                                    className="h-3 w-3 shrink-0"
+                                    weight="regular"
+                                  />
+                                  <span className="truncate font-medium text-sm">
+                                    {command.name}
+                                  </span>
+                                  {isValid ? (
+                                    <CheckCircle
+                                      className="h-3 w-3 shrink-0 text-green-500"
+                                      weight="regular"
+                                    />
+                                  ) : (
+                                    <WarningCircle
+                                      className="h-3 w-3 shrink-0 text-red-500"
+                                      weight="regular"
+                                    />
+                                  )}
+                                </div>
+                                <p className="mt-1 truncate text-xs opacity-70">
+                                  {command.description || "No description"}
+                                </p>
+                              </div>
+                            </div>
+                            {validationError && (
+                              <p className="mt-1 text-red-500 text-xs">
+                                {validationError}
+                              </p>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b bg-background p-4">
-        <div className="flex items-center gap-2">
-          <div>
-            <h3 className="font-semibold">Commands Management</h3>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            disabled={loading || commands.length === 0}
-            onClick={handleImport}
-            size="sm"
-            variant="outline"
-          >
-            <UploadSimple className="mr-1 h-4 w-4" weight="regular" />
-            Import
-          </Button>
-          <Button
-            disabled={loading || commands.length === 0}
-            onClick={handleExport}
-            size="sm"
-            variant="outline"
-          >
-            <DownloadSimple className="mr-1 h-4 w-4" weight="regular" />
-            Export
-          </Button>
-          <Button
-            disabled={loading || !currentPath}
-            onClick={handleAdd}
-            size="sm"
-            title={
-              currentPath
-                ? "Add Command"
-                : "Select a project or global settings first"
-            }
-            variant={currentPath ? "default" : "outline"}
-          >
-            <Plus className="h-4 w-4" weight="regular" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Error display */}
-      {error && (
-        <div className="mx-4 mt-4 flex items-start gap-3 rounded-md border border-red-500/20 bg-red-500/10 p-3">
-          <WarningCircle
-            className="mt-0.5 h-5 w-5 shrink-0 text-red-600"
-            weight="regular"
-          />
-          <p className="text-red-700 text-sm">{error}</p>
-        </div>
-      )}
-
-      {/* No project selected */}
-      {!(currentPath || loading) && (
-        <div className="flex h-full items-center justify-center">
-          <p className="text-muted-foreground text-sm">
-            Select a project to manage commands
-          </p>
-        </div>
-      )}
-
-      {/* Main content */}
-      {currentPath && (
-        <div className="flex-1 overflow-hidden">
-          {loading && (
-            <div className="flex h-full items-center justify-center">
-              <Spinner
-                className="h-6 w-6 animate-spin text-muted-foreground"
-                weight="regular"
-              />
-            </div>
-          )}
-          {!loading && commands.length === 0 && !isAdding && (
-            <div className="flex h-full flex-col items-center justify-center">
-              <FileText
-                className="mb-4 h-12 w-12 text-muted-foreground"
-                weight="regular"
-              />
-              <p className="mb-4 text-muted-foreground text-sm">
-                No commands configured
-              </p>
-              <Button onClick={handleAdd} size="sm">
-                <Plus className="mr-1 h-4 w-4" weight="regular" />
-                Create Your First Command
-              </Button>
-            </div>
-          )}
-          {!loading && (commands.length > 0 || isAdding) && (
-            <div className="flex h-full">
-              {/* Commands list - Grouped by category */}
-              <div className="w-80 overflow-y-auto border-r">
-                <div className="p-2">
-                  {isAdding && (
-                    <div className="mb-2 rounded-md border border-primary/20 bg-primary/10 p-2">
-                      <form
-                        className="space-y-2"
-                        onSubmit={createForm.handleSubmit(handleConfirmAdd)}
-                      >
-                        <Controller
-                          control={createForm.control}
-                          name="name"
-                          render={({ field, fieldState }) => (
-                            <Field data-invalid={fieldState.invalid}>
-                              <Input
-                                {...field}
-                                aria-invalid={fieldState.invalid}
-                                autoFocus
-                                className="font-mono text-sm"
-                                id="name"
-                              />
-                              {fieldState.invalid && (
-                                <FieldError errors={[fieldState.error]} />
-                              )}
-                            </Field>
-                          )}
-                        />
-                        <div className="flex gap-2">
-                          <Button className="flex-1" size="sm" type="submit">
-                            Create
-                          </Button>
-                          <Button
-                            className="flex-1"
-                            onClick={handleCancelAdd}
-                            size="sm"
-                            type="button"
-                            variant="outline"
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </form>
-                    </div>
-                  )}
-                  {groupedCommands.map((group) => {
-                    const isExpanded = expandedGroups.has(group.category);
-                    return (
-                      <div className="mb-2" key={group.category}>
-                        <button
-                          className="flex w-full items-center gap-2 rounded-md p-2 text-left transition-colors hover:bg-muted/50"
-                          onClick={() => toggleGroup(group.category)}
-                          type="button"
-                        >
-                          {isExpanded ? (
-                            <CaretDown className="h-4 w-4" weight="regular" />
-                          ) : (
-                            <CaretRight className="h-4 w-4" weight="regular" />
-                          )}
-                          <Folder
-                            className="h-4 w-4 text-muted-foreground"
-                            weight="regular"
-                          />
-                          <span className="font-medium text-sm capitalize">
-                            {group.category === "root"
-                              ? "Commands"
-                              : group.category}
-                          </span>
-                          <span className="ml-auto text-muted-foreground text-xs">
-                            {group.commands.length}
-                          </span>
-                        </button>
-
-                        {isExpanded && (
-                          <div className="mt-1 ml-4 space-y-1">
-                            {group.commands.map((command) => {
-                              const validationError =
-                                validationErrors[command.name];
-                              const isValid =
-                                command.isValid !== false && !validationError;
-
-                              return (
-                                <button
-                                  className={`cursor-pointer rounded-md p-2 transition-colors ${
-                                    selectedCommand === command.name
-                                      ? "bg-primary text-primary-foreground"
-                                      : "hover:bg-muted"
-                                  }`}
-                                  key={command.name}
-                                  onClick={() =>
-                                    setSelectedCommand(command.name)
-                                  }
-                                  type="button"
-                                >
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div className="min-w-0 flex-1">
-                                      <div className="flex items-center gap-2">
-                                        <Code
-                                          className="h-3 w-3 shrink-0"
-                                          weight="regular"
-                                        />
-                                        <span className="truncate font-medium text-sm">
-                                          {command.name}
-                                        </span>
-                                        {isValid ? (
-                                          <CheckCircle
-                                            className="h-3 w-3 shrink-0 text-green-500"
-                                            weight="regular"
-                                          />
-                                        ) : (
-                                          <WarningCircle
-                                            className="h-3 w-3 shrink-0 text-red-500"
-                                            weight="regular"
-                                          />
-                                        )}
-                                      </div>
-                                      <p className="mt-1 truncate text-xs opacity-70">
-                                        {command.description ||
-                                          "No description"}
-                                      </p>
-                                    </div>
-                                  </div>
-                                  {validationError && (
-                                    <p className="mt-1 text-red-500 text-xs">
-                                      {validationError}
-                                    </p>
-                                  )}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+    <TabLayout
+      main={
+        selectedCommandData ? (
+          <div className="flex h-full min-w-0 flex-col overflow-hidden">
+            {/* Error display */}
+            {error && (
+              <div className="mx-4 mt-4 flex items-start gap-3 rounded-md border border-red-500/20 bg-red-500/10 p-3">
+                <WarningCircle
+                  className="mt-0.5 h-5 w-5 shrink-0 text-red-600"
+                  weight="regular"
+                />
+                <p className="text-red-700 text-sm">{error}</p>
               </div>
+            )}
 
-              {/* Command editor */}
-              <div className="flex flex-1 flex-col overflow-hidden">
-                {selectedCommandData ? (
-                  <>
-                    {/* Editor header */}
-                    <div className="flex items-center justify-between border-b p-4">
-                      <div>
-                        <h4 className="font-medium">
-                          {selectedCommandData.name}
-                        </h4>
-                        <p className="text-muted-foreground text-xs">
-                          {selectedCommandData.path.split("/").pop()}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          disabled={saving}
-                          onClick={handleSave}
-                          size="sm"
-                          variant="outline"
-                        >
-                          <FloppyDisk
-                            className="mr-1 h-4 w-4"
-                            weight="regular"
-                          />
-                          {saving ? "Saving..." : "Save"}
-                        </Button>
-                        <Button
-                          onClick={handleDelete}
-                          size="sm"
-                          variant="destructive"
-                        >
-                          <Trash className="mr-1 h-4 w-4" weight="regular" />
-                          Delete
-                        </Button>
-                      </div>
-                    </div>
+            {/* Editor header with import/export */}
+            <div className="flex items-center justify-between border-b bg-background p-4">
+              <div>
+                <h4 className="font-medium">{selectedCommandData.name}</h4>
+                <p className="text-muted-foreground text-xs">
+                  {selectedCommandData.path.split("/").pop()}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  disabled={loading}
+                  onClick={handleImport}
+                  size="sm"
+                  variant="outline"
+                >
+                  <UploadSimple className="mr-1 h-4 w-4" weight="regular" />
+                  Import
+                </Button>
+                <Button
+                  disabled={loading}
+                  onClick={handleExport}
+                  size="sm"
+                  variant="outline"
+                >
+                  <DownloadSimple className="mr-1 h-4 w-4" weight="regular" />
+                  Export
+                </Button>
+                <Button
+                  disabled={saving}
+                  onClick={handleSave}
+                  size="sm"
+                  variant="outline"
+                >
+                  <FloppyDisk className="mr-1 h-4 w-4" weight="regular" />
+                  {saving ? "Saving..." : "Save"}
+                </Button>
+                <Button onClick={handleDelete} size="sm" variant="destructive">
+                  <Trash className="mr-1 h-4 w-4" weight="regular" />
+                  Delete
+                </Button>
+              </div>
+            </div>
 
-                    {/* Editor - Split view with frontmatter and body */}
-                    <div className="flex flex-1 flex-col overflow-hidden">
-                      {hasFrontmatter ? (
-                        <div
-                          className="overflow-hidden border-b"
-                          style={{ height: "50%" }}
-                        >
-                          <div className="border-b bg-muted/50 px-4 py-2 font-medium text-muted-foreground text-xs">
-                            Frontmatter (YAML)
-                          </div>
-                          <CodeEditor
-                            height="100%"
-                            language="yaml"
-                            onChange={(value) => {
-                              if (
-                                value !== null &&
-                                value !== undefined &&
-                                selectedCommand
-                              ) {
-                                const newContent = `---\n${value}\n---\n${body}`;
-                                setCommands(
-                                  commands.map((c) =>
-                                    c.name === selectedCommand
-                                      ? { ...c, content: newContent }
-                                      : c
-                                  )
-                                );
-                                setValidationErrors((prev) => {
-                                  const next = { ...prev };
-                                  delete next[selectedCommandData.name];
-                                  return next;
-                                });
-                              }
-                            }}
-                            value={frontmatter || ""}
-                          />
-                        </div>
-                      ) : (
-                        <div
-                          className="flex items-center justify-center border-b bg-muted/30 px-4 py-3 text-muted-foreground text-sm"
-                          style={{ height: "50px" }}
-                        >
-                          No frontmatter
-                        </div>
-                      )}
+            {/* Editor - Split view with frontmatter and body */}
+            <div className="flex flex-1 flex-col overflow-hidden">
+              {hasFrontmatter ? (
+                <div
+                  className="overflow-hidden border-b"
+                  style={{ height: "50%" }}
+                >
+                  <div className="border-b bg-muted/50 px-4 py-2 font-medium text-muted-foreground text-xs">
+                    Frontmatter (YAML)
+                  </div>
+                  <CodeEditor
+                    height="100%"
+                    language="yaml"
+                    onChange={(value) => {
+                      if (
+                        value !== null &&
+                        value !== undefined &&
+                        selectedCommand
+                      ) {
+                        const newContent = `---\n${value}\n---\n${body}`;
+                        setCommands(
+                          commands.map((c) =>
+                            c.name === selectedCommand
+                              ? { ...c, content: newContent }
+                              : c
+                          )
+                        );
+                        setValidationErrors((prev) => {
+                          const next = { ...prev };
+                          delete next[selectedCommandData.name];
+                          return next;
+                        });
+                      }
+                    }}
+                    value={frontmatter || ""}
+                  />
+                </div>
+              ) : (
+                <div
+                  className="flex items-center justify-center border-b bg-muted/30 px-4 py-3 text-muted-foreground text-sm"
+                  style={{ height: "50px" }}
+                >
+                  No frontmatter
+                </div>
+              )}
 
-                      <div className="flex-1 overflow-hidden">
-                        <div className="border-b bg-muted/50 px-4 py-2 font-medium text-muted-foreground text-xs">
-                          Command Body (Markdown)
-                        </div>
-                        <TipTapEditor
-                          className="h-full"
-                          content={body}
-                          onChange={(value) => {
-                            if (selectedCommand) {
-                              const newContent =
-                                hasFrontmatter && frontmatter
-                                  ? `---\n${frontmatter}\n---\n${value}`
-                                  : value;
-                              setCommands(
-                                commands.map((c) =>
-                                  c.name === selectedCommand
-                                    ? { ...c, content: newContent }
-                                    : c
-                                )
-                              );
-                              setValidationErrors((prev) => {
-                                const next = { ...prev };
-                                delete next[selectedCommandData.name];
-                                return next;
-                              });
-                            }
-                          }}
-                          placeholder="# Command Title
+              <div className="flex-1 overflow-hidden">
+                <div className="border-b bg-muted/50 px-4 py-2 font-medium text-muted-foreground text-xs">
+                  Command Body (Markdown)
+                </div>
+                <TipTapEditor
+                  className="h-full"
+                  content={body}
+                  onChange={(value) => {
+                    if (selectedCommand) {
+                      const newContent =
+                        hasFrontmatter && frontmatter
+                          ? `---\n${frontmatter}\n---\n${value}`
+                          : value;
+                      setCommands(
+                        commands.map((c) =>
+                          c.name === selectedCommand
+                            ? { ...c, content: newContent }
+                            : c
+                        )
+                      );
+                      setValidationErrors((prev) => {
+                        const next = { ...prev };
+                        delete next[selectedCommandData.name];
+                        return next;
+                      });
+                    }
+                  }}
+                  placeholder="# Command Title
 
 $ARGUMENTS
 
@@ -798,30 +781,27 @@ $ARGUMENTS
 
 Add your command instructions here.
 "
-                        />
-                      </div>
-                    </div>
-
-                    {validationErrors[selectedCommandData.name] && (
-                      <div className="border-red-500/20 border-t bg-red-500/10 p-3">
-                        <p className="flex items-center gap-2 text-red-700 text-sm">
-                          <WarningCircle className="h-4 w-4" weight="regular" />
-                          {validationErrors[selectedCommandData.name]}
-                        </p>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex h-full items-center justify-center text-muted-foreground">
-                    Select a command to edit
-                  </div>
-                )}
+                />
               </div>
             </div>
-          )}
-        </div>
-      )}
-    </div>
+
+            {validationErrors[selectedCommandData.name] && (
+              <div className="border-red-500/20 border-t bg-red-500/10 p-3">
+                <p className="flex items-center gap-2 text-red-700 text-sm">
+                  <WarningCircle className="h-4 w-4" weight="regular" />
+                  {validationErrors[selectedCommandData.name]}
+                </p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex h-full items-center justify-center text-muted-foreground">
+            Select a command to edit
+          </div>
+        )
+      }
+      sidebar={renderSidebar()}
+    />
   );
 };
 

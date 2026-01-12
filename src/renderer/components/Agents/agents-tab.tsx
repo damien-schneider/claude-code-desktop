@@ -13,17 +13,13 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
-  ResizablePanel as Panel,
-  ResizablePanelGroup as PanelGroup,
-  ResizableHandle as PanelResizeHandle,
-} from "@/components/ui/resizable";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TabLayout } from "@/components/ui/tab-layout";
 import { Textarea } from "@/components/ui/textarea";
 import {
   type AgentFrontmatter,
@@ -105,7 +101,6 @@ const buildAgentContent = (values: AgentFormValues): string => {
   return `${buildFrontmatter(frontmatterData)}\n\n# ${name}\n\nYou are a specialist agent for...\n\n## Instructions\n\n${content}`;
 };
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex tab component with state management - refactoring would require extracting custom hooks
 export const AgentsTab: React.FC = () => {
   const {
     items: rawAgents,
@@ -145,7 +140,6 @@ export const AgentsTab: React.FC = () => {
   const [isRawMode, setIsRawMode] = useState(false);
   const [rawContent, setRawContent] = useState("");
   const [isAdding, setIsAdding] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Form for agent editing
   const form = useForm<AgentFormValues>({
@@ -259,172 +253,8 @@ export const AgentsTab: React.FC = () => {
   return (
     <div className="flex h-full flex-col">
       {/* Main Content */}
-      <PanelGroup className="flex-1 overflow-hidden" orientation="horizontal">
-        {/* Agents List */}
-        <Panel
-          className={cn(
-            "border-r bg-muted/30 transition-all duration-300 ease-in-out",
-            sidebarCollapsed ? "min-w-[36px]" : "min-w-[210px]"
-          )}
-          collapsedSize={36}
-          collapsible
-          defaultSize={250}
-          maxSize={350}
-          minSize={210}
-          onCollapse={() => setSidebarCollapsed(true)}
-          onExpand={() => setSidebarCollapsed(false)}
-        >
-          {loading ? (
-            <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-              {!sidebarCollapsed && "Loading..."}
-            </div>
-          ) : (
-            <div className="flex h-full flex-col overflow-hidden">
-              <div className="shrink-0 space-y-1 p-2">
-                {/* Add Agent Button / Form */}
-                {isAdding && !sidebarCollapsed ? (
-                  <div className="rounded-md border border-primary/20 bg-primary/10 p-2">
-                    <form
-                      className="space-y-2"
-                      onSubmit={createForm.handleSubmit(handleConfirmAdd)}
-                    >
-                      <Controller
-                        control={createForm.control}
-                        name="name"
-                        render={({ field, fieldState }) => (
-                          <Field data-invalid={fieldState.invalid}>
-                            <Input
-                              {...field}
-                              aria-invalid={fieldState.invalid}
-                              autoFocus
-                              className="font-mono text-sm"
-                              id="name"
-                              onKeyDown={(e) => {
-                                if (e.key === "Escape") {
-                                  handleCancelAdd();
-                                }
-                              }}
-                              placeholder="my-agent-name (optional, leave empty for auto-name)"
-                            />
-                            {fieldState.invalid && (
-                              <FieldError errors={[fieldState.error]} />
-                            )}
-                          </Field>
-                        )}
-                      />
-                      <div className="flex gap-2">
-                        <Button className="flex-1" size="sm" type="submit">
-                          Create
-                        </Button>
-                        <Button
-                          className="flex-1"
-                          onClick={handleCancelAdd}
-                          size="sm"
-                          type="button"
-                          variant="outline"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </form>
-                  </div>
-                ) : (
-                  <button
-                    className={cn(
-                      "flex w-full items-center justify-center gap-2 rounded-md border-2 border-dashed p-3 transition-colors",
-                      activePath
-                        ? "cursor-pointer border-primary/50 hover:border-primary hover:bg-primary/5"
-                        : "cursor-not-allowed border-muted opacity-50",
-                      sidebarCollapsed && "h-10 border-none p-0"
-                    )}
-                    disabled={!activePath}
-                    onClick={handleAdd}
-                    title={
-                      activePath
-                        ? "Add new agent"
-                        : "Select a project or global settings first"
-                    }
-                    type="button"
-                  >
-                    <PlusCircle className="h-5 w-5" weight="regular" />
-                    {!sidebarCollapsed && (
-                      <span className="font-medium text-sm">Add Agent</span>
-                    )}
-                  </button>
-                )}
-              </div>
-
-              {/* Agents List */}
-              {agents.length === 0 && !isAdding ? (
-                <div className="flex min-h-0 flex-1 items-center justify-center text-muted-foreground">
-                  <div className="text-center">
-                    <HardDrives
-                      className={cn(
-                        "mx-auto mb-2 h-8 w-8 opacity-50",
-                        sidebarCollapsed && "mb-0"
-                      )}
-                      weight="regular"
-                    />
-                    {!sidebarCollapsed && (
-                      <>
-                        <p className="text-sm">No agents found</p>
-                        <p className="mt-1 text-xs">
-                          Create agents to delegate specialized tasks
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="min-h-0 flex-1 space-y-1 overflow-y-auto p-2">
-                  {agents.map((agent) => (
-                    <button
-                      className={cn(
-                        "w-full cursor-pointer rounded-md p-2 text-left transition-colors",
-                        selectedAgent === agent.path
-                          ? "bg-primary text-primary-foreground"
-                          : "hover:bg-muted/50",
-                        sidebarCollapsed && "flex justify-center p-2"
-                      )}
-                      key={agent.path}
-                      onClick={() => setSelectedAgent(agent.path)}
-                      title={
-                        sidebarCollapsed
-                          ? agent.displayName || agent.name
-                          : undefined
-                      }
-                      type="button"
-                    >
-                      <div className="flex items-start gap-2">
-                        <FileText
-                          className={cn(
-                            "h-4 w-4 shrink-0",
-                            !sidebarCollapsed && "mt-0.5"
-                          )}
-                        />
-                        {!sidebarCollapsed && (
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate font-medium text-sm">
-                              {agent.displayName || agent.name}
-                            </div>
-                            <div className="truncate text-xs opacity-70">
-                              {agent.description || "No description"}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </Panel>
-
-        <PanelResizeHandle />
-
-        {/* Agent Editor */}
-        <Panel defaultSize="75%" minSize="60%">
+      <TabLayout
+        main={
           <div className="flex h-full min-w-0 flex-col overflow-hidden">
             {selectedAgentData ? (
               <>
@@ -695,8 +525,123 @@ You are a specialist agent for...
               </div>
             )}
           </div>
-        </Panel>
-      </PanelGroup>
+        }
+        sidebar={
+          loading ? (
+            <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
+              Loading...
+            </div>
+          ) : (
+            <div className="flex h-full flex-col overflow-hidden">
+              <div className="shrink-0 space-y-1 p-2">
+                {/* Add Agent Button / Form */}
+                {isAdding ? (
+                  <div className="rounded-md border border-primary/20 bg-primary/10 p-2">
+                    <form
+                      className="space-y-2"
+                      onSubmit={createForm.handleSubmit(handleConfirmAdd)}
+                    >
+                      <Controller
+                        control={createForm.control}
+                        name="name"
+                        render={({ field, fieldState }) => (
+                          <Field data-invalid={fieldState.invalid}>
+                            <Input
+                              {...field}
+                              aria-invalid={fieldState.invalid}
+                              autoFocus
+                              className="font-mono text-sm"
+                              id="name"
+                              onKeyDown={(e) => {
+                                if (e.key === "Escape") {
+                                  handleCancelAdd();
+                                }
+                              }}
+                              placeholder="my-agent-name (optional, leave empty for auto-name)"
+                            />
+                            {fieldState.invalid && (
+                              <FieldError errors={[fieldState.error]} />
+                            )}
+                          </Field>
+                        )}
+                      />
+                      <div className="flex gap-2">
+                        <Button className="flex-1" size="sm" type="submit">
+                          Create
+                        </Button>
+                        <Button
+                          className="flex-1"
+                          onClick={handleCancelAdd}
+                          size="sm"
+                          type="button"
+                          variant="outline"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
+                ) : (
+                  <Button
+                    className="w-full border p-3"
+                    disabled={!activePath}
+                    onClick={handleAdd}
+                    type="button"
+                    variant="ghost"
+                  >
+                    <PlusCircle className="h-5 w-5" weight="regular" />
+                    <span className="font-medium text-sm">Add Agent</span>
+                  </Button>
+                )}
+              </div>
+
+              {/* Agents List */}
+              {agents.length === 0 && !isAdding ? (
+                <div className="flex min-h-0 flex-1 items-center justify-center text-muted-foreground">
+                  <div className="text-center">
+                    <HardDrives
+                      className="mx-auto mb-2 h-8 w-8 opacity-50"
+                      weight="regular"
+                    />
+                    <p className="text-sm">No agents found</p>
+                    <p className="mt-1 text-xs">
+                      Create agents to delegate specialized tasks
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="min-h-0 flex-1 space-y-1 overflow-y-auto p-2">
+                  {agents.map((agent) => (
+                    <button
+                      className={cn(
+                        "w-full cursor-pointer rounded-md p-2 text-left transition-colors",
+                        selectedAgent === agent.path
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-muted/50"
+                      )}
+                      key={agent.path}
+                      onClick={() => setSelectedAgent(agent.path)}
+                      type="button"
+                    >
+                      <div className="flex items-start gap-2">
+                        <FileText className="mt-0.5 h-4 w-4 shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate font-medium text-sm">
+                            {agent.displayName || agent.name}
+                          </div>
+                          <div className="truncate text-xs opacity-70">
+                            {agent.description || "No description"}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        }
+      />
     </div>
   );
 };

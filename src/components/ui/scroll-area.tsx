@@ -6,17 +6,21 @@ import { cn } from "@/lib/utils";
 
 function ScrollArea({
   className,
+  classNameViewport,
   children,
   ...props
-}: ScrollAreaPrimitive.Root.Props) {
+}: ScrollAreaPrimitive.Root.Props & { classNameViewport?: string }) {
   return (
     <ScrollAreaPrimitive.Root
-      className={cn("relative", className)}
+      className={cn("relative min-h-0", className)}
       data-slot="scroll-area"
       {...props}
     >
       <ScrollAreaPrimitive.Viewport
-        className="size-full rounded-[inherit] outline-none transition-[color,box-shadow] focus-visible:outline-1 focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        className={cn(
+          "data-overflow-y-end:mask-b-from-[calc(100%-2rem)] data-overflow-y-start:mask-t-from-[calc(100%-2rem)] size-full rounded-[inherit] outline-none transition-[color,box-shadow] focus-visible:outline-1 focus-visible:ring-[3px] focus-visible:ring-ring/50",
+          classNameViewport
+        )}
         data-slot="scroll-area-viewport"
       >
         {children}

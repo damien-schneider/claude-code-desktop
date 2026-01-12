@@ -32,7 +32,7 @@ export default function DragWindowRegion({ title }: DragWindowRegionProps) {
   const isMacOS = platform === "darwin";
 
   return (
-    <div className="draglayer flex h-5 items-center justify-between bg-secondary px-2">
+    <div className="draglayer flex h-5 items-center justify-between bg-background px-2">
       {/* Title for non-Mac */}
       {title && !isMacOS && (
         <div className="select-none whitespace-nowrap text-gray-400 text-xs">
