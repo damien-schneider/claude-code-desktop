@@ -7,8 +7,7 @@ import {
   Trash,
   X,
 } from "@phosphor-icons/react";
-import type React from "react";
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
@@ -111,7 +110,7 @@ export const RulesTab: React.FC = () => {
     return ruleContents[selectedRule] !== originalRuleContents[selectedRule];
   }, [selectedRule, ruleContents, originalRuleContents]);
 
-  const handleSave = async () => {
+  const handleSave = React.useCallback(async () => {
     if (!(selectedRule && selectedRuleData)) {
       return;
     }
@@ -126,7 +125,7 @@ export const RulesTab: React.FC = () => {
     } finally {
       setSaving(false);
     }
-  };
+  }, [selectedRule, selectedRuleData, ruleContents, saveItem]);
 
   const handleCancel = () => {
     if (selectedRule) {

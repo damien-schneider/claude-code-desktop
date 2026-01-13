@@ -140,21 +140,23 @@ export function parseHookJson(content: string): {
 
 /**
  * Helper to validate hook script syntax (without executing)
+ * Note: In the renderer process, we only validate that the script is a string
+ * Actual JavaScript syntax validation would require eval/new Function which
+ * violates CSP. The CLI will validate the actual script syntax.
  */
 export function validateHookScript(script: string): {
   valid: boolean;
   error?: string;
 } {
-  try {
-    // Use Function constructor to check syntax without executing
-    new Function(script);
-    return { valid: true };
-  } catch (e) {
-    return {
-      valid: false,
-      error: e instanceof Error ? e.message : "Syntax error",
-    };
+  // Basic validation - just check it's a non-empty string
+  // CSP prevents using new Function() for syntax checking in renderer
+  if (typeof script !== "string") {
+    return { valid: false, error: "Script must be a string" };
   }
+  if (script.trim().length === 0) {
+    return { valid: false, error: "Script cannot be empty" };
+  }
+  return { valid: true };
 }
 
 /**

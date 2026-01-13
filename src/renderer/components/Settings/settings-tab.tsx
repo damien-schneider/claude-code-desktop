@@ -2,7 +2,7 @@ import { ArrowsClockwise, FloppyDisk } from "@phosphor-icons/react";
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CodeEditor } from "@/renderer/components/code-editor";
+import { TipTapEditor } from "@/renderer/components/tip-tap-editor";
 
 export const SettingsTab: React.FC = () => {
   const [settings, setSettings] = React.useState<{
@@ -44,11 +44,12 @@ export const SettingsTab: React.FC = () => {
             <CardTitle className="text-base">settings.json</CardTitle>
           </CardHeader>
           <CardContent className="flex-1">
-            <CodeEditor
-              height="100%"
-              language="json"
+            <TipTapEditor
+              className="h-full"
+              content={settingsJson}
               onChange={(value) => setSettingsJson(value || "")}
-              value={settingsJson}
+              placeholder="Edit your settings.json..."
+              rawMode={true}
             />
           </CardContent>
         </Card>

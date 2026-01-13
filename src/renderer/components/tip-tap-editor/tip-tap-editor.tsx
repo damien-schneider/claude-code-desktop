@@ -374,12 +374,22 @@ export const TipTapEditor = forwardRef<TipTapEditorRef, TipTapEditorProps>(
     return (
       <div className={cn("relative flex min-h-[200px] flex-col", className)}>
         {/* Formatted WYSIWYG view */}
+        {/* biome-ignore lint/a11y/useSemanticElements: Using button element would interfere with TipTap editor internal focus management */}
         <div
+          aria-label="Focus editor"
           className={cn(
             "min-h-[200px] flex-1 cursor-text",
             isRawMode && "hidden"
           )}
           onClick={(e) => handleContainerClick(e, formattedEditor)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              formattedEditor?.commands.focus("end");
+            }
+          }}
+          role="button"
+          tabIndex={0}
         >
           <EditorContent
             className="h-full min-h-[200px]"
@@ -388,12 +398,22 @@ export const TipTapEditor = forwardRef<TipTapEditorRef, TipTapEditorProps>(
         </div>
 
         {/* Raw markdown view with syntax highlighting */}
+        {/* biome-ignore lint/a11y/useSemanticElements: Using button element would interfere with TipTap editor internal focus management */}
         <div
+          aria-label="Focus editor"
           className={cn(
             "min-h-[200px] flex-1 cursor-text",
             !isRawMode && "hidden"
           )}
           onClick={(e) => handleContainerClick(e, rawEditor)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              rawEditor?.commands.focus("end");
+            }
+          }}
+          role="button"
+          tabIndex={0}
         >
           <EditorContent className="h-full min-h-[200px]" editor={rawEditor} />
         </div>

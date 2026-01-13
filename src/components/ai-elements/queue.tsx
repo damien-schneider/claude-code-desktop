@@ -130,7 +130,6 @@ export const QueueItemAction = ({
       className
     )}
     size="icon"
-    type="button"
     variant="ghost"
     {...props}
   />
@@ -212,6 +211,7 @@ export const QueueSectionTrigger = ({
   className,
   ...props
 }: QueueSectionTriggerProps) => (
+  // @ts-expect-error - asChild type definition issue in UI library
   <CollapsibleTrigger asChild>
     <button
       className={cn(

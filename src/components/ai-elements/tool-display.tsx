@@ -41,6 +41,14 @@ import { cn } from "@/utils/tailwind";
 // Types
 // ============================================================================
 
+type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+
 interface ToolDisplayProps {
   toolName: string;
   input?: Record<string, unknown>;
@@ -425,7 +433,6 @@ const JsonField = memo(
           <Button
             className="h-auto shrink-0 gap-1 p-0 font-medium text-muted-foreground text-xs hover:text-foreground"
             onClick={() => setIsExpanded(!isExpanded)}
-            type="button"
             variant="ghost"
           >
             <ChevronRightIcon
@@ -685,7 +692,6 @@ export const ToolResultDisplay = memo(
               className="absolute top-2 right-2 size-6"
               onClick={handleCopy}
               size="icon"
-              type="button"
               variant="ghost"
             >
               {copied ? (

@@ -14,8 +14,7 @@ import {
   Trash,
 } from "@phosphor-icons/react";
 import { useAtom, useSetAtom } from "jotai";
-import type React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TabLayout } from "@/components/ui/tab-layout";
@@ -228,39 +227,43 @@ export const FilesTab: React.FC = () => {
   ]);
 
   // Load a directory's contents
-  const loadDirectoryContents = async (
-    dirPath: string
-  ): Promise<FileNode[]> => {
-    console.log("Loading directory contents for:", dirPath);
-    try {
-      const result = await ipc.client.claude.readDirectory({
-        dirPath,
-        includeHidden: true,
-      });
-      console.log("Directory result:", result);
-      return result.items.map((item) => ({
-        ...item,
-        level: 0,
-        isExpanded: false,
-        loaded: false,
-        children: item.type === "directory" ? [] : undefined,
-      }));
-    } catch (error) {
-      console.error("Failed to load directory:", error);
-      return [];
-    }
-  };
+  const loadDirectoryContents = React.useCallback(
+    async (dirPath: string): Promise<FileNode[]> => {
+      console.log("Loading directory contents for:", dirPath);
+      try {
+        const result = await ipc.client.claude.readDirectory({
+          dirPath,
+          includeHidden: true,
+        });
+        console.log("Directory result:", result);
+        return result.items.map((item) => ({
+          ...item,
+          level: 0,
+          isExpanded: false,
+          loaded: false,
+          children: item.type === "directory" ? [] : undefined,
+        }));
+      } catch (error) {
+        console.error("Failed to load directory:", error);
+        return [];
+      }
+    },
+    []
+  );
 
   // Recursively build the tree
-  const buildTree = async (basePath: string): Promise<FileNode[]> => {
-    const items = await loadDirectoryContents(basePath);
+  const buildTree = React.useCallback(
+    async (basePath: string): Promise<FileNode[]> => {
+      const items = await loadDirectoryContents(basePath);
 
-    // For each directory, add an empty children array that will be loaded on expand
-    return items.map((item) => ({
-      ...item,
-      children: item.type === "directory" ? [] : undefined,
-    }));
-  };
+      // For each directory, add an empty children array that will be loaded on expand
+      return items.map((item) => ({
+        ...item,
+        children: item.type === "directory" ? [] : undefined,
+      }));
+    },
+    [loadDirectoryContents]
+  );
 
   // Load tree - unified effect that handles all cases
   useEffect(() => {
@@ -283,7 +286,13 @@ export const FilesTab: React.FC = () => {
 
     setRootPath(claudePath);
     buildTree(claudePath).then(setFileTree);
-  }, [isGlobalSettingsSelected, selectedProjectId, homePath, currentView]);
+  }, [
+    isGlobalSettingsSelected,
+    selectedProjectId,
+    homePath,
+    currentView,
+    buildTree,
+  ]);
 
   const loadFileContent = async (filePath: string) => {
     setLoading(true);
@@ -569,7 +578,7 @@ export const FilesTab: React.FC = () => {
           {selectedFile ? (
             <div className="flex h-full flex-1 flex-col">
               {/* File Header */}
-              <div className="flex items-center justify-between border-b bg-background p-3">
+              <div className="flex items-center justify-between bg-background p-3">
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                   <SelectedFileIconComponent
                     className="h-4 w-4 shrink-0 text-muted-foreground"
@@ -608,7 +617,8 @@ export const FilesTab: React.FC = () => {
               </div>
 
               {/* File Content */}
-              <div className="flex-1 overflow-auto p-4">
+
+              <ScrollArea>
                 <FileContent
                   fileContent={fileContent}
                   isEditableFile={isEditableFile}
@@ -616,7 +626,7 @@ export const FilesTab: React.FC = () => {
                   onContentChange={setFileContent}
                   selectedFile={selectedFile}
                 />
-              </div>
+              </ScrollArea>
             </div>
           ) : (
             <div className="flex h-full items-center justify-center text-muted-foreground">

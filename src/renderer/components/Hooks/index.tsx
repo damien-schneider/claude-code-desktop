@@ -13,8 +13,7 @@ import {
   WarningCircle,
 } from "@phosphor-icons/react";
 import { useAtom } from "jotai";
-import type React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError } from "@/components/ui/field";
@@ -107,7 +106,7 @@ export const HooksTab: React.FC = () => {
   }, [setHomePath]);
 
   // Load hooks from the selected project
-  const loadHooks = async () => {
+  const loadHooks = React.useCallback(async () => {
     if (!activePath) {
       console.log("No active path, skipping hooks load");
       return;
@@ -154,7 +153,7 @@ export const HooksTab: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activePath]);
 
   // Reload when switching to this tab or when path changes
   useEffect(() => {
@@ -423,16 +422,13 @@ console.log('${hookType} hook executed:', {
       "onEnd",
     ] as const;
 
+    // Just validate that methods are strings if present
+    // Actual script validation happens in the CLI, not in the renderer
+    // Using new Function() would violate CSP
     for (const method of methods) {
       const methodValue = parsed[method as keyof typeof parsed];
-      if (methodValue) {
-        try {
-          new Function(methodValue as string);
-        } catch (e) {
-          throw new Error(
-            `${method} syntax error: ${e instanceof Error ? e.message : "Unknown error"}`
-          );
-        }
+      if (methodValue && typeof methodValue !== "string") {
+        throw new Error(`${method} must be a string`);
       }
     }
   };
@@ -440,14 +436,11 @@ console.log('${hookType} hook executed:', {
   const validateHookSyntax = (content: string) => {
     const parsed: HookJson = JSON.parse(content);
 
-    if (parsed.script) {
-      try {
-        new Function(parsed.script);
-      } catch (e) {
-        throw new Error(
-          `Script syntax error: ${e instanceof Error ? e.message : "Unknown error"}`
-        );
-      }
+    // Just validate that script is a string if present
+    // Actual script validation happens in the CLI, not in the renderer
+    // Using new Function() would violate CSP
+    if (parsed.script && typeof parsed.script !== "string") {
+      throw new Error("Script must be a string");
     }
 
     validateLifecycleMethods(parsed);

@@ -27,6 +27,7 @@ import {
   type PropsWithChildren,
   type ReactNode,
   type RefObject,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -146,7 +147,7 @@ export function PromptInputProvider({
 }: PromptInputProviderProps) {
   // ----- textInput state
   const [textInput, setTextInput] = useState(initialTextInput);
-  const clearInput = () => setTextInput("");
+  const clearInput = useCallback(() => setTextInput(""), []);
 
   // ----- attachments state (global when wrapped)
   const [attachmentFiles, setAttachmentFiles] = useState<
@@ -157,7 +158,7 @@ export function PromptInputProvider({
     // Intentionally empty - will be set by file input component
   });
 
-  const add = (files: File[] | FileList) => {
+  const add = useCallback((files: File[] | FileList) => {
     const incoming = Array.from(files);
     if (incoming.length === 0) {
       return;
@@ -174,9 +175,9 @@ export function PromptInputProvider({
         }))
       )
     );
-  };
+  }, []);
 
-  const remove = (id: string) => {
+  const remove = useCallback((id: string) => {
     setAttachmentFiles((prev) => {
       const found = prev.find((f) => f.id === id);
       if (found?.url) {
@@ -184,9 +185,9 @@ export function PromptInputProvider({
       }
       return prev.filter((f) => f.id !== id);
     });
-  };
+  }, []);
 
-  const clear = () => {
+  const clear = useCallback(() => {
     setAttachmentFiles((prev) => {
       for (const f of prev) {
         if (f.url) {
@@ -195,7 +196,7 @@ export function PromptInputProvider({
       }
       return [];
     });
-  };
+  }, []);
 
   // Keep a ref to attachments for cleanup on unmount (avoids stale closure)
   const attachmentsRef = useRef(attachmentFiles);
@@ -212,9 +213,9 @@ export function PromptInputProvider({
     };
   }, []);
 
-  const openFileDialog = () => {
+  const openFileDialog = useCallback(() => {
     openRef.current?.();
-  };
+  }, []);
 
   const attachments = useMemo<AttachmentsContext>(
     () => ({
@@ -225,16 +226,16 @@ export function PromptInputProvider({
       openFileDialog,
       fileInputRef,
     }),
-    [attachmentFiles]
+    [attachmentFiles, add, remove, clear, openFileDialog]
   );
 
-  const __registerFileInput = (
-    ref: RefObject<HTMLInputElement | null>,
-    open: () => void
-  ) => {
-    fileInputRef.current = ref.current;
-    openRef.current = open;
-  };
+  const __registerFileInput = useCallback(
+    (ref: RefObject<HTMLInputElement | null>, open: () => void) => {
+      fileInputRef.current = ref.current;
+      openRef.current = open;
+    },
+    []
+  );
 
   const controller = useMemo<PromptInputControllerProps>(
     () => ({
@@ -246,7 +247,7 @@ export function PromptInputProvider({
       attachments,
       __registerFileInput,
     }),
-    [textInput, attachments]
+    [textInput, attachments, clearInput, __registerFileInput]
   );
 
   return (
@@ -303,7 +304,7 @@ export function PromptInputAttachment({
         render={() => (
           <div
             className={cn(
-              "group relative flex h-8 cursor-pointer select-none items-center gap-1.5 rounded-md border border-border px-1.5 font-medium text-sm transition-all hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+              "group relative flex h-8 cursor-pointer select-none items-center gap-1.5 rounded-xl border border-border px-1.5 font-medium text-sm transition-all hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
               className
             )}
             key={data.id}
@@ -332,7 +333,6 @@ export function PromptInputAttachment({
                   e.stopPropagation();
                   attachments.remove(data.id);
                 }}
-                type="button"
                 variant="ghost"
               >
                 <XIcon />
@@ -705,7 +705,7 @@ export const PromptInput = ({
       openFileDialog,
       fileInputRef: inputRef,
     }),
-    [files]
+    [files, add, remove, clear, openFileDialog]
   );
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
@@ -1050,7 +1050,6 @@ export const PromptInputButton = ({
     <InputGroupButton
       className={cn(className)}
       size={newSize}
-      type="button"
       variant={variant}
       {...props}
     />
@@ -1339,12 +1338,8 @@ export const PromptInputSelectValue = ({
 
 export type PromptInputHoverCardProps = ComponentProps<typeof HoverCard>;
 
-export const PromptInputHoverCard = ({
-  openDelay = 0,
-  closeDelay = 0,
-  ...props
-}: PromptInputHoverCardProps) => (
-  <HoverCard closeDelay={closeDelay} openDelay={openDelay} {...props} />
+export const PromptInputHoverCard = (props: PromptInputHoverCardProps) => (
+  <HoverCard {...props} />
 );
 
 export type PromptInputHoverCardTriggerProps = ComponentProps<

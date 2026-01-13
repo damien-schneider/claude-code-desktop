@@ -178,14 +178,15 @@ function parseSessionLines(lines: string[]): {
         firstUserTimestamp = timestamp;
       }
     });
-    lastTimestamp = parsed.timestamp || lastTimestamp;
+    lastTimestamp =
+      typeof parsed.timestamp === "string" ? parsed.timestamp : lastTimestamp;
 
-    if (!gitBranch && parsed.gitBranch) {
+    if (!gitBranch && typeof parsed.gitBranch === "string") {
       gitBranch = parsed.gitBranch;
     }
 
     if (!previewMessage && shouldExtractPreview(parsed)) {
-      previewMessage = extractMessageContent(parsed.message) || "";
+      previewMessage = extractMessageContent(parsed.message as unknown) || "";
     }
   }
 
@@ -220,10 +221,13 @@ function updateTimestamps(
  * Check if this line should be used for preview message
  */
 function shouldExtractPreview(parsed: Record<string, unknown>): boolean {
+  const message = parsed.message;
   return (
     parsed.type === "user" &&
-    !!parsed.message?.content &&
-    typeof parsed.message === "object"
+    message !== null &&
+    typeof message === "object" &&
+    "content" in message &&
+    !!(message as { content?: unknown }).content
   );
 }
 

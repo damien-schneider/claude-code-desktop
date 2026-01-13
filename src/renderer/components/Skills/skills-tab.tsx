@@ -10,7 +10,7 @@ import {
   Trash,
 } from "@phosphor-icons/react";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
@@ -155,17 +155,22 @@ export const SkillsTab: React.FC = () => {
   } = useClaudeItems({ type: "skills", currentView: "skills" });
 
   // File watcher for hot-reload
+  const handleSkillChange = useCallback(
+    async (event: { action: string }) => {
+      // Reload skills when a skill file changes
+      await loadItems();
+      if (event.action === "change" || event.action === "add") {
+        showSuccess("Skill updated");
+      }
+    },
+    [loadItems]
+  );
+
   const { isWatching } = useFileWatcher({
     projectPath: activePath,
     watchHome: true,
     enabled: !!activePath,
-    onSkillChange: async (event) => {
-      // Reload skills when a skill file changes
-      await loadItems();
-      if (event.action === "change" || event.action === "add") {
-        showSuccess("Skill updated", `"${event.path.split("/").pop()}"`);
-      }
-    },
+    onSkillChange: handleSkillChange,
   });
 
   // Parse skills to extract frontmatter

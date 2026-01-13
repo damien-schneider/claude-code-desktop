@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
 import { createContext, memo, useContext, useEffect, useState } from "react";
-import type { Components } from "react-markdown";
+import type { StreamdownProps } from "streamdown";
 import { Streamdown } from "streamdown";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup, ButtonGroupText } from "@/components/ui/button-group";
@@ -83,7 +83,7 @@ export const MessageAction = ({
   ...props
 }: MessageActionProps) => {
   const button = (
-    <Button size={size} type="button" variant={variant} {...props}>
+    <Button size={size} variant={variant} {...props}>
       {children}
       <span className="sr-only">{label || tooltip}</span>
     </Button>
@@ -249,7 +249,6 @@ export const MessageBranchPrevious = ({
       disabled={totalBranches <= 1}
       onClick={goToPrevious}
       size="icon-sm"
-      type="button"
       variant="ghost"
       {...props}
     >
@@ -273,7 +272,6 @@ export const MessageBranchNext = ({
       disabled={totalBranches <= 1}
       onClick={goToNext}
       size="icon-sm"
-      type="button"
       variant="ghost"
       {...props}
     >
@@ -426,7 +424,7 @@ function parseToolUseContent(content: string): {
 /**
  * Custom Streamdown components for rendering tool-related code blocks
  */
-const streamdownComponents: Components = {
+const streamdownComponents: StreamdownProps["components"] = {
   pre: ({ children, className, ...props }) => {
     // Extract the code element's children to get the actual content
     const codeContent = extractTextFromChildren(children);
@@ -605,6 +603,7 @@ export const MessageResponse = memo(
                       if (typeof part === "string") {
                         return (
                           <Streamdown
+                            cdnUrl={null}
                             className={cn(
                               "[&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                             )}
@@ -626,6 +625,7 @@ export const MessageResponse = memo(
               // Normal text block - use Streamdown
               return (
                 <Streamdown
+                  cdnUrl={null}
                   className={cn("[&>*:first-child]:mt-0 [&>*:last-child]:mb-0")}
                   components={streamdownComponents}
                   controls={{ code: false }}
@@ -679,6 +679,7 @@ export const MessageResponse = memo(
             if (typeof part === "string") {
               return (
                 <Streamdown
+                  cdnUrl={null}
                   className={cn("[&>*:first-child]:mt-0 [&>*:last-child]:mb-0")}
                   components={streamdownComponents}
                   controls={{ code: false }}
@@ -698,6 +699,7 @@ export const MessageResponse = memo(
     // Default: render with Streamdown
     return (
       <Streamdown
+        cdnUrl={null}
         className={cn(
           "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
           className
@@ -760,7 +762,6 @@ export function MessageAttachment({
                 e.stopPropagation();
                 onRemove();
               }}
-              type="button"
               variant="ghost"
             >
               <XIcon />
@@ -790,7 +791,6 @@ export function MessageAttachment({
                 e.stopPropagation();
                 onRemove();
               }}
-              type="button"
               variant="ghost"
             >
               <XIcon />

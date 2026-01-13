@@ -21,7 +21,7 @@ function CalendarRoot({
   ...props
 }: {
   className?: string;
-  rootRef?: React.RefObject<HTMLDivElement>;
+  rootRef?: React.Ref<HTMLDivElement>;
 } & React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div

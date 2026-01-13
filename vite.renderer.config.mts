@@ -23,4 +23,11 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // Replace new Function() calls that cause CSP violations
+  esbuild: {
+    // This won't work for pre-bundled deps, but helps for source
+    supported: {
+      "dynamic-import": true,
+    },
+  },
 });

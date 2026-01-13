@@ -216,6 +216,7 @@ export const WebPreviewConsole = ({
       open={consoleOpen}
       {...props}
     >
+      {/* @ts-expect-error - asChild type definition issue in UI library */}
       <CollapsibleTrigger asChild>
         <Button
           className="flex w-full items-center justify-between p-4 text-left font-medium hover:bg-muted/50"

@@ -455,7 +455,7 @@ export const AgentsTab: React.FC = () => {
                                 onValueChange={field.onChange}
                               >
                                 <SelectTrigger id="color">
-                                  <SelectValue placeholder="Select a color" />
+                                  <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="blue">Blue</SelectItem>

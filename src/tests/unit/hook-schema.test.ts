@@ -356,7 +356,12 @@ describe("parseHookJson", () => {
 });
 
 describe("validateHookScript", () => {
-  it("should validate valid JavaScript", () => {
+  // Note: Due to CSP restrictions, we can't use new Function() to validate
+  // JavaScript syntax in the renderer. The function now just validates
+  // that the script is a non-empty string. Actual syntax validation
+  // happens in the CLI.
+
+  it("should validate non-empty string", () => {
     const result = validateHookScript("console.log('test');");
     expect(result.valid).toBe(true);
     expect(result.error).toBeUndefined();
@@ -373,24 +378,25 @@ describe("validateHookScript", () => {
     expect(result.valid).toBe(true);
   });
 
-  it("should validate async function", () => {
+  it("should validate async function string", () => {
     const script = "async function test() { await Promise.resolve(); }";
     const result = validateHookScript(script);
     expect(result.valid).toBe(true);
   });
 
-  it("should reject invalid JavaScript syntax", () => {
-    const result = validateHookScript("console.log('test'");
+  it("should reject empty string", () => {
+    const result = validateHookScript("");
     expect(result.valid).toBe(false);
     expect(result.error).toBeDefined();
   });
 
-  it("should reject syntax with unclosed brackets", () => {
-    const result = validateHookScript("{ console.log('test'); ");
+  it("should reject whitespace-only string", () => {
+    const result = validateHookScript("   ");
     expect(result.valid).toBe(false);
+    expect(result.error).toBeDefined();
   });
 
-  it("should validate arrow function", () => {
+  it("should validate arrow function string", () => {
     const script = "() => { console.log('test'); }";
     const result = validateHookScript(script);
     expect(result.valid).toBe(true);

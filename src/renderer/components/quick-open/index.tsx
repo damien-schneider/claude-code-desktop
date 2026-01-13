@@ -229,10 +229,7 @@ export const QuickOpenDialog: React.FC<QuickOpenDialogProps> = ({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent
-        className="max-w-xl gap-0 p-0"
-        onPointerDownOutside={(e) => e.preventDefault()}
-      >
+      <DialogContent className="max-w-xl gap-0 p-0" showCloseButton={false}>
         <div className="flex flex-col">
           {/* Search Input */}
           <div className="flex items-center gap-3 border-b px-4 py-3">

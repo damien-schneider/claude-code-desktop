@@ -16,12 +16,19 @@ interface ToolResultBlock {
   is_error?: boolean;
 }
 
+interface ToolUseBlock {
+  type: "tool_use";
+  id?: string;
+  name: string;
+  input: Record<string, unknown>;
+}
+
 interface TextBlock {
   type: "text";
   text: string;
 }
 
-type ContentBlock = ToolResultBlock | TextBlock;
+type ContentBlock = ToolResultBlock | TextBlock | ToolUseBlock;
 
 // Test helper to check if content has tool blocks
 function hasToolBlocks(contentBlocks: ContentBlock[] | undefined): boolean {

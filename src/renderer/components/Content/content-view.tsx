@@ -1,7 +1,6 @@
 import { useAtom } from "jotai";
 import type React from "react";
 import { AgentsTab } from "@/renderer/components/agents/agents-tab";
-import { ChatLayout } from "@/renderer/components/chat";
 import { ClaudeTab } from "@/renderer/components/claude-tab/claude-tab";
 import { CommandsTab } from "@/renderer/components/commands/commands-tab";
 // Direct imports instead of lazy loading to avoid Vite dynamic import errors
@@ -11,6 +10,7 @@ import { McpTab } from "@/renderer/components/mcp/mcp-tab";
 import { RulesTab } from "@/renderer/components/rules/rules-tab";
 import { SettingsTab } from "@/renderer/components/settings/settings-tab";
 import { SkillsTab } from "@/renderer/components/skills/skills-tab";
+import { ChatLayout } from "@/renderer/features/chat";
 import { currentViewAtom, type NavigationView } from "@/renderer/stores";
 import { cn } from "@/utils/tailwind";
 

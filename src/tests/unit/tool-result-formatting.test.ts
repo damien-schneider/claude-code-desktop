@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
+import type { ContentBlock } from "@/renderer/stores/chat-atoms";
 import { formatMessageContent } from "@/renderer/stores/chat-atoms";
 
 describe("formatMessageContent - tool_result blocks", () => {
   it("should format tool_result block as markdown", () => {
-    const content = [
+    const content: ContentBlock[] = [
       {
         type: "tool_result",
         content: "No files found",
@@ -16,7 +17,7 @@ describe("formatMessageContent - tool_result blocks", () => {
   });
 
   it("should format tool_result block with multi-line content", () => {
-    const content = [
+    const content: ContentBlock[] = [
       {
         type: "tool_result",
         content:
@@ -30,10 +31,10 @@ describe("formatMessageContent - tool_result blocks", () => {
   });
 
   it("should format tool_result block with object content", () => {
-    const content = [
+    const content: ContentBlock[] = [
       {
         type: "tool_result",
-        content: { status: "success", count: 2 },
+        content: [{ status: "success", count: 2 }],
       },
     ];
     const result = formatMessageContent(content);
@@ -43,7 +44,7 @@ describe("formatMessageContent - tool_result blocks", () => {
   });
 
   it("should format mixed text and tool_result blocks", () => {
-    const content = [
+    const content: ContentBlock[] = [
       {
         type: "text",
         text: "Checking files...",

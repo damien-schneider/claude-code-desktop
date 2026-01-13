@@ -5,7 +5,7 @@
 
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { ThinkingIndicator } from "@/renderer/components/chat/thinking-indicator";
+import { ThinkingIndicator } from "@/renderer/features/chat/components/thinking-indicator";
 
 // Top-level regex patterns for performance
 const THINKING_WITH_DURATION_REGEX = /Thinking.*\(.*s\)/;

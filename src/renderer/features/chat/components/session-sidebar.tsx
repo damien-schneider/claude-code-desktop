@@ -11,6 +11,7 @@ import { useAtom, useSetAtom } from "jotai";
 import React, { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Toggle } from "@/components/ui/toggle";
 import {
   activeSessionsAtom,
@@ -26,6 +27,7 @@ import {
   startNewSessionAtom,
 } from "@/renderer/stores";
 import { cn } from "@/utils/tailwind";
+import { DebugPanel, DebugPanelButton } from "./debug-panel";
 
 export interface SessionSidebarProps {
   className?: string;
@@ -145,15 +147,22 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
             >
               <ArrowsClockwise className="h-4 w-4" weight="regular" />
             </Button>
+            {!import.meta.env.DEV && (
+              <DebugPanel>
+                <DebugPanelButton />
+              </DebugPanel>
+            )}
           </div>
 
           {/* Project Filter Toggle */}
           {selectedProjectId && (
             <div className="mt-2">
               <Toggle
-                pressed={filter === "project"}
-                onPressedChange={(pressed) => setFilter(pressed ? "project" : "all")}
                 className="w-full"
+                onPressedChange={(pressed) =>
+                  setFilter(pressed ? "project" : "all")
+                }
+                pressed={filter === "project"}
                 variant="outline"
               >
                 <Folder className="mr-2 h-4 w-4" weight="regular" />
@@ -178,7 +187,7 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-2">
+        <ScrollArea className="flex-1" classNameViewport="p-2">
           {sessions.length === 0 && !loading ? (
             <div className="px-3 py-8 text-center text-muted-foreground text-sm">
               <ChatCircle className="mx-auto mb-2 h-12 w-12 opacity-50" />
@@ -246,7 +255,7 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
               ) : null
             )
           )}
-        </div>
+        </ScrollArea>
       </div>
     </div>
   );

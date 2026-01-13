@@ -87,20 +87,22 @@ function SidebarHeader() {
 
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              className="h-8 w-8 p-0"
-              disabled={isScanning}
-              onClick={scanProjects}
-              variant="default"
-            >
-              {isScanning ? (
-                <Spinner className="h-3 w-3 animate-spin" weight="regular" />
-              ) : (
-                <ArrowsClockwise className="h-3 w-3" weight="regular" />
-              )}
-            </Button>
-          </TooltipTrigger>
+          <TooltipTrigger
+            render={() => (
+              <Button
+                className="h-8 w-8 p-0"
+                disabled={isScanning}
+                onClick={() => scanProjects()}
+                variant="default"
+              >
+                {isScanning ? (
+                  <Spinner className="h-3 w-3 animate-spin" weight="regular" />
+                ) : (
+                  <ArrowsClockwise className="h-3 w-3" weight="regular" />
+                )}
+              </Button>
+            )}
+          />
           <TooltipContent>
             <p>Scan projects</p>
           </TooltipContent>

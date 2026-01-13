@@ -191,9 +191,9 @@ export const useClaudeStream = (processId: string | null) => {
   const rafRef = useRef<number | null>(null);
 
   const handleMessage = (
-    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex IPC message handler with multiple event types - refactoring would require breaking into multiple handlers
     _event: unknown,
     data: IPCMessageWrapper
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex IPC message handler with multiple event types - refactoring would require breaking into multiple handlers
   ) => {
     const eventData = data.data;
     if (eventData.processId !== processId) {
@@ -567,6 +567,7 @@ export const useClaudeStream = (processId: string | null) => {
         window.electron.removeListener("claude-process-event", messageHandler);
       }
     };
+    // biome-ignore lint/correctness/useExhaustiveDependencies: handleMessage intentionally changes when its dependencies change; re-subscribing is the correct behavior
   }, [processId, handleMessage, setStreamingMessage, setActiveSessions]);
 
   return { isStreaming, streamingMessage };
