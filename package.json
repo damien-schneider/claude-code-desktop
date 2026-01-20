@@ -51,7 +51,7 @@
     "@vitejs/plugin-react": "^5.1.2",
     "@vitest/coverage-v8": "^4.0.17",
     "babel-plugin-react-compiler": "^1.0.0",
-    "electron": "^39.2.7",
+    "electron": "^40.0.0",
     "electron-devtools-installer": "^4.0.0",
     "electron-playwright-helpers": "^2.1.0",
     "globals": "^17.0.0",
