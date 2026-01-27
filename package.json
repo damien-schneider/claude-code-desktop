@@ -104,7 +104,7 @@
     "input-otp": "^1.4.2",
     "jotai": "^2.16.1",
     "lowlight": "^3.3.0",
-    "lucide-react": "^0.562.0",
+    "lucide-react": "^0.563.0",
     "motion": "^12.26.1",
     "nanoid": "^5.1.6",
     "next-themes": "^0.4.6",
